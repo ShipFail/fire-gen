@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FireGen — Generative AI at the speed of Firebase</title>
+  <meta name="description" content="FireGen turns Firebase Realtime Database into a universal Generative AI API. Write a job node, watch results stream back. Veo 3, Imagen, Gemini, Lyria, Chirp — handled." />
+  <meta property="og:title" content="FireGen — Generative AI at the speed of Firebase" />
+  <meta property="og:description" content="Write to RTDB. Get AI results. Polling, GCS, auth — handled. The Firebase-native way to ship Generative AI." />
+  <meta property="og:type" content="website" />
+  <meta name="theme-color" content="#0ea5e9" />
+
+  <!-- Inter font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind (CDN) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // Tailwind config for dark mode + brand colors
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eff8ff',
+              100: '#dff1ff',
+              200: '#b9e3ff',
+              300: '#84d0ff',
+              400: '#45b7ff',
+              500: '#0ea5e9', /* primary */
+              600: '#0786bf',
+              700: '#066c9a',
+              800: '#075a7f',
+              900: '#0b4a69'
+            }
+          },
+          boxShadow: {
+            glow: '0 0 0 6px rgba(14,165,233,0.15)'
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Flowbite (Marketing UI / components) -->
+  <link href="https://unpkg.com/flowbite@2.5.1/dist/flowbite.min.css" rel="stylesheet" />
+  <script defer src="https://unpkg.com/flowbite@2.5.1/dist/flowbite.min.js"></script>
+
+  <style>
+    html, body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji"; }
+    .gradient-hero {
+      background-image:
+        radial-gradient(1200px 600px at 10% -10%, rgba(14,165,233,.18), transparent 60%),
+        radial-gradient(800px 400px at 100% 0%, rgba(99,102,241,.14), transparent 60%),
+        linear-gradient(180deg, rgba(2,6,23,0.00) 0%, rgba(2,6,23,0.05) 100%);
+    }
+    .codecard code { white-space: pre; }
+  </style>
+</head>
+
+<body class="bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+  <!-- Top Announcement Bar -->
+  <div class="relative isolate z-50">
+    <div class="w-full bg-slate-900 text-white px-4 sm:px-6 py-2.5 text-center text-sm">
+      <span class="inline-flex items-center gap-2">
+        <span class="inline-flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        Launching on Product Hunt soon — join the waitlist to get early access!
+        <a href="#waitlist" class="ml-3 underline decoration-emerald-300 hover:text-emerald-300">Get early access</a>
+      </span>
+    </div>
+  </div>
+
+  <!-- Navbar -->
+  <header class="sticky top-0 z-40 backdrop-blur bg-white/75 dark:bg-slate-950/60 border-b border-slate-200/60 dark:border-slate-800">
+    <nav class="mx-auto max-w-7xl px-4 sm:px-6">
+      <div class="flex h-16 items-center justify-between">
+        <a href="#" class="flex items-center gap-3">
+          <!-- Flame + key SVG logo -->
+          <svg width="28" height="28" viewBox="0 0 24 24" class="text-brand-500" fill="currentColor" aria-hidden="true">
+            <path d="M12.7 2.2c.2-.3.7-.2.8.1 1.2 3.2.2 5.4-1.9 7.2 2.4-.1 4.6-1.4 6.1-3.6.2-.3.6-.3.8 0 1.3 1.7 2 3.7 2 5.7 0 5-3.6 8.7-8.5 8.7S4.5 16.6 4.5 12c0-2.7 1.1-5.2 3-7.1.3-.3.8 0 .7.4-.6 2-.2 3.9 1.7 5.4.2.2.6 0 .6-.3 0-3.2 1.1-5.6 2.2-8.2z"/>
+            <circle cx="18.5" cy="18.5" r="1.5"></circle>
+            <rect x="13" y="17.5" width="4" height="1.5" rx="0.75"></rect>
+          </svg>
+          <span class="text-xl font-extrabold tracking-tight">FireGen</span>
+          <span class="hidden sm:inline text-xs font-semibold text-white bg-brand-500/90 px-2 py-0.5 rounded-full">Firebase Extension</span>
+        </a>
+
+        <div class="flex items-center gap-4">
+          <a href="#features" class="text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white">Features</a>
+          <a href="#how" class="text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white">How it works</a>
+          <a href="#pricing" class="text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white">Pricing</a>
+          <a href="#faq" class="text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white">FAQ</a>
+          <button id="themeToggle" class="ml-2 inline-flex items-center justify-center rounded-full p-2 hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="Toggle theme">
+            <svg id="moon" class="h-5 w-5 hidden dark:block" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1111.21 3a7 7 0 109.79 9.79z"/></svg>
+            <svg id="sun" class="h-5 w-5 dark:hidden" viewBox="0 0 24 24" fill="currentColor"><path d="M6.76 4.84l-1.8-1.79-1.41 1.41 1.79 1.8 1.42-1.42zM1 13h3v-2H1v2zm10 10h2v-3h-2v3zm9.66-3.95l1.41-1.41-1.79-1.8-1.41 1.42 1.79 1.79zM20 13h3v-2h-3v2zM11 1h2v3h-2V1zM4.34 19.05l1.79-1.79-1.41-1.42-1.79 1.8 1.41 1.41zM17.24 4.84l1.42 1.42 1.79-1.8-1.41-1.41-1.8 1.79z"/></svg>
+          </button>
+          <a href="#waitlist" class="inline-flex items-center rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-200 dark:focus:ring-brand-800">Join Waitlist</a>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Hero -->
+  <section class="gradient-hero relative">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 py-20 sm:py-28">
+      <div class="grid lg:grid-cols-12 gap-10 items-center">
+        <div class="lg:col-span-7">
+          <div class="inline-flex items-center gap-2 rounded-full border border-slate-200/80 dark:border-slate-800 bg-white/60 dark:bg-slate-900/40 px-3 py-1.5 backdrop-blur text-xs font-semibold text-slate-600 dark:text-slate-300">
+            <span class="inline-flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            Firebase-native. Vertex AI ready. Veo 3 approved.
+          </div>
+          <h1 class="mt-5 text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight">
+            Generative AI <span class="text-brand-500">at the speed of Firebase</span>
+          </h1>
+          <p class="mt-5 max-w-2xl text-lg text-slate-600 dark:text-slate-300">
+            FireGen turns <strong>Realtime Database</strong> into your universal Generative AI API.
+            Write a job node. Watch results stream back. Polling, LROs, GCS URLs, and auth — handled.
+          </p>
+          <div class="mt-8 flex flex-wrap gap-3">
+            <a href="#how" class="inline-flex items-center gap-2 rounded-lg bg-brand-500 px-5 py-3 text-white font-semibold shadow-sm hover:bg-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-200 dark:focus:ring-brand-800">
+              See how it works
+              <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+            </a>
+            <a href="#waitlist" class="inline-flex items-center gap-2 rounded-lg border border-slate-300/80 dark:border-slate-700 px-5 py-3 font-semibold hover:bg-slate-50 dark:hover:bg-slate-800">
+              Join waitlist
+            </a>
+          </div>
+          <div class="mt-6 text-sm text-slate-500 dark:text-slate-400">
+            One-liner: <em>“Generative AI as easy as writing to Firebase Realtime Database.”</em>
+          </div>
+        </div>
+
+        <!-- Right: code preview card -->
+        <div class="lg:col-span-5">
+          <div class="codecard relative rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/60 backdrop-blur shadow-xl">
+            <div class="flex items-center justify-between px-5 py-3 border-b border-slate-200/80 dark:border-slate-800">
+              <div class="flex items-center gap-2">
+                <span class="h-3 w-3 rounded-full bg-rose-400"></span>
+                <span class="h-3 w-3 rounded-full bg-amber-400"></span>
+                <span class="h-3 w-3 rounded-full bg-emerald-400"></span>
+              </div>
+              <button id="copyCode" class="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-brand-500">Copy</button>
+            </div>
+            <pre class="p-5 overflow-x-auto text-sm leading-relaxed"><code class="language-ts">
+// 1) Create a job (client)
+const jobRef = push(ref(rtdb, "/jobs"), {
+  uid: auth.currentUser!.uid,
+  status: "requested",
+  model: { family: "veo", id: "veo-3.0-fast-generate-001" },
+  request: {
+    prompt: "a neon city cat skateboarding at night",
+    durationSeconds: 8, aspectRatio: "16:9", resolution: "720p", generateAudio: true
+  },
+  ttlAt: Date.now() + 90*60*1000
+});
+
+// 2) Subscribe to updates (client)
+onValue(jobRef, (snap) => {
+  const job = snap.val();
+  if (job.status === "succeeded") {
+    video.src = job.result.signedUrl; // stream from GCS
+  } else if (job.status === "failed") {
+    toast(job.error.message);
+  }
+});
+            </code></pre>
+          </div>
+          <p class="mt-3 text-xs text-slate-500 dark:text-slate-400">Zero SDK juggling. No operations polling. No storage fiddling. Just RTDB.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Social proof strip -->
+  <section class="border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/40">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 py-10">
+      <div class="flex flex-wrap items-center justify-center gap-6 text-slate-500 dark:text-slate-400 text-xs sm:text-sm">
+        <span class="uppercase tracking-widest">Built for</span>
+        <span class="inline-flex items-center gap-2 font-semibold">Firebase</span>
+        <span class="inline-flex items-center gap-2 font-semibold">Vertex AI</span>
+        <span class="inline-flex items-center gap-2 font-semibold">Product Hunt</span>
+        <span class="inline-flex items-center gap-2 font-semibold">YC Demo Day Vibes</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section id="how" class="mx-auto max-w-7xl px-4 sm:px-6 py-20">
+    <div class="max-w-3xl">
+      <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight">How it works</h2>
+      <p class="mt-3 text-slate-600 dark:text-slate-300">A Firebase-native pattern that’s universal across models.</p>
+    </div>
+
+    <div class="mt-10 grid lg:grid-cols-3 gap-6">
+      <!-- Step 1 -->
+      <div class="rounded-2xl border border-slate-200 dark:border-slate-800 p-6 bg-white dark:bg-slate-900">
+        <div class="flex items-center gap-3">
+          <span class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-brand-50 text-brand-600">1</span>
+          <h3 class="font-semibold">Client writes a job to RTDB</h3>
+        </div>
+        <p class="mt-3 text-sm text-slate-600 dark:text-slate-300">Add a node at <code class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800">/jobs/{jobId}</code> with prompt &amp; params.</p>
+      </div>
+      <!-- Step 2 -->
+      <div class="rounded-2xl border border-slate-200 dark:border-slate-800 p-6 bg-white dark:bg-slate-900">
+        <div class="flex items-center gap-3">
+          <span class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-brand-50 text-brand-600">2</span>
+          <h3 class="font-semibold">Extension starts &amp; (if needed) polls</h3>
+        </div>
+        <p class="mt-3 text-sm text-slate-600 dark:text-slate-300">Functions v2 + Firebase Task Queue handle Veo LROs, backoff, and TTL. Sync models resolve immediately.</p>
+      </div>
+      <!-- Step 3 -->
+      <div class="rounded-2xl border border-slate-200 dark:border-slate-800 p-6 bg-white dark:bg-slate-900">
+        <div class="flex items-center gap-3">
+          <span class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-brand-50 text-brand-600">3</span>
+          <h3 class="font-semibold">Client listens for results</h3>
+        </div>
+        <p class="mt-3 text-sm text-slate-600 dark:text-slate-300">Subscribe to the node. When <code>status</code> flips to <em>succeeded</em>, you get the <code>result</code> (e.g. GCS signed URL).</p>
+      </div>
+    </div>
+
+    <!-- Flow diagram (ASCII-style) -->
+    <div class="mt-12 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6">
+      <pre class="text-sm leading-7 text-slate-700 dark:text-slate-300 overflow-x-auto">
+Client         ──▶  RTDB /jobs  ──▶  Functions (onCreate)
+  │                              │
+  │         ◀────────────────────┘  write status=running, opName
+  │
+  │                              ┌─▶ Task Queue Poller ──▶ Vertex Operations.get()
+  │                              │          │
+  │                              └──────────┴── (backoff, TTL, retries)
+  │
+  ◀──────── real-time updates ◀── RTDB /jobs (status/result/error)
+      </pre>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section id="features" class="mx-auto max-w-7xl px-4 sm:px-6 py-20">
+    <div class="max-w-3xl">
+      <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight">Why teams choose FireGen</h2>
+      <p class="mt-3 text-slate-600 dark:text-slate-300">DX-first, Firebase-native, production-ready.</p>
+    </div>
+
+    <div class="mt-10 grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div class="rounded-2xl border border-slate-200 dark:border-slate-800 p-6 bg-white dark:bg-slate-900">
+        <h3 class="font-semibold">Firebase-native</h3>
+        <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">Realtime triggers, Task Queue, Functions v2, secure rules. No extra infra.</p>
+      </div>
+      <div class="rounded-2xl border border-slate-200 dark:border-slate-800 p-6 bg-white dark:bg-slate-900">
+        <h3 class="font-semibold">LROs handled</h3>
+        <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">Exponential backoff + jitter. Cancel, TTL, and dead-letter patterns baked in.</p>
+      </div>
+      <div class="rounded-2xl border border-slate-200 dark:border-slate-800 p-6 bg-white dark:bg-slate-900">
+        <h3 class="font-semibold">Big-file friendly</h3>
+        <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">Veo writes to GCS via <code>storageUri</code>. We return signed URLs you can stream.</p>
+      </div>
+      <div class="rounded-2xl border border-slate-200 dark:border-slate-800 p-6 bg-white dark:bg-slate-900">
+        <h3 class="font-semibold">Universal schema</h3>
+        <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">Same job shape for video, image, text, audio. Sync and async flows unified.</p>
+      </div>
+      <div class="rounded-2xl border border-slate-200 dark:border-slate-800 p-6 bg-white dark:bg-slate-900">
+        <h3 class="font-semibold">Secure by default</h3>
+        <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">Rules restrict per-user reads/writes. App Check ready. Keys kept server-side.</p>
+      </div>
+      <div class="rounded-2xl border border-slate-200 dark:border-slate-800 p-6 bg-white dark:bg-slate-900">
+        <h3 class="font-semibold">Drop-in Extension</h3>
+        <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">Install, set bucket &amp; location, done. Works across projects out of the box.</p>
+      </div>
+    </div>
+
+    <!-- Supported models -->
+    <div class="mt-14">
+      <h3 class="text-lg font-semibold">Supported models at launch</h3>
+      <div class="mt-4 flex flex-wrap gap-2 text-xs">
+        <span class="px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800">Veo 3 / Veo 3 Fast (Video)</span>
+        <span class="px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800">Imagen 4 (Image)</span>
+        <span class="px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800">Gemini 2.5 (Text / Multimodal)</span>
+        <span class="px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800">Lyria 2 (Music)</span>
+        <span class="px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800">Chirp 3 HD (TTS)</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Comparison -->
+  <section class="mx-auto max-w-7xl px-4 sm:px-6 py-20">
+    <div class="grid lg:grid-cols-2 gap-10 items-start">
+      <div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight">Why not DIY?</h2>
+        <p class="mt-3 text-slate-600 dark:text-slate-300">We’ve been there: multiple SDKs, outdated examples, polling edge cases, storage hand-offs, and auth. FireGen compresses days into minutes.</p>
+        <ul class="mt-6 space-y-2 text-sm text-slate-600 dark:text-slate-300 list-disc list-inside">
+          <li>No OIDC or queue plumbing — Firebase Task Queue does it for you.</li>
+          <li>No guessing async vs sync — we normalize both flows.</li>
+          <li>No storage headaches — signed URLs ready to stream.</li>
+        </ul>
+      </div>
+      <div class="rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-slate-50 dark:bg-slate-900/40">
+            <tr>
+              <th class="p-4">Approach</th>
+              <th class="p-4">Dev Effort</th>
+              <th class="p-4">Time-to-first-result</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200 dark:divide-slate-800 bg-white dark:bg-slate-900">
+            <tr>
+              <td class="p-4 font-semibold">Direct Vertex SDKs</td>
+              <td class="p-4">High (LROs, storage, auth, docs)</td>
+              <td class="p-4">Days → weeks</td>
+            </tr>
+            <tr>
+              <td class="p-4 font-semibold">Workflows / Scheduler DIY</td>
+              <td class="p-4">Medium (new services, YAML/cron)</td>
+              <td class="p-4">Days</td>
+            </tr>
+            <tr class="bg-brand-50/40 dark:bg-slate-900/60">
+              <td class="p-4 font-semibold">FireGen (Extension)</td>
+              <td class="p-4">Low (write node + subscribe)</td>
+              <td class="p-4">Minutes</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing -->
+  <section id="pricing" class="mx-auto max-w-7xl px-4 sm:px-6 py-20">
+    <div class="text-center max-w-3xl mx-auto">
+      <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight">Pricing</h2>
+      <p class="mt-3 text-slate-600 dark:text-slate-300">Free for the hackathon &amp; early access. Usage billed by Firebase &amp; Vertex AI as usual.</p>
+    </div>
+
+    <div class="mt-10 grid md:grid-cols-2 gap-6">
+      <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6">
+        <h3 class="text-xl font-bold">Starter</h3>
+        <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">Solo makers &amp; prototypes.</p>
+        <div class="mt-6 text-4xl font-extrabold">$0<span class="text-base font-medium text-slate-500">/install</span></div>
+        <ul class="mt-6 space-y-2 text-sm text-slate-600 dark:text-slate-300 list-disc list-inside">
+          <li>RTDB job pattern</li>
+          <li>Veo 3 LRO polling</li>
+          <li>GCS signed URLs</li>
+          <li>Basic logging</li>
+        </ul>
+        <a href="#waitlist" class="mt-6 inline-flex items-center justify-center w-full rounded-lg bg-slate-900 text-white px-4 py-2 font-semibold hover:bg-slate-800">Join waitlist</a>
+      </div>
+
+      <div class="rounded-2xl border-2 border-brand-500 bg-white dark:bg-slate-900 p-6 shadow-glow">
+        <div class="inline-block rounded-full bg-brand-100 text-brand-700 px-3 py-1 text-xs font-semibold">Most popular</div>
+        <h3 class="mt-2 text-xl font-bold">Pro</h3>
+        <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">Teams shipping production apps.</p>
+        <div class="mt-6 text-4xl font-extrabold">$—<span class="text-base font-medium text-slate-500">/mo</span></div>
+        <ul class="mt-6 space-y-2 text-sm text-slate-600 dark:text-slate-300 list-disc list-inside">
+          <li>Advanced metrics &amp; alerts</li>
+          <li>DLQ &amp; retries controls</li>
+          <li>Per-model policies &amp; quotas</li>
+          <li>Priority email support</li>
+        </ul>
+        <a href="#waitlist" class="mt-6 inline-flex items-center justify-center w-full rounded-lg bg-brand-500 text-white px-4 py-2 font-semibold hover:bg-brand-600">Request access</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonials -->
+  <section class="mx-auto max-w-7xl px-4 sm:px-6 py-20">
+    <div class="grid md:grid-cols-2 gap-6">
+      <figure class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6">
+        <blockquote class="text-lg font-medium">“Veo took us three days before FireGen. Now it’s two lines of code. Unreal.”</blockquote>
+        <figcaption class="mt-4 text-sm text-slate-600 dark:text-slate-300">— Indie dev, Firebase Studio power user</figcaption>
+      </figure>
+      <figure class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6">
+        <blockquote class="text-lg font-medium">“The RTDB pattern is a universal API. My team didn’t touch Vertex docs once.”</blockquote>
+        <figcaption class="mt-4 text-sm text-slate-600 dark:text-slate-300">— Startup CTO, YC alum</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq" class="mx-auto max-w-7xl px-4 sm:px-6 py-20">
+    <div class="max-w-3xl">
+      <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight">FAQ</h2>
+      <p class="mt-3 text-slate-600 dark:text-slate-300">Quick answers for builders.</p>
+    </div>
+
+    <div id="accordion-flush" data-accordion="collapse" data-active-classes="bg-white dark:bg-slate-900 text-slate-900 dark:text-white" data-inactive-classes="text-slate-600 dark:text-slate-300">
+      <!-- Q1 -->
+      <h3 id="faq-1">
+        <button type="button" class="flex items-center justify-between w-full py-5 font-medium text-left text-slate-700 dark:text-slate-200 border-b border-slate-200 dark:border-slate-800" data-accordion-target="#faq-1-body" aria-expanded="true" aria-controls="faq-1-body">
+          <span>Does FireGen work with Veo 3 long-running operations?</span>
+          <svg class="w-6 h-6 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+        </button>
+      </h3>
+      <div id="faq-1-body" class="hidden" aria-labelledby="faq-1">
+        <div class="py-5 border-b border-slate-200 dark:border-slate-800 text-sm text-slate-600 dark:text-slate-300">
+          Yes. We enqueue a Firebase Task Queue poller with exponential backoff and TTL. Results are normalized into <code>result</code> with signed URLs.
+        </div>
+      </div>
+      <!-- Q2 -->
+      <h3 id="faq-2">
+        <button type="button" class="flex items-center justify-between w-full py-5 font-medium text-left text-slate-700 dark:text-slate-200 border-b border-slate-200 dark:border-slate-800" data-accordion-target="#faq-2-body" aria-expanded="false" aria-controls="faq-2-body">
+          <span>What about synchronous models like Lyria or TTS (Chirp)?</span>
+          <svg class="w-6 h-6 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+        </button>
+      </h3>
+      <div id="faq-2-body" class="hidden" aria-labelledby="faq-2">
+        <div class="py-5 border-b border-slate-200 dark:border-slate-800 text-sm text-slate-600 dark:text-slate-300">
+          The starter handles them inline and writes results immediately. Same client pattern: write a node and listen.
+        </div>
+      </div>
+      <!-- Q3 -->
+      <h3 id="faq-3">
+        <button type="button" class="flex items-center justify-between w-full py-5 font-medium text-left text-slate-700 dark:text-slate-200 border-b border-slate-200 dark:border-slate-800" data-accordion-target="#faq-3-body" aria-expanded="false" aria-controls="faq-3-body">
+          <span>Can I host outputs in Firebase Storage instead of GCS?</span>
+          <svg class="w-6 h-6 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+        </button>
+      </h3>
+      <div id="faq-3-body" class="hidden" aria-labelledby="faq-3">
+        <div class="py-5 border-b border-slate-200 dark:border-slate-800 text-sm text-slate-600 dark:text-slate-300">
+          Yes. We recommend keeping the source of truth in GCS (via <code>storageUri</code>) and optionally mirroring to Firebase Storage.
+        </div>
+      </div>
+      <!-- Q4 -->
+      <h3 id="faq-4">
+        <button type="button" class="flex items-center justify-between w-full py-5 font-medium text-left text-slate-700 dark:text-slate-200 border-b border-slate-200 dark:border-slate-800" data-accordion-target="#faq-4-body" aria-expanded="false" aria-controls="faq-4-body">
+          <span>Is there a codename?</span>
+          <svg class="w-6 h-6 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+        </button>
+      </h3>
+      <div id="faq-4-body" class="hidden" aria-labelledby="faq-4">
+        <div class="py-5 border-b border-slate-200 dark:border-slate-800 text-sm text-slate-600 dark:text-slate-300">
+          Yes — <strong>LoKey</strong>. Loki (Norse god of fire) + low-key simplicity + RTDB key pun.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA / Waitlist -->
+  <section id="waitlist" class="relative overflow-hidden">
+    <div class="absolute inset-0 -z-10 opacity-40 blur-3xl pointer-events-none"
+         style="background: radial-gradient(600px 300px at 20% 30%, rgba(14,165,233,.25), transparent),
+                          radial-gradient(600px 300px at 80% 70%, rgba(99,102,241,.2), transparent)"></div>
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 py-20">
+      <div class="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 md:p-12 lg:p-16 shadow-xl">
+        <div class="max-w-2xl">
+          <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight">Get early access</h2>
+          <p class="mt-3 text-slate-600 dark:text-slate-300">Be the first to try FireGen, our Firebase Extension that turns RTDB into a universal Generative AI API.</p>
+        </div>
+        <form id="waitlistForm" class="mt-8 grid sm:grid-cols-3 gap-3">
+          <input id="email" type="email" required placeholder="you@startup.com"
+                 class="sm:col-span-2 w-full rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-3 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-brand-200 dark:focus:ring-brand-800" />
+          <button class="inline-flex items-center justify-center rounded-lg bg-brand-500 px-5 py-3 text-white font-semibold shadow-sm hover:bg-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-200 dark:focus:ring-brand-800">
+            Join waitlist
+          </button>
+          <p id="formNote" class="sm:col-span-3 mt-2 text-xs text-slate-500 dark:text-slate-400">No spam. We’ll only email regarding early access.</p>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-200 dark:border-slate-800">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 py-10">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-2">
+          <svg width="22" height="22" viewBox="0 0 24 24" class="text-brand-500" fill="currentColor" aria-hidden="true">
+            <path d="M12.7 2.2c.2-.3.7-.2.8.1 1.2 3.2.2 5.4-1.9 7.2 2.4-.1 4.6-1.4 6.1-3.6.2-.3.6-.3.8 0 1.3 1.7 2 3.7 2 5.7 0 5-3.6 8.7-8.5 8.7S4.5 16.6 4.5 12c0-2.7 1.1-5.2 3-7.1.3-.3.8 0 .7.4-.6 2-.2 3.9 1.7 5.4.2.2.6 0 .6-.3 0-3.2 1.1-5.6 2.2-8.2z"/>
+          </svg>
+          <span class="font-semibold">FireGen</span>
+          <span class="mx-2 text-slate-400">•</span>
+          <span class="text-xs text-slate-500 dark:text-slate-400">Codename: LoKey</span>
+        </div>
+        <div class="text-xs text-slate-500 dark:text-slate-400">
+          © <span id="year"></span> FireGen. Built with Firebase + Vertex AI.
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Utilities -->
+  <script>
+    // Dark mode toggle
+    const themeToggle = document.getElementById('themeToggle');
+    const storageKey = 'firegen-theme';
+    function setTheme(dark) {
+      const el = document.documentElement;
+      if (dark) { el.classList.add('dark'); localStorage.setItem(storageKey, 'dark'); }
+      else { el.classList.remove('dark'); localStorage.setItem(storageKey, 'light'); }
+    }
+    (function initTheme(){
+      const saved = localStorage.getItem(storageKey);
+      if (!saved) {
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        setTheme(prefersDark);
+      } else {
+        setTheme(saved === 'dark');
+      }
+    })();
+    themeToggle.addEventListener('click', () => {
+      setTheme(!document.documentElement.classList.contains('dark'));
+    });
+
+    // Copy code
+    document.getElementById('copyCode').addEventListener('click', () => {
+      const code = document.querySelector('.codecard code')?.textContent || '';
+      navigator.clipboard.writeText(code).then(() => {
+        const btn = document.getElementById('copyCode');
+        const old = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(() => (btn.textContent = old), 1200);
+      });
+    });
+
+    // Waitlist form (demo)
+    document.getElementById('waitlistForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      if (!email) return;
+      const note = document.getElementById('formNote');
+      note.textContent = 'Thanks! You’re on the list — we’ll be in touch.';
+      note.classList.remove('text-slate-500', 'dark:text-slate-400');
+      note.classList.add('text-emerald-600', 'dark:text-emerald-400');
+      e.target.reset();
+    });
+
+    // Year
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>

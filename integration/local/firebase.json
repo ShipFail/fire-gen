@@ -1,0 +1,16 @@
+{
+  "database": {
+    "rules": "../../extension/database.rules.json"
+  },
+  "functions": {
+    "source": "../../extension/functions"
+  },
+  "emulators": {
+    "database": {
+      "port": 9000
+    },
+    "functions": {
+      "port": 5001
+    }
+  }
+}

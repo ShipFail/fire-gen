@@ -1,0 +1,13 @@
+{
+  "rules": {
+    "jobs": {
+      "$jobId": {
+        ".read": "auth != null && data.child('uid').val() == auth.uid",
+        ".write": "auth != null && (
+          (!data.exists() && newData.child('uid').val() == auth.uid && newData.child('status').val() == 'requested')
+          || (auth.token.admin == true)
+        )"
+      }
+    }
+  }
+}

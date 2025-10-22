@@ -1,0 +1,36 @@
+// functions/src/models/gemini-tts/gemini-2.5-flash-preview-tts.ts
+import {z} from "zod";
+import {GeminiTTSRequestBaseSchema, GeminiTTSAdapterBase} from "./shared.js";
+
+export const Gemini25FlashPreviewTTSRequestSchema = GeminiTTSRequestBaseSchema.extend({
+  model: z.literal("gemini-2.5-flash-preview-tts"),
+});
+
+export type Gemini25FlashPreviewTTSRequest = z.infer<typeof Gemini25FlashPreviewTTSRequestSchema>;
+
+export const GEMINI_2_5_FLASH_PREVIEW_TTS_CONFIG = {
+  modelId: "gemini-2.5-flash-preview-tts" as const,
+  displayName: "Gemini 2.5 Flash TTS",
+  category: "audio" as const,
+  subtype: "tts" as const,
+  isAsync: false,
+  generationTime: "2-8s",
+  schema: Gemini25FlashPreviewTTSRequestSchema,
+} as const;
+
+export const GEMINI_2_5_FLASH_PREVIEW_TTS_AI_HINT = `
+- **gemini-2.5-flash-preview-tts**: Fast TTS for spoken words (30 voices, 24 languages)
+  - **CRITICAL: Use TTS for ANY request involving SPOKEN WORDS**
+  - Use when: User wants to HEAR WORDS SPOKEN - "say", "speak", "voice", "read aloud", "narrate", "announce", "tell"
+  - Semantic understanding: If request involves CONVERTING TEXT TO SPEECH → Use TTS (not music, not instrumental)
+  - Voices: Zephyr (bright), Puck (upbeat), Charon (informative), Kore (warm), etc.
+  - Think: "Are words being spoken out loud?" → YES = TTS
+  - DEFAULT CHOICE for TTS
+`;
+
+export class Gemini25FlashPreviewTTSAdapter extends GeminiTTSAdapterBase {
+  protected schema = Gemini25FlashPreviewTTSRequestSchema;
+  protected modelId = "gemini-2.5-flash-preview-tts";
+}
+
+export default Gemini25FlashPreviewTTSAdapter;

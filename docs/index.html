@@ -49,6 +49,13 @@
   <link href="https://unpkg.com/flowbite@2.5.1/dist/flowbite.min.css" rel="stylesheet" />
   <script defer src="https://unpkg.com/flowbite@2.5.1/dist/flowbite.min.js"></script>
 
+  <!-- Prism.js (syntax highlighting) -->
+  <!-- Light + Dark themes; we toggle via JS to match site theme -->
+  <link id="prismLight" rel="stylesheet" href="https://unpkg.com/prismjs@1.29.0/themes/prism.min.css" />
+  <link id="prismDark" rel="stylesheet" href="https://unpkg.com/prismjs@1.29.0/themes/prism-okaidia.min.css" disabled />
+  <script defer src="https://unpkg.com/prismjs@1.29.0/components/prism-core.min.js"></script>
+  <script defer src="https://unpkg.com/prismjs@1.29.0/plugins/autoloader/prism-autoloader.min.js" data-autoloader-path="https://unpkg.com/prismjs@1.29.0/components/"></script>
+
   <style>
     html, body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji"; }
     .gradient-hero {
@@ -57,7 +64,8 @@
         radial-gradient(800px 400px at 100% 0%, rgba(99,102,241,.14), transparent 60%),
         linear-gradient(180deg, rgba(2,6,23,0.00) 0%, rgba(2,6,23,0.05) 100%);
     }
-    .codecard code { white-space: pre; }
+    .codecard code { white-space: pre; word-break: normal; overflow-wrap: normal; }
+    .codecard pre { overflow: auto; max-height: 26rem; }
   </style>
 </head>
 
@@ -151,7 +159,7 @@
                 <button id="copyCode" class="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-brand-500">Copy</button>
               </div>
             </div>
-            <pre id="codeAi" class="p-5 overflow-x-auto text-sm leading-relaxed"><code class="language-ts">
+            <pre id="codeAi" class="p-5 overflow-x-auto text-sm leading-relaxed"><code class="language-typescript">
 // AI‑assisted mode: just write a prompt string
 import { getDatabase, ref, push, onValue } from "firebase/database";
 
@@ -170,7 +178,7 @@ onValue(jobRef, (snap) => {
   }
 });
             </code></pre>
-            <pre id="codeExplicit" class="p-5 overflow-x-auto text-sm leading-relaxed hidden"><code class="language-ts">
+            <pre id="codeExplicit" class="p-5 overflow-x-auto text-sm leading-relaxed hidden"><code class="language-typescript">
 // Explicit mode: send a structured job
 import { getDatabase, ref, push, onValue } from "firebase/database";
 
@@ -226,11 +234,11 @@ onValue(jobRef, (snap) => {
         <div class="lg:col-span-6 grid sm:grid-cols-2 gap-4">
           <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
             <div class="text-xs font-semibold text-slate-500">Input (RTDB write)</div>
-            <pre class="mt-2 text-sm"><code>"Vertical video of a waterfall with ambient sound"</code></pre>
+            <pre class="mt-2 text-sm overflow-auto"><code class="language-json">"Vertical video of a waterfall with ambient sound"</code></pre>
           </div>
           <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
             <div class="text-xs font-semibold text-slate-500">Transformed Job (server)</div>
-            <pre class="mt-2 text-sm overflow-x-auto"><code>{
+            <pre class="mt-2 text-sm overflow-auto"><code class="language-json">{
   "status": "requested",
   "request": {
     "type": "video",
@@ -246,6 +254,21 @@ onValue(jobRef, (snap) => {
     "reasons": ["…two-step reasoning chain…"]
   }
 }</code></pre>
+          </div>
+          <div class="sm:col-span-2 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+            <div class="flex items-center justify-between">
+              <div class="text-xs font-semibold text-slate-500">Reasoning Chain (_meta.reasons)</div>
+              <button id="toggleReasons" class="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-brand-500">View</button>
+            </div>
+            <pre id="reasonsBlock" class="mt-2 text-sm overflow-auto hidden"><code class="language-json">[
+  "Step 1: Top 3 candidates with parameters and confidence…",
+  "Selected Model: veo-3.0-fast-generate-001 with final parameters…",
+  "Validation: (if any) Zod error corrected on retry…"
+]</code></pre>
+            <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">Stored at <code>firegen-jobs/{jobId}/_meta/reasons</code>
+              <button class="ml-2 inline-flex items-center text-[11px] font-semibold text-slate-600 dark:text-slate-300 hover:text-brand-500" data-copytext="firegen-jobs/{jobId}/_meta/reasons">Copy</button>
+              for transparency and debugging.
+            </p>
           </div>
         </div>
       </div>
@@ -263,7 +286,9 @@ onValue(jobRef, (snap) => {
       <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6">
         <div class="text-xs font-semibold text-slate-500">Step 2</div>
         <h3 class="mt-1 font-semibold">Write to RTDB</h3>
-        <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">AI‑assisted: write a string prompt. Explicit: send a structured request. Both to <code>firegen-jobs</code>.</p>
+        <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">AI‑assisted: write a string prompt. Explicit: send a structured request. Both to <code>firegen-jobs</code>
+          <button class="ml-2 inline-flex items-center text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-brand-500" data-copytext="firegen-jobs">Copy</button>.
+        </p>
       </div>
       <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6">
         <div class="text-xs font-semibold text-slate-500">Step 3</div>
@@ -307,7 +332,10 @@ onValue(jobRef, (snap) => {
           <span class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-brand-50 text-brand-600">1</span>
           <h3 class="font-semibold">Client writes to RTDB</h3>
         </div>
-        <p class="mt-3 text-sm text-slate-600 dark:text-slate-300">AI‑assisted: write a <strong>string prompt</strong> to <code class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800">firegen-jobs/{jobId}</code>. Explicit: write a structured object.</p>
+        <p class="mt-3 text-sm text-slate-600 dark:text-slate-300">AI‑assisted: write a <strong>string prompt</strong> to <code class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800">firegen-jobs/{jobId}</code>
+          <button class="ml-2 inline-flex items-center text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-brand-500" data-copytext="firegen-jobs/{jobId}">Copy</button>.
+          Explicit: write a structured object.
+        </p>
       </div>
       <!-- Step 2 -->
       <div class="rounded-2xl border border-slate-200 dark:border-slate-800 p-6 bg-white dark:bg-slate-900">
@@ -610,6 +638,16 @@ Client         ──▶  RTDB /firegen-jobs  ──▶  Functions (onCreate)
       const el = document.documentElement;
       if (dark) { el.classList.add('dark'); localStorage.setItem(storageKey, 'dark'); }
       else { el.classList.remove('dark'); localStorage.setItem(storageKey, 'light'); }
+      // Sync Prism theme with site theme
+      const prismLight = document.getElementById('prismLight');
+      const prismDark = document.getElementById('prismDark');
+      if (prismLight && prismDark) {
+        prismLight.disabled = !!dark;
+        prismDark.disabled = !dark;
+      }
+      if (window.Prism && window.Prism.highlightAll) {
+        window.Prism.highlightAll();
+      }
     }
     (function initTheme(){
       const saved = localStorage.getItem(storageKey);
@@ -622,6 +660,19 @@ Client         ──▶  RTDB /firegen-jobs  ──▶  Functions (onCreate)
     })();
     themeToggle.addEventListener('click', () => {
       setTheme(!document.documentElement.classList.contains('dark'));
+    });
+
+    // Reasoning Chain toggle
+    const toggleReasons = document.getElementById('toggleReasons');
+    const reasonsBlock = document.getElementById('reasonsBlock');
+    toggleReasons?.addEventListener('click', () => {
+      const isHidden = reasonsBlock?.classList.contains('hidden');
+      reasonsBlock?.classList.toggle('hidden');
+      toggleReasons.textContent = isHidden ? 'Hide' : 'View';
+      if (isHidden && window.Prism && window.Prism.highlightElement) {
+        const code = reasonsBlock.querySelector('code');
+        if (code) window.Prism.highlightElement(code);
+      }
     });
 
     // Copy code
@@ -659,10 +710,36 @@ Client         ──▶  RTDB /firegen-jobs  ──▶  Functions (onCreate)
       tabExplicit.classList.toggle('dark:text-slate-200', !onAi);
       tabExplicit.classList.toggle('text-slate-600', onAi);
       tabExplicit.classList.toggle('dark:text-slate-300', onAi);
+      // Re-highlight visible block (for good measure)
+      if (window.Prism && window.Prism.highlightAllUnder) {
+        Prism.highlightAllUnder(document.querySelector('.codecard'));
+      }
     }
 
     tabAi?.addEventListener('click', () => activate('ai'));
     tabExplicit?.addEventListener('click', () => activate('explicit'));
+
+    // Ensure syntax highlighting runs after load
+    if (window.Prism && window.Prism.highlightAll) {
+      window.Prism.highlightAll();
+    } else {
+      document.addEventListener('DOMContentLoaded', () => {
+        if (window.Prism && window.Prism.highlightAll) window.Prism.highlightAll();
+      });
+    }
+
+    // Generic small copy buttons: use [data-copytext]
+    document.addEventListener('click', (e) => {
+      const target = e.target;
+      if (!(target instanceof Element)) return;
+      const copyText = target.getAttribute('data-copytext');
+      if (!copyText) return;
+      navigator.clipboard.writeText(copyText).then(() => {
+        const old = target.textContent;
+        target.textContent = 'Copied!';
+        setTimeout(() => { target.textContent = old || 'Copy'; }, 1200);
+      });
+    });
 
     // Waitlist form (demo)
     document.getElementById('waitlistForm').addEventListener('submit', (e) => {

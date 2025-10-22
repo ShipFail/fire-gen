@@ -123,6 +123,7 @@
           <h1 class="mt-5 text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight">
             Prompt in. <span class="text-brand-500">The right model out.</span>
           </h1>
+          <p class="mt-2 text-xs font-semibold text-slate-600 dark:text-slate-300">For Firebase app builders using <span class="font-semibold">Realtime Database</span> + <span class="font-semibold">Vertex AI</span>.</p>
           <p class="mt-5 max-w-2xl text-lg text-slate-600 dark:text-slate-300">
             FireGen turns <strong>Realtime Database</strong> into your universal Generative AI API.
             <strong>AI Request Analyzer</strong> understands your prompt and automatically selects the best model and valid parameters.
@@ -139,6 +140,22 @@
           </div>
           <div class="mt-6 text-sm text-slate-500 dark:text-slate-400">
             One-liner: <em>“Generative AI as easy as writing to Firebase Realtime Database.”</em>
+          </div>
+
+          <!-- Instant Quickstart (above the fold) -->
+          <div class="mt-6 grid sm:grid-cols-3 gap-3 text-xs">
+            <div class="rounded-lg border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/60 p-3">
+              <div class="font-semibold text-slate-700 dark:text-slate-200">1) Install</div>
+              <div class="mt-1 text-slate-600 dark:text-slate-300">Add the FireGen Extension to your Firebase project.</div>
+            </div>
+            <div class="rounded-lg border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/60 p-3">
+              <div class="font-semibold text-slate-700 dark:text-slate-200">2) Write</div>
+              <div class="mt-1 text-slate-600 dark:text-slate-300">push(<code>"firegen-jobs"</code>, <em>"your prompt"</em>) <button class="ml-2 inline-flex items-center text-[11px] font-semibold text-slate-600 dark:text-slate-300 hover:text-brand-500" data-copytext='push(ref(rtdb, "firegen-jobs"), "Vertical video of a waterfall…")'>Copy</button></div>
+            </div>
+            <div class="rounded-lg border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/60 p-3">
+              <div class="font-semibold text-slate-700 dark:text-slate-200">3) Subscribe</div>
+              <div class="mt-1 text-slate-600 dark:text-slate-300"><code>onValue(jobRef, ...)</code> → <code>response.url</code></div>
+            </div>
           </div>
         </div>
 
@@ -208,6 +225,15 @@ onValue(jobRef, (snap) => {
             </code></pre>
           </div>
           <p class="mt-3 text-xs text-slate-500 dark:text-slate-400">Zero SDK juggling. No model guessing. No schema errors. Just RTDB.</p>
+
+          <!-- Demo GIF placeholder (swap in docs/demo.gif when ready) -->
+          <div class="mt-4">
+            <img id="demoGif" src="./demo.gif" alt="FireGen demo: push → stream result" class="hidden w-full h-auto rounded-2xl border border-slate-200 dark:border-slate-800" loading="lazy" />
+            <div id="demoPlaceholder" class="rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 bg-white/60 dark:bg-slate-900/40 p-6 text-center text-sm text-slate-600 dark:text-slate-400">
+              <div class="font-semibold mb-1">Demo coming soon</div>
+              <div>Watch “write a string → stream the result” in ~15 seconds.</div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -755,6 +781,20 @@ Client         ──▶  RTDB /firegen-jobs  ──▶  Functions (onCreate)
 
     // Year
     document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Demo GIF swap-in: hide placeholder if demo.gif loads
+    const demoImg = document.getElementById('demoGif');
+    const demoPh = document.getElementById('demoPlaceholder');
+    if (demoImg) {
+      const showDemo = () => { demoImg.classList.remove('hidden'); demoPh?.classList.add('hidden'); };
+      const keepPlaceholder = () => { demoImg.classList.add('hidden'); demoPh?.classList.remove('hidden'); };
+      if ((demoImg).complete) {
+        if ((demoImg).naturalWidth > 0) showDemo(); else keepPlaceholder();
+      } else {
+        demoImg.addEventListener('load', showDemo);
+        demoImg.addEventListener('error', keepPlaceholder);
+      }
+    }
   </script>
 </body>
 </html>

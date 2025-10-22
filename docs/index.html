@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>FireGen — Generative AI at the speed of Firebase</title>
-  <meta name="description" content="FireGen turns Firebase Realtime Database into a universal Generative AI API. Write a job node, watch results stream back. Veo 3, Imagen, Gemini, Lyria, Chirp — handled." />
-  <meta property="og:title" content="FireGen — Generative AI at the speed of Firebase" />
-  <meta property="og:description" content="Write to RTDB. Get AI results. Polling, GCS, auth — handled. The Firebase-native way to ship Generative AI." />
+  <title>FireGen — Prompt in. The right model out.</title>
+  <meta name="description" content="FireGen turns Firebase Realtime Database into a universal Generative AI API. New: AI Request Analyzer — just write a prompt, and FireGen picks the right model and parameters automatically (Veo, Imagen, Gemini, Lyria, TTS)." />
+  <meta property="og:title" content="FireGen — Prompt in. The right model out." />
+  <meta property="og:description" content="New: AI Request Analyzer. Write a prompt to RTDB and FireGen semantically routes it to the best model with valid params. Polling, GCS, auth — handled." />
   <meta property="og:type" content="website" />
   <meta name="theme-color" content="#0ea5e9" />
 
@@ -67,7 +67,7 @@
     <div class="w-full bg-slate-900 text-white px-4 sm:px-6 py-2.5 text-center text-sm">
       <span class="inline-flex items-center gap-2">
         <span class="inline-flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        Launching on Product Hunt soon — join the waitlist to get early access!
+        New: AI Request Analyzer — just write a prompt and FireGen picks the model + params
         <a href="#waitlist" class="ml-3 underline decoration-emerald-300 hover:text-emerald-300">Get early access</a>
       </span>
     </div>
@@ -113,11 +113,12 @@
             Firebase-native. Vertex AI ready. Veo 3 approved.
           </div>
           <h1 class="mt-5 text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight">
-            Generative AI <span class="text-brand-500">at the speed of Firebase</span>
+            Prompt in. <span class="text-brand-500">The right model out.</span>
           </h1>
           <p class="mt-5 max-w-2xl text-lg text-slate-600 dark:text-slate-300">
             FireGen turns <strong>Realtime Database</strong> into your universal Generative AI API.
-            Write a job node. Watch results stream back. Polling, LROs, GCS URLs, and auth — handled.
+            <strong>AI Request Analyzer</strong> understands your prompt and automatically selects the best model and valid parameters.
+            Write a string. Watch results stream back. Polling, LROs, GCS URLs, and auth — handled.
           </p>
           <div class="mt-8 flex flex-wrap gap-3">
             <a href="#how" class="inline-flex items-center gap-2 rounded-lg bg-brand-500 px-5 py-3 text-white font-semibold shadow-sm hover:bg-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-200 dark:focus:ring-brand-800">
@@ -142,35 +143,140 @@
                 <span class="h-3 w-3 rounded-full bg-amber-400"></span>
                 <span class="h-3 w-3 rounded-full bg-emerald-400"></span>
               </div>
-              <button id="copyCode" class="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-brand-500">Copy</button>
+              <div class="flex items-center gap-2">
+                <div class="hidden sm:flex text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
+                  <button id="tabAi" class="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200">AI‑assisted</button>
+                  <button id="tabExplicit" class="px-3 py-1 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">Explicit</button>
+                </div>
+                <button id="copyCode" class="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-brand-500">Copy</button>
+              </div>
             </div>
-            <pre class="p-5 overflow-x-auto text-sm leading-relaxed"><code class="language-ts">
-// 1) Create a job (client)
-const jobRef = push(ref(rtdb, "/jobs"), {
-  uid: auth.currentUser!.uid,
-  status: "requested",
-  model: { family: "veo", id: "veo-3.0-fast-generate-001" },
-  request: {
-    prompt: "a neon city cat skateboarding at night",
-    durationSeconds: 8, aspectRatio: "16:9", resolution: "720p", generateAudio: true
-  },
-  ttlAt: Date.now() + 90*60*1000
-});
+            <pre id="codeAi" class="p-5 overflow-x-auto text-sm leading-relaxed"><code class="language-ts">
+// AI‑assisted mode: just write a prompt string
+import { getDatabase, ref, push, onValue } from "firebase/database";
 
-// 2) Subscribe to updates (client)
+const rtdb = getDatabase();
+const jobRef = push(ref(rtdb, "firegen-jobs"), "Vertical video of a waterfall with ambient sound");
+
+// Subscribe to updates
 onValue(jobRef, (snap) => {
   const job = snap.val();
+  if (!job) return;
   if (job.status === "succeeded") {
-    video.src = job.result.signedUrl; // stream from GCS
+    // Media outputs provide a signed URL under response.url
+    player.src = job.response.url;
   } else if (job.status === "failed") {
-    toast(job.error.message);
+    console.error(job.response.error?.message);
+  }
+});
+            </code></pre>
+            <pre id="codeExplicit" class="p-5 overflow-x-auto text-sm leading-relaxed hidden"><code class="language-ts">
+// Explicit mode: send a structured job
+import { getDatabase, ref, push, onValue } from "firebase/database";
+
+const rtdb = getDatabase();
+const jobRef = push(ref(rtdb, "firegen-jobs"), {
+  status: "requested",
+  request: {
+    type: "video",
+    model: "veo-3.0-fast-generate-001",
+    prompt: "a neon city cat skateboarding at night",
+    duration: 8,
+    aspectRatio: "16:9",
+    resolution: "1080p",
+    audio: true
+  }
+});
+
+onValue(jobRef, (snap) => {
+  const job = snap.val();
+  if (!job) return;
+  if (job.status === "succeeded") {
+    player.src = job.response.url;
+  } else if (job.status === "failed") {
+    console.error(job.response.error?.message);
   }
 });
             </code></pre>
           </div>
-          <p class="mt-3 text-xs text-slate-500 dark:text-slate-400">Zero SDK juggling. No operations polling. No storage fiddling. Just RTDB.</p>
+          <p class="mt-3 text-xs text-slate-500 dark:text-slate-400">Zero SDK juggling. No model guessing. No schema errors. Just RTDB.</p>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- New: AI Request Analyzer -->
+  <section class="border-t border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/30">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 py-16">
+      <div class="flex items-center gap-2 text-xs font-semibold text-brand-700">
+        <span class="inline-flex items-center gap-1 rounded-full bg-brand-100 px-2 py-1">New</span>
+        <span>AI Request Analyzer</span>
+      </div>
+      <div class="mt-3 grid lg:grid-cols-12 gap-8 items-start">
+        <div class="lg:col-span-6">
+          <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Semantic prompt‑to‑model routing</h2>
+          <p class="mt-3 text-slate-600 dark:text-slate-300">FireGen understands your natural‑language prompt, picks the best model across Veo/Imagen/Gemini/Lyria/TTS, and fills valid parameters automatically. It preserves your prompt verbatim and saves the reasoning trail for transparency.</p>
+          <ul class="mt-6 space-y-2 text-sm text-slate-700 dark:text-slate-300 list-disc list-inside">
+            <li>Two‑phase analysis (candidates → final) with validation & retry</li>
+            <li>Zod‑validated requests from a single model registry</li>
+            <li>URL‑aware (image‑to‑video) and multilingual phrasing</li>
+            <li>Reasoning chain stored under <code>_meta.reasons</code></li>
+          </ul>
+        </div>
+        <div class="lg:col-span-6 grid sm:grid-cols-2 gap-4">
+          <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+            <div class="text-xs font-semibold text-slate-500">Input (RTDB write)</div>
+            <pre class="mt-2 text-sm"><code>"Vertical video of a waterfall with ambient sound"</code></pre>
+          </div>
+          <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+            <div class="text-xs font-semibold text-slate-500">Transformed Job (server)</div>
+            <pre class="mt-2 text-sm overflow-x-auto"><code>{
+  "status": "requested",
+  "request": {
+    "type": "video",
+    "model": "veo-3.0-fast-generate-001",
+    "prompt": "Vertical video of a waterfall with ambient sound",
+    "duration": 8,
+    "aspectRatio": "9:16",
+    "resolution": "1080p",
+    "audio": true
+  },
+  "_meta": {
+    "aiAssisted": true,
+    "reasons": ["…two-step reasoning chain…"]
+  }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Quickstart -->
+  <section class="mx-auto max-w-7xl px-4 sm:px-6 py-16">
+    <div class="grid md:grid-cols-3 gap-6 items-start">
+      <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6">
+        <div class="text-xs font-semibold text-slate-500">Step 1</div>
+        <h3 class="mt-1 font-semibold">Install Extension</h3>
+        <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">Deploy FireGen to your Firebase project (set region and bucket). Works with RTDB.</p>
+      </div>
+      <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6">
+        <div class="text-xs font-semibold text-slate-500">Step 2</div>
+        <h3 class="mt-1 font-semibold">Write to RTDB</h3>
+        <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">AI‑assisted: write a string prompt. Explicit: send a structured request. Both to <code>firegen-jobs</code>.</p>
+      </div>
+      <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6">
+        <div class="text-xs font-semibold text-slate-500">Step 3</div>
+        <h3 class="mt-1 font-semibold">Listen for results</h3>
+        <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">Use <code>onValue</code> to read <code>response.url</code> (media) or <code>response.text</code> (text/STT) when status is <em>succeeded</em>.</p>
+      </div>
+    </div>
+    <div class="mt-6 flex flex-wrap gap-3">
+      <a href="https://github.com/ShipFail/fire-gen" target="_blank" rel="noreferrer" class="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-5 py-3 text-white font-semibold hover:bg-slate-800">
+        View on GitHub
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 5h6m0 0v6m0-6L10 14"/></svg>
+      </a>
+      <a href="#waitlist" class="inline-flex items-center gap-2 rounded-lg border border-slate-300/80 dark:border-slate-700 px-5 py-3 font-semibold hover:bg-slate-50 dark:hover:bg-slate-800">Join waitlist</a>
     </div>
   </section>
 
@@ -191,7 +297,7 @@ onValue(jobRef, (snap) => {
   <section id="how" class="mx-auto max-w-7xl px-4 sm:px-6 py-20">
     <div class="max-w-3xl">
       <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight">How it works</h2>
-      <p class="mt-3 text-slate-600 dark:text-slate-300">A Firebase-native pattern that’s universal across models.</p>
+      <p class="mt-3 text-slate-600 dark:text-slate-300">A Firebase‑native pattern. Use AI‑assisted mode (string prompt) or explicit mode (structured request).</p>
     </div>
 
     <div class="mt-10 grid lg:grid-cols-3 gap-6">
@@ -199,17 +305,17 @@ onValue(jobRef, (snap) => {
       <div class="rounded-2xl border border-slate-200 dark:border-slate-800 p-6 bg-white dark:bg-slate-900">
         <div class="flex items-center gap-3">
           <span class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-brand-50 text-brand-600">1</span>
-          <h3 class="font-semibold">Client writes a job to RTDB</h3>
+          <h3 class="font-semibold">Client writes to RTDB</h3>
         </div>
-        <p class="mt-3 text-sm text-slate-600 dark:text-slate-300">Add a node at <code class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800">/jobs/{jobId}</code> with prompt &amp; params.</p>
+        <p class="mt-3 text-sm text-slate-600 dark:text-slate-300">AI‑assisted: write a <strong>string prompt</strong> to <code class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800">firegen-jobs/{jobId}</code>. Explicit: write a structured object.</p>
       </div>
       <!-- Step 2 -->
       <div class="rounded-2xl border border-slate-200 dark:border-slate-800 p-6 bg-white dark:bg-slate-900">
         <div class="flex items-center gap-3">
           <span class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-brand-50 text-brand-600">2</span>
-          <h3 class="font-semibold">Extension starts &amp; (if needed) polls</h3>
+          <h3 class="font-semibold">AI analyzes &amp; selects model</h3>
         </div>
-        <p class="mt-3 text-sm text-slate-600 dark:text-slate-300">Functions v2 + Firebase Task Queue handle Veo LROs, backoff, and TTL. Sync models resolve immediately.</p>
+        <p class="mt-3 text-sm text-slate-600 dark:text-slate-300">The <strong>AI Request Analyzer</strong> picks the best model and valid parameters, then transforms your node into a structured job.</p>
       </div>
       <!-- Step 3 -->
       <div class="rounded-2xl border border-slate-200 dark:border-slate-800 p-6 bg-white dark:bg-slate-900">
@@ -217,22 +323,22 @@ onValue(jobRef, (snap) => {
           <span class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-brand-50 text-brand-600">3</span>
           <h3 class="font-semibold">Client listens for results</h3>
         </div>
-        <p class="mt-3 text-sm text-slate-600 dark:text-slate-300">Subscribe to the node. When <code>status</code> flips to <em>succeeded</em>, you get the <code>result</code> (e.g. GCS signed URL).</p>
+        <p class="mt-3 text-sm text-slate-600 dark:text-slate-300">Functions v2 + Task Queue handle sync/async models. You subscribe and read <code>response.url</code> or <code>response.text</code> when <em>succeeded</em>.</p>
       </div>
     </div>
 
     <!-- Flow diagram (ASCII-style) -->
     <div class="mt-12 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6">
       <pre class="text-sm leading-7 text-slate-700 dark:text-slate-300 overflow-x-auto">
-Client         ──▶  RTDB /jobs  ──▶  Functions (onCreate)
+Client         ──▶  RTDB /firegen-jobs  ──▶  Functions (onCreate)
   │                              │
-  │         ◀────────────────────┘  write status=running, opName
+  │         ◀────────────────────┘  analyze prompt → structured request
   │
   │                              ┌─▶ Task Queue Poller ──▶ Vertex Operations.get()
   │                              │          │
   │                              └──────────┴── (backoff, TTL, retries)
   │
-  ◀──────── real-time updates ◀── RTDB /jobs (status/result/error)
+  ◀──────── real-time updates ◀── RTDB /firegen-jobs (status/response/error)
       </pre>
     </div>
   </section>
@@ -241,10 +347,14 @@ Client         ──▶  RTDB /jobs  ──▶  Functions (onCreate)
   <section id="features" class="mx-auto max-w-7xl px-4 sm:px-6 py-20">
     <div class="max-w-3xl">
       <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight">Why teams choose FireGen</h2>
-      <p class="mt-3 text-slate-600 dark:text-slate-300">DX-first, Firebase-native, production-ready.</p>
+      <p class="mt-3 text-slate-600 dark:text-slate-300">DX‑first, Firebase‑native, now with AI‑assisted routing.</p>
     </div>
 
     <div class="mt-10 grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div class="rounded-2xl border border-slate-200 dark:border-slate-800 p-6 bg-white dark:bg-slate-900">
+        <h3 class="font-semibold">AI Request Analyzer</h3>
+        <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">Prompt‑to‑model routing with validation. No more guessing IDs or params; FireGen sets them correctly and saves the reasoning.</p>
+      </div>
       <div class="rounded-2xl border border-slate-200 dark:border-slate-800 p-6 bg-white dark:bg-slate-900">
         <h3 class="font-semibold">Firebase-native</h3>
         <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">Realtime triggers, Task Queue, Functions v2, secure rules. No extra infra.</p>
@@ -267,19 +377,19 @@ Client         ──▶  RTDB /jobs  ──▶  Functions (onCreate)
       </div>
       <div class="rounded-2xl border border-slate-200 dark:border-slate-800 p-6 bg-white dark:bg-slate-900">
         <h3 class="font-semibold">Drop-in Extension</h3>
-        <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">Install, set bucket &amp; location, done. Works across projects out of the box.</p>
+        <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">Install, set bucket &amp; location, done. Write a string or an object — your choice.</p>
       </div>
     </div>
 
     <!-- Supported models -->
     <div class="mt-14">
-      <h3 class="text-lg font-semibold">Supported models at launch</h3>
+  <h3 class="text-lg font-semibold">Supported models (auto‑routed)</h3>
       <div class="mt-4 flex flex-wrap gap-2 text-xs">
         <span class="px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800">Veo 3 / Veo 3 Fast (Video)</span>
         <span class="px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800">Imagen 4 (Image)</span>
         <span class="px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800">Gemini 2.5 (Text / Multimodal)</span>
         <span class="px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800">Lyria 2 (Music)</span>
-        <span class="px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800">Chirp 3 HD (TTS)</span>
+        <span class="px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800">Gemini TTS (Speech)</span>
       </div>
     </div>
   </section>
@@ -386,6 +496,18 @@ Client         ──▶  RTDB /jobs  ──▶  Functions (onCreate)
     </div>
 
     <div id="accordion-flush" data-accordion="collapse" data-active-classes="bg-white dark:bg-slate-900 text-slate-900 dark:text-white" data-inactive-classes="text-slate-600 dark:text-slate-300">
+      <!-- New Q0 -->
+      <h3 id="faq-0">
+        <button type="button" class="flex items-center justify-between w-full py-5 font-medium text-left text-slate-700 dark:text-slate-200 border-b border-slate-200 dark:border-slate-800" data-accordion-target="#faq-0-body" aria-expanded="false" aria-controls="faq-0-body">
+          <span>Can I just send a prompt and let FireGen decide the model?</span>
+          <svg class="w-6 h-6 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+        </button>
+      </h3>
+      <div id="faq-0-body" class="hidden" aria-labelledby="faq-0">
+        <div class="py-5 border-b border-slate-200 dark:border-slate-800 text-sm text-slate-600 dark:text-slate-300">
+          Yes. Write a <strong>string</strong> to <code>firegen-jobs/{jobId}</code>. The <em>AI Request Analyzer</em> selects the best model (Veo/Imagen/Gemini/Lyria/TTS), fills valid parameters, and stores the reasoning at <code>_meta.reasons</code>.
+        </div>
+      </div>
       <!-- Q1 -->
       <h3 id="faq-1">
         <button type="button" class="flex items-center justify-between w-full py-5 font-medium text-left text-slate-700 dark:text-slate-200 border-b border-slate-200 dark:border-slate-800" data-accordion-target="#faq-1-body" aria-expanded="true" aria-controls="faq-1-body">
@@ -401,7 +523,7 @@ Client         ──▶  RTDB /jobs  ──▶  Functions (onCreate)
       <!-- Q2 -->
       <h3 id="faq-2">
         <button type="button" class="flex items-center justify-between w-full py-5 font-medium text-left text-slate-700 dark:text-slate-200 border-b border-slate-200 dark:border-slate-800" data-accordion-target="#faq-2-body" aria-expanded="false" aria-controls="faq-2-body">
-          <span>What about synchronous models like Lyria or TTS (Chirp)?</span>
+          <span>What about synchronous models like Lyria or TTS?</span>
           <svg class="w-6 h-6 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
         </button>
       </h3>
@@ -431,7 +553,7 @@ Client         ──▶  RTDB /jobs  ──▶  Functions (onCreate)
       </h3>
       <div id="faq-4-body" class="hidden" aria-labelledby="faq-4">
         <div class="py-5 border-b border-slate-200 dark:border-slate-800 text-sm text-slate-600 dark:text-slate-300">
-          Yes — <strong>LoKey</strong>. Loki (Norse god of fire) + low-key simplicity + RTDB key pun.
+          Yes — <strong>LoKey</strong>. Loki (Norse god of fire) + low‑key simplicity + RTDB key pun.
         </div>
       </div>
     </div>
@@ -504,7 +626,8 @@ Client         ──▶  RTDB /jobs  ──▶  Functions (onCreate)
 
     // Copy code
     document.getElementById('copyCode').addEventListener('click', () => {
-      const code = document.querySelector('.codecard code')?.textContent || '';
+      const active = document.querySelector('.codecard pre:not(.hidden) code');
+      const code = active?.textContent || '';
       navigator.clipboard.writeText(code).then(() => {
         const btn = document.getElementById('copyCode');
         const old = btn.textContent;
@@ -512,6 +635,34 @@ Client         ──▶  RTDB /jobs  ──▶  Functions (onCreate)
         setTimeout(() => (btn.textContent = old), 1200);
       });
     });
+
+    // Code tabs
+    const tabAi = document.getElementById('tabAi');
+    const tabExplicit = document.getElementById('tabExplicit');
+    const codeAi = document.getElementById('codeAi');
+    const codeExplicit = document.getElementById('codeExplicit');
+
+    function activate(tab) {
+      const onAi = tab === 'ai';
+      codeAi.classList.toggle('hidden', !onAi);
+      codeExplicit.classList.toggle('hidden', onAi);
+      // styles
+      tabAi.classList.toggle('bg-slate-100', onAi);
+      tabAi.classList.toggle('dark:bg-slate-800', onAi);
+      tabAi.classList.toggle('text-slate-700', onAi);
+      tabAi.classList.toggle('dark:text-slate-200', onAi);
+      tabAi.classList.toggle('text-slate-600', !onAi);
+      tabAi.classList.toggle('dark:text-slate-300', !onAi);
+      tabExplicit.classList.toggle('bg-slate-100', !onAi);
+      tabExplicit.classList.toggle('dark:bg-slate-800', !onAi);
+      tabExplicit.classList.toggle('text-slate-700', !onAi);
+      tabExplicit.classList.toggle('dark:text-slate-200', !onAi);
+      tabExplicit.classList.toggle('text-slate-600', onAi);
+      tabExplicit.classList.toggle('dark:text-slate-300', onAi);
+    }
+
+    tabAi?.addEventListener('click', () => activate('ai'));
+    tabExplicit?.addEventListener('click', () => activate('explicit'));
 
     // Waitlist form (demo)
     document.getElementById('waitlistForm').addEventListener('submit', (e) => {

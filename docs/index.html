@@ -150,12 +150,24 @@
             </div>
             <div class="rounded-lg border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/60 p-3">
               <div class="font-semibold text-slate-700 dark:text-slate-200">2) Write</div>
-              <div class="mt-1 text-slate-600 dark:text-slate-300">push(<code>"firegen-jobs"</code>, <em>"your prompt"</em>) <button class="ml-2 inline-flex items-center text-[11px] font-semibold text-slate-600 dark:text-slate-300 hover:text-brand-500" data-copytext='push(ref(rtdb, "firegen-jobs"), "Vertical video of a waterfall…")'>Copy</button></div>
+              <div class="mt-1 text-slate-600 dark:text-slate-300">push(<code>"firegen-jobs"</code>, <em>"your prompt"</em>) <button id="copyPushQuick" class="ml-2 inline-flex items-center text-[11px] font-semibold text-slate-600 dark:text-slate-300 hover:text-brand-500" data-copytext='push(ref(rtdb, "firegen-jobs"), "Vertical video of a waterfall…")'>Copy</button></div>
             </div>
             <div class="rounded-lg border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/60 p-3">
               <div class="font-semibold text-slate-700 dark:text-slate-200">3) Subscribe</div>
               <div class="mt-1 text-slate-600 dark:text-slate-300"><code>onValue(jobRef, ...)</code> → <code>response.url</code></div>
             </div>
+          </div>
+
+          <!-- Try it now: personalize the prompt and copy -->
+          <div class="mt-4 flex flex-col sm:flex-row gap-2">
+            <input id="promptInput"
+                   class="flex-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-sm"
+                   value="Vertical video of a waterfall with ambient sound"
+                   aria-label="Prompt" />
+            <button id="copyPushFromInput"
+                    class="inline-flex items-center justify-center rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600">
+              Copy push(...)
+            </button>
           </div>
         </div>
 
@@ -168,7 +180,11 @@
                 <span class="h-3 w-3 rounded-full bg-amber-400"></span>
                 <span class="h-3 w-3 rounded-full bg-emerald-400"></span>
               </div>
-              <div class="flex items-center gap-2">
+              <div class="flex items-center gap-3">
+                <div id="statusTicker" class="hidden sm:flex items-center gap-2 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                  <span class="inline-flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                  <span id="statusText">requested</span>
+                </div>
                 <div class="hidden sm:flex text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
                   <button id="tabAi" class="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200">AI‑assisted</button>
                   <button id="tabExplicit" class="px-3 py-1 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">Explicit</button>
@@ -760,6 +776,7 @@ Client         ──▶  RTDB /firegen-jobs  ──▶  Functions (onCreate)
       if (!(target instanceof Element)) return;
       const copyText = target.getAttribute('data-copytext');
       if (!copyText) return;
+      e.preventDefault();
       navigator.clipboard.writeText(copyText).then(() => {
         const old = target.textContent;
         target.textContent = 'Copied!';
@@ -778,6 +795,77 @@ Client         ──▶  RTDB /firegen-jobs  ──▶  Functions (onCreate)
       note.classList.add('text-emerald-600', 'dark:text-emerald-400');
       e.target.reset();
     });
+
+    // Try it now: personalize the prompt in code + quick copy
+    const promptInput = document.getElementById('promptInput');
+    const copyPushFromInput = document.getElementById('copyPushFromInput');
+    const copyPushQuick = document.getElementById('copyPushQuick');
+
+    function sanitizePrompt(s) {
+      return String(s ?? '').replace(/\s+/g, ' ').trim().replace(/"/g, '\\"');
+    }
+
+    function updatePromptEverywhere(prompt) {
+      const safe = sanitizePrompt(prompt || '');
+      // Update AI‑assisted code block
+      const aiCode = document.querySelector('#codeAi code');
+      if (aiCode && aiCode.textContent) {
+        aiCode.textContent = aiCode.textContent.replace(
+          /push\(ref\(rtdb, "firegen-jobs"\),\s*"[^"]*"\);/,
+          `push(ref(rtdb, "firegen-jobs"), "${safe}");`
+        );
+      }
+      // Update Explicit code block (prompt field)
+      const exCode = document.querySelector('#codeExplicit code');
+      if (exCode && exCode.textContent) {
+        exCode.textContent = exCode.textContent.replace(
+          /prompt:\s*"[^"]*"/,
+          `prompt: "${safe}"`
+        );
+      }
+      if (window.Prism && window.Prism.highlightAllUnder) {
+        Prism.highlightAllUnder(document.querySelector('.codecard'));
+      }
+      // Update the quick “Copy” in step 2
+      if (copyPushQuick) {
+        copyPushQuick.setAttribute(
+          'data-copytext',
+          `push(ref(rtdb, "firegen-jobs"), "${safe}")`
+        );
+      }
+    }
+
+    promptInput?.addEventListener('input', (e) => {
+      // @ts-ignore
+      updatePromptEverywhere(e.target.value);
+    });
+
+    copyPushFromInput?.addEventListener('click', () => {
+      const safe = sanitizePrompt(promptInput?.value || '');
+      const snippet = `push(ref(rtdb, "firegen-jobs"), "${safe}")`;
+      navigator.clipboard.writeText(snippet).then(() => {
+        const old = copyPushFromInput.textContent;
+        copyPushFromInput.textContent = 'Copied!';
+        setTimeout(() => (copyPushFromInput.textContent = old || 'Copy push(...)'), 1200);
+      });
+    });
+
+    // Initialize with default value
+    updatePromptEverywhere(document.getElementById('promptInput')?.value || '');
+
+    // Tiny status ticker (visual proof without backend)
+    (function cycleStatus() {
+      const el = document.getElementById('statusTicker');
+      const txt = document.getElementById('statusText');
+      if (!el || !txt) return;
+      el.classList.remove('hidden');
+      const steps = ['requested', 'running', 'succeeded'];
+      let i = 0;
+      setInterval(() => {
+        txt.textContent = steps[i % steps.length];
+        i++;
+      }, 1400);
+    })();
 
     // Year
     document.getElementById('year').textContent = new Date().getFullYear();

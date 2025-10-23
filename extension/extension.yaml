@@ -8,9 +8,10 @@ version: 0.1.0
 specVersion: v1beta
 
 displayName: FireGen – Generate Media from Prompts
-description:>
-  Listens for Firestore tasks (e.g., prompts) and calls FireGen to produce
-  images/video/text. Writes results and status updates back to Firestore/Storage.
+description: >
+  Listens for job requests in Realtime Database and generates videos, images, audio, or text using
+  Vertex AI models (Veo, Imagen, Gemini, Chirp, Lyria). Supports AI-assisted mode (natural language)
+  and explicit mode (structured parameters). Results written back to Realtime Database with signed URLs.
 
 license: MIT
 sourceUrl: https://github.com/shipfail/fire-gen   # public, verifiable source
@@ -29,14 +30,14 @@ billingRequired: true
 
 # What users must enable in their project.
 apis:
-  - apiName: firestore.googleapis.com
-    reason: Needed to read/write task documents and statuses.
+  - apiName: aiplatform.googleapis.com
+    reason: Access Vertex AI models for video, image, audio, and text generation.
   - apiName: cloudfunctions.googleapis.com
     reason: Run the FireGen worker functions.
   - apiName: eventarc.googleapis.com
-    reason: Wire Gen2 triggers.
-  - apiName: secretmanager.googleapis.com
-    reason: Store the FireGen API key or credential.
+    reason: Wire Cloud Functions v2 triggers (RTDB onCreate, Task Queue).
+  - apiName: cloudtasks.googleapis.com
+    reason: Poll async operations for video generation (Veo long-running operations).
   
 roles:
   - role: firebasedatabase.admin
@@ -44,75 +45,35 @@ roles:
       Allows the extension to read job requests and write results to your Realtime Database instance.
   - role: aiplatform.user
     reason:
-      Allows the extension to call Vertex AI Veo models for video generation.
+      Allows the extension to call Vertex AI models (Veo, Imagen, Gemini, Chirp, Lyria).
   - role: storage.objectAdmin
     reason:
-      Allows the extension to manage generated video files in Cloud Storage.
+      Allows the extension to manage generated media files in Cloud Storage.
 
 resources:
-  - name: veoProcessor
+  - name: firegenJobCreated
     type: firebaseextensions.v1beta.function
-    description:
-      Listens for new video generation job requests in your specified Realtime Database path,
-      processes them using Veo models, and writes results back to the database.
+    description: >
+      Listens for new job requests in your specified Realtime Database path.
+      Handles both AI-assisted mode (natural language strings) and explicit mode (structured objects).
+      Routes jobs to appropriate model adapters and manages async operations for video generation.
     properties:
       runtime: nodejs22
       eventTrigger:
         eventType: providers/google.firebase.database/eventTypes/ref.create
-        resource: projects/_/instances/${param:SELECTED_DATABASE_INSTANCE}/refs/${param:NODE_PATH}/{jobId}
+        resource: projects/_/instances/${DATABASE_INSTANCE}/refs/firegen-jobs/{jobId}
 
-params:
-  - param: NODE_PATH
-    label: Realtime Database jobs path
-    description: >-
-      What is the Realtime Database path where video generation jobs will be created?
-    type: string
-    example: jobs
-    validationRegex: ^\S+$
-    validationErrorMessage: Path cannot have spaces.
-    required: true
-    default: jobs
-
-  - param: SELECTED_DATABASE_INSTANCE
-    label: Realtime Database
+  - name: firegenJobPoll
+    type: firebaseextensions.v1beta.function
     description: >
-      From which Realtime Database instance do you want to process video generation jobs?
-    type: string
-    example: my-instance
-    validationRegex: ^([0-9a-z_.-]*)$
-    validationErrorMessage: Invalid database instance
-    default: ${DATABASE_INSTANCE}
-    required: true
+      Task Queue trigger for polling async video generation operations.
+      Checks Vertex AI operation status, handles retries, and updates job status in Realtime Database.
+    properties:
+      runtime: nodejs22
+      taskQueueTrigger: {}
 
-  - param: VERTEX_PROJECT_ID
-    label: Vertex AI Project ID
-    description: >-
-      What is your Google Cloud project ID for Vertex AI? This is usually the same as your Firebase project ID.
-    type: string
-    example: my-project-id
-    validationRegex: ^[a-z][a-z0-9-]*[a-z0-9]$
-    validationErrorMessage: Invalid project ID format
-    default: ${PROJECT_ID}
-    required: true
-
-  - param: VERTEX_LOCATION
-    label: Vertex AI Location
-    description: >-
-      What region should be used for Vertex AI video generation? Veo models are available in us-central1.
-    type: string
-    example: us-central1
-    validationRegex: ^[a-z0-9-]+$
-    validationErrorMessage: Invalid location format
-    default: us-central1
-    required: true
-
-  - param: JOB_TTL_MINUTES
-    label: Job TTL in minutes
-    description: >-
-      How long should video generation jobs remain active before timing out?
-    type: string
-    example: 90
-    validationRegex: ^\d+$
-    validationErrorMessage: Must be a positive integer
-    default: 90
-    required: true
+# No configurable parameters - extension uses hard-coded values:
+# - Database instance: ${DATABASE_INSTANCE} (default Firebase RTDB instance)
+# - Job path: firegen-jobs/{jobId} (hard-coded in source code)
+# - All other settings are auto-resolved by the source code
+params: []

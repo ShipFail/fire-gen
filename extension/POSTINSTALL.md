@@ -4,14 +4,23 @@ You can test out this extension right away!
 
 1. Go to your [Realtime Database dashboard](https://console.firebase.google.com/project/${param:PROJECT_ID}/database/${param:PROJECT_ID}/data) in the Firebase console.
 
-2. Navigate to the path `${param:NODE_PATH}` and create a new child node with this structure:
+2. Navigate to the path `firegen-jobs` and create a new child node.
+
+**AI-Assisted Mode** (Recommended - Just write what you want!)
+
+```json
+"Create a 4 second sunset video with gentle waves"
+```
+
+**Explicit Mode** (Advanced - Full control over parameters)
 
 ```json
 {
-  "uid": "your-user-id",
+  "uid": "user-123",
   "status": "requested",
-  "model": { "id": "veo-3.0-fast-generate-001" },
   "request": {
+    "type": "video",
+    "model": "veo-3.0-fast-generate-001",
     "prompt": "a cat playing with a ball in a sunny garden",
     "durationSeconds": 5,
     "aspectRatio": "16:9",
@@ -23,30 +32,92 @@ You can test out this extension right away!
 
 3. Watch the node update in real-time as it processes:
    - `status` changes from `"requested"` → `"running"` → `"succeeded"`
-   - When complete, a `result` field appears with the video `gcsUri`
+   - When complete, a `response` field appears with `url` and `uri`
 
-4. Find your generated video in [Cloud Storage](https://console.cloud.google.com/storage/browser) under the `veo-outputs/` folder.
+4. Access your generated media:
+   - `response.url` - Signed URL (valid for 25 hours, use immediately)
+   - `response.uri` - GCS URI (`gs://...` for backend operations)
+   - ⚠️ **Files are automatically deleted after 24 hours**
 
 ### Using the extension
 
-This extension provides a simple job pattern for video generation:
+This extension provides two ways to generate media:
 
-#### Creating a video generation job
+#### AI-Assisted Mode (Natural Language)
+
+The simplest way - just write what you want as a string:
 
 ```javascript
 import { getDatabase, ref, push } from "firebase/database";
 
 const db = getDatabase();
-const jobRef = await push(ref(db, "${param:NODE_PATH}"), {
+
+// Just write your request in plain English!
+await push(ref(db, "firegen-jobs"), 
+  "Create a neon city at night with flying cars"
+);
+```
+
+The AI analyzer will:
+- Determine the best model (video, image, audio, or text)
+- Set optimal parameters automatically
+- Add reasoning to `_meta.reasons` field for transparency
+
+#### Explicit Mode (Structured Parameters)
+
+For production workflows with precise control:
+
+```javascript
+const db = getDatabase();
+
+// Video generation
+const videoJob = await push(ref(db, "firegen-jobs"), {
   uid: "user-123",
   status: "requested",
-  model: { id: "veo-3.0-fast-generate-001" },
   request: {
-    prompt: "a neon city cat skateboarding at night",
+    type: "video",
+    model: "veo-3.0-generate-001",
+    prompt: "a serene mountain landscape at dawn",
     durationSeconds: 8,
-    aspectRatio: "16:9", 
-    resolution: "720p",
+    aspectRatio: "16:9",
+    resolution: "1080p",
     generateAudio: true
+  }
+});
+
+// Image generation
+const imageJob = await push(ref(db, "firegen-jobs"), {
+  uid: "user-123",
+  status: "requested",
+  request: {
+    type: "image",
+    model: "imagen-4.0-fast-generate-001",
+    prompt: "a futuristic robot in a cyberpunk city",
+    aspectRatio: "1:1",
+    numberOfImages: 1
+  }
+});
+
+// Audio generation (Text-to-Speech)
+const audioJob = await push(ref(db, "firegen-jobs"), {
+  uid: "user-123",
+  status: "requested",
+  request: {
+    type: "audio",
+    model: "gemini-2.5-flash-preview-tts",
+    text: "Hello world! This is text-to-speech generation.",
+    voiceName: "Puck"
+  }
+});
+
+// Text generation
+const textJob = await push(ref(db, "firegen-jobs"), {
+  uid: "user-123",
+  status: "requested",
+  request: {
+    type: "text",
+    model: "gemini-2.5-pro",
+    prompt: "Explain quantum computing in simple terms"
   }
 });
 ```
@@ -60,41 +131,141 @@ onValue(jobRef, (snapshot) => {
   const job = snapshot.val();
   
   if (job.status === "succeeded") {
-    console.log("Video ready:", job.result.gcsUri);
-    // Use the GCS URI to display or download the video
+    // For video/image/audio
+    if (job.response.url) {
+      console.log("Media ready:", job.response.url);
+      console.log("GCS URI:", job.response.uri);
+      // ⚠️ Download within 24 hours - files auto-delete
+    }
+    
+    // For text generation
+    if (job.response.text) {
+      console.log("Generated text:", job.response.text);
+    }
+    
+    // AI-Assisted mode reasoning
+    if (job._meta?.reasons) {
+      console.log("AI analysis:", job._meta.reasons);
+    }
   } else if (job.status === "failed") {
-    console.error("Generation failed:", job.error.message);
+    console.error("Generation failed:", job.response?.error?.message);
+  } else if (job.status === "expired") {
+    console.warn("Job timed out after 90 minutes");
   }
 });
 ```
 
 ### Supported models and parameters
 
-**Models:**
-- `veo-3.0-generate-001` - Highest quality Veo 3 model
-- `veo-3.0-fast-generate-001` - Faster Veo 3 model  
-- `veo-2.0-generate-001` - Previous generation model
+#### VIDEO (Veo models)
+**Models:** `veo-3.0-generate-001`, `veo-3.0-fast-generate-001`, `veo-2.0-generate-001`
 
-**Request parameters:**
-- `prompt` (required) - Text description of the video to generate
-- `durationSeconds` (optional) - Length of video (1-8 seconds, default: 8)
-- `aspectRatio` (optional) - Video dimensions ("16:9" or "9:16", default: "16:9")  
-- `resolution` (optional) - Video quality ("720p" or "1080p", default: "720p")
-- `generateAudio` (optional) - Include audio track (true/false, default: true)
+**Parameters:**
+- `prompt` (required) - Text description of the video
+- `durationSeconds` (optional) - Length: 1-8 seconds (default: 8)
+- `aspectRatio` (optional) - `"16:9"` or `"9:16"` (default: `"16:9"`)
+- `resolution` (optional) - `"720p"` or `"1080p"` (default: `"720p"`)
+- `generateAudio` (optional) - Include audio (default: `true`)
+
+#### IMAGE (Imagen & Nano Banana)
+**Models:** `imagen-4.0-ultra-generate-001`, `imagen-4.0-generate-001`, `imagen-4.0-fast-generate-001`, `nano-banana`
+
+**Parameters:**
+- `prompt` (required) - Text description of the image
+- `aspectRatio` (optional) - `"1:1"`, `"16:9"`, `"9:16"`, `"4:3"`, `"3:4"` (default: `"1:1"`)
+- `numberOfImages` (optional) - Images to generate: 1-4 (default: 1)
+
+#### AUDIO
+**Text-to-Speech Models:** `gemini-2.5-flash-preview-tts`, `gemini-2.5-pro-preview-tts`
+
+**Parameters:**
+- `text` (required) - Text to convert to speech
+- `voiceName` (optional) - Voice: `"Puck"`, `"Charon"`, `"Kore"`, `"Fenrir"`, `"Aoede"` (default: `"Puck"`)
+
+**Speech-to-Text Models:** `chirp-3-hd`, `chirp`
+
+**Parameters:**
+- `audioUri` (required) - GCS URI of audio file to transcribe
+
+**Music Generation:** `lyria-002`
+
+**Parameters:**
+- `prompt` (required) - Music description (style, mood, instruments)
+
+#### TEXT (Gemini models)
+**Models:** `gemini-2.5-pro`, `gemini-2.5-flash`
+
+**Parameters:**
+- `prompt` (required) - Text generation prompt
+- `temperature` (optional) - Creativity: 0.0-2.0 (default: 1.0)
+- `maxOutputTokens` (optional) - Max length: 1-8192 (default: 2048)
 
 ### Job lifecycle
 
 1. **requested** - Job created, waiting to be processed
-2. **running** - Video generation in progress (may take 30-120 seconds)
-3. **succeeded** - Video generated successfully, check `result.gcsUri`
-4. **failed** - Generation failed, check `error.message`
-5. **expired** - Job timed out after ${param:JOB_TTL_MINUTES} minutes
+2. **starting** - Job accepted, initialization in progress
+3. **running** - Generation in progress (video may take 30-120 seconds)
+4. **succeeded** - Generation complete, check `response.url` or `response.text`
+5. **failed** - Generation failed, check `response.error.message`
+6. **expired** - Job timed out after 90 minutes
 
-### Accessing generated videos
+### Response structure
 
-Videos are stored in your project's Cloud Storage bucket under `veo-outputs/`. The `result.gcsUri` provides the full GCS path.
+**For media files (video/image/audio):**
+```json
+{
+  "status": "succeeded",
+  "response": {
+    "url": "https://storage.googleapis.com/...?Expires=...",
+    "uri": "gs://bucket/firegen-jobs/abc123/video-veo-3.0-fast-generate-001.mp4"
+  },
+  "_meta": {
+    "reasons": ["AI analysis step 1", "AI analysis step 2"]
+  }
+}
+```
 
-To create a public download URL, you can use the Firebase Admin SDK or copy files to a public bucket.
+**For text generation:**
+```json
+{
+  "status": "succeeded",
+  "response": {
+    "text": "Generated text content here..."
+  }
+}
+```
+
+**Important notes:**
+- ⚠️ **Files are deleted after 24 hours** - Download immediately
+- 🔗 **Signed URLs expire after 25 hours** - Use within validity period
+- 🔒 **User-scoped jobs** - Set `uid` to match authenticated user for security
+
+### Security rules
+
+Protect your jobs with Realtime Database rules:
+
+```json
+{
+  "rules": {
+    "firegen-jobs": {
+      "$jobId": {
+        ".read": "auth != null && (data.child('uid').val() === auth.uid || !data.exists())",
+        ".write": "auth != null && (!data.exists() || data.child('uid').val() === auth.uid)"
+      }
+    }
+  }
+}
+```
+
+This ensures users can only:
+- Create jobs with their own `uid`
+- Read/write their own jobs
+- Prevent unauthorized access
+
+This ensures users can only:
+- Create jobs with their own `uid`
+- Read/write their own jobs
+- Prevent unauthorized access
 
 ### Monitoring
 

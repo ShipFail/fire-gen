@@ -1,5 +1,7 @@
 # FireGen - AI Media Generation Extension
 
+<p align="center"><img src="./docs/firegen-logo.webp" width="256" alt="FireGen Logo" /></p>
+
 > Serverless AI media generation using Google Vertex AI. Supports 17 models across video, image, audio, and text generation through a unified Firebase RTDB job queue.
 
 [![Firebase](https://img.shields.io/badge/Firebase-Cloud%20Functions-orange)](https://firebase.google.com/docs/functions)

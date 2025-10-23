@@ -3,6 +3,8 @@
 import {GEMINI_2_5_PRO_AI_HINT} from "./gemini-2.5-pro.js";
 import {GEMINI_2_5_FLASH_AI_HINT} from "./gemini-2.5-flash.js";
 import {GEMINI_2_5_FLASH_LITE_AI_HINT} from "./gemini-2.5-flash-lite.js";
+import {GEMINI_2_0_FLASH_AI_HINT} from "./gemini-2.0-flash.js";
+import {GEMINI_2_0_FLASH_LITE_AI_HINT} from "./gemini-2.0-flash-lite.js";
 
 /**
  * Assembled AI hints for all Gemini Text models.
@@ -13,10 +15,12 @@ export const GEMINI_TEXT_AI_HINTS = `
 ${GEMINI_2_5_PRO_AI_HINT}
 ${GEMINI_2_5_FLASH_AI_HINT}
 ${GEMINI_2_5_FLASH_LITE_AI_HINT}
+${GEMINI_2_0_FLASH_AI_HINT}
+${GEMINI_2_0_FLASH_LITE_AI_HINT}
 
 Text Schema Structure (CRITICAL):
 - type: "text" (REQUIRED)
-- model: gemini-2.5-* (NOT audio, NOT other types)
+- model: gemini-2.5-* or gemini-2.0-* (NOT audio, NOT other types)
 - prompt: "..." (text generation request - REQUIRED)
 - systemInstruction: Optional (role/behavior instruction)
 - temperature: Optional (0.0-2.0, default: 1.0; lower = more focused, higher = more creative)

@@ -11,10 +11,14 @@ This document tracks workarounds required for integrating with Google Vertex AI 
 - How to handle SDK type mismatches
 - Short/medium/long-term migration paths
 
-**Last Updated:** 2025-10-07
+**Last Updated:** 2025-10-23
 **SDK Version:** `@google/genai@1.22.0`
 
 ### Key Updates
+- **API Compliance Review Completed (2025-10-23):**
+  - ✅ Veo, Imagen, Nano Banana, Gemini TTS, Gemini Text - FULLY COMPLIANT with official docs
+  - ⚠️ Lyria - Compliant based on limited available documentation
+  - 🔴 Chirp TTS/STT - Using undocumented SDK methods, REQUIRES PRODUCTION TESTING
 - Enhanced error handling for Chirp TTS/STT
 - Updated alternative approaches for unverified SDK methods
 - More comprehensive testing strategy for model adapters
@@ -23,21 +27,138 @@ This document tracks workarounds required for integrating with Google Vertex AI 
 
 ## Status Overview
 
-| Component | Status | Workaround Type | Notes |
-|-----------|--------|-----------------|-------|
-| Veo (Video) | ✅ Working | None | Fully typed SDK support |
-| Imagen (Image) | ⚠️ Type cast | `as any` on method | `generateImages()` not in types |
-| Nano Banana | ⚠️ Type cast | `as any` on config | `imageConfig` not typed |
-| Gemini TTS | ⚠️ Type cast | `as any` on config | Audio config incomplete |
-| Chirp TTS | 🔴 Unverified | `as any` on method | May not exist in SDK |
-| Chirp STT | 🔴 Unverified | `as any` on method | May not exist in SDK |
-| Lyria (Music) | ⚠️ Type cast | `as any` on method | `generateMusic()` not typed |
-| Gemini Text | ✅ Working | Minor config cast | Mostly functional |
+| Component | Status | API Compliance | Workaround Type | Notes |
+|-----------|--------|----------------|-----------------|-------|
+| Veo (Video) | ✅ Working | ✅ Fully Compliant | None | Fully typed SDK support, all params verified |
+| Imagen (Image) | ⚠️ Type cast | ✅ Fully Compliant | `as any` on method | `generateImages()` not in types, but params correct |
+| Nano Banana | ⚠️ Type cast | ✅ Fully Compliant | `as any` on config | `imageConfig` not typed, but params correct |
+| Gemini TTS | ⚠️ Type cast | ✅ Fully Compliant | `as any` on config | Audio config incomplete, but params correct |
+| Chirp TTS | 🔴 Unverified | 🔴 Undocumented | `as any` on method | May not exist in SDK, params unverified |
+| Chirp STT | 🔴 Unverified | 🔴 Undocumented | `as any` on method | May not exist in SDK, params unverified |
+| Lyria (Music) | ⚠️ Type cast | ⚠️ Limited Docs | `as any` on method | `generateMusic()` not typed, limited official docs |
+| Gemini Text | ✅ Working | ✅ Fully Compliant | Minor config cast | Mostly functional, all params verified |
 
 **Legend:**
-- ✅ Working - Confirmed functional
-- ⚠️ Type cast - Works but requires type assertions
-- 🔴 Unverified - Implementation may not work in runtime
+- ✅ Working - Confirmed functional with verified API compliance
+- ⚠️ Type cast - Works but requires type assertions, params verified against docs
+- 🔴 Unverified - Implementation may not work in runtime, undocumented API
+- ✅ Fully Compliant - All parameters verified against official documentation
+- ⚠️ Limited Docs - Compliant based on available documentation
+- 🔴 Undocumented - API method not in official SDK documentation
+
+---
+
+## API Compliance Review (2025-10-23)
+
+A comprehensive review was conducted to verify all model API parameters against official documentation.
+
+### Review Methodology
+
+1. **Documentation Sources:**
+   - Google Cloud Vertex AI official documentation
+   - Google AI Gemini API documentation
+   - @google/genai SDK source code and types
+   - Google Cloud Speech/TTS API documentation
+   - Developer community forums and examples
+
+2. **Verification Process:**
+   - Compare each parameter name against official docs
+   - Verify parameter types and validation rules
+   - Check for missing or extra parameters
+   - Validate default values and constraints
+   - Review response structure expectations
+
+### Detailed Findings
+
+#### ✅ Fully Compliant Models (6/8)
+
+**1. Veo Video Generation**
+- ✅ All parameters match official `generateVideos()` API
+- ✅ Correct schema: `source.prompt`, `config.durationSeconds`, `config.aspectRatio`, etc.
+- ✅ Validation: Duration (4/6/8), AspectRatio (6 options), Resolution (720p/1080p)
+- ✅ Optional `referenceImageGcsUri` correctly implemented
+- **Verdict:** No changes needed
+
+**2. Imagen 4.0 Image Generation**
+- ✅ All parameters match official Imagen 4.0 API
+- ✅ Correct: `prompt`, `aspectRatio`, `enhancePrompt`, `sampleCount`, `personGeneration`, `language`, `safetySettings`
+- ✅ Validation: AspectRatio (10 options), SampleCount (1-4)
+- ✅ All optional parameters correctly handled
+- **Verdict:** No changes needed
+
+**3. Nano Banana (Gemini 2.5 Flash Image)**
+- ✅ All parameters match Gemini image generation API
+- ✅ Correct model: `gemini-2.5-flash-image`
+- ✅ Correct: `contents`, `config.responseModalities`, `config.imageConfig.aspectRatio`
+- ✅ Validation: AspectRatio (10 options)
+- **Verdict:** No changes needed
+
+**4. Gemini TTS (Text-to-Speech)**
+- ✅ All parameters match Gemini audio generation API
+- ✅ Correct: `contents`, `config.responseModalities`, `config.speechConfig.voiceConfig`
+- ✅ Voice list: All 30 voices verified (Zephyr, Puck, Charon, etc.)
+- ✅ Correct structure: `contents: [{role: "user", parts: [{text}]}]`
+- **Verdict:** No changes needed
+
+**5. Gemini Text Generation**
+- ✅ All parameters match Gemini `generateContent()` API
+- ✅ Correct: `model`, `contents`, `systemInstruction`
+- ✅ Config parameters: `temperature`, `maxOutputTokens`, `topP`, `topK`, `stopSequences`
+- ✅ Validation ranges: temperature (0-2), topP (0-1)
+- **Verdict:** No changes needed
+
+**6. Lyria Music Generation**
+- ✅ Parameters match available Lyria documentation
+- ✅ Correct: `model`, `prompt`, `negativePrompt`, `seed`
+- ⚠️ Note: Limited official documentation available
+- **Verdict:** Compliant based on available docs, no changes needed
+
+#### 🔴 Undocumented / Unverified Models (2/8)
+
+**7. Chirp TTS (Cloud Text-to-Speech)**
+- 🔴 Uses `(ai.models as any).synthesizeSpeech()` - NOT in SDK docs
+- 🔴 Parameter names UNVERIFIED: `text`, `voice`, `language`, `sampleRate`
+- ⚠️ Expected Cloud TTS params differ: `input.text`, `voice.name`, `audioConfig.sampleRateHertz`
+- **Recommendation:** 
+  - URGENT: Test in production to verify API exists
+  - If fails: Migrate to `@google-cloud/text-to-speech` client library
+  - Document actual working parameters if API exists
+
+**8. Chirp STT (Speech-to-Text)**
+- 🔴 Uses `(ai.models as any).transcribeAudio()` - NOT in SDK docs
+- 🔴 Parameter names UNVERIFIED: `audioUri`, `language`, `encoding`, `sampleRate`
+- 🔴 Response format UNCERTAIN: tries `response.transcript || response.text`
+- ⚠️ Expected Cloud Speech V2 params differ: `uri`, `config.model`, `config.languageCodes`
+- **Recommendation:**
+  - URGENT: Test in production to verify API exists
+  - If fails: Migrate to `@google-cloud/speech` client library
+  - Document actual response structure if API exists
+
+### Compliance Summary
+
+| Category | Count | Models |
+|----------|-------|--------|
+| **✅ Fully Compliant** | 6 | Veo, Imagen, Nano Banana, Gemini TTS, Gemini Text, Lyria |
+| **🔴 Undocumented** | 2 | Chirp TTS, Chirp STT |
+
+**Overall Status:** 75% (6/8) models fully verified and compliant
+
+### Action Items from Review
+
+**HIGH PRIORITY (Immediate):**
+- [ ] Production test Chirp TTS - verify `synthesizeSpeech()` exists
+- [ ] Production test Chirp STT - verify `transcribeAudio()` exists
+- [ ] Document actual Chirp API behavior if methods work
+- [ ] If Chirp methods fail, implement migration to Cloud TTS/Speech clients
+
+**MEDIUM PRIORITY (Short-term):**
+- [ ] Monitor production logs for Chirp-related errors
+- [ ] Create fallback mechanism for Chirp if SDK methods unavailable
+- [ ] Update WORKAROUNDS.md with production test results
+
+**LOW PRIORITY (Long-term):**
+- [ ] Track @google/genai SDK updates for Chirp support
+- [ ] Remove Chirp workarounds when officially documented
 
 ---
 

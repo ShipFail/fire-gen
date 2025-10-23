@@ -16,12 +16,12 @@ name: firegen
 version: 0.1.0
 specVersion: v1beta
 
-displayName: FireGen
-description:
-  Generates videos using Google's Veo models via Realtime Database job pattern.
-  Write a job node, get real-time video generation results.
+displayName: FireGen – Generate Media from Prompts
+description:>
+  Listens for Firestore tasks (e.g., prompts) and calls FireGen to produce
+  images/video/text. Writes results and status updates back to Firestore/Storage.
 
-license: Apache-2.0
+license: MIT
 
 author:
   authorName: Huan Li

@@ -13,13 +13,31 @@ description:>
   images/video/text. Writes results and status updates back to Firestore/Storage.
 
 license: MIT
+sourceUrl: https://github.com/shipfail/fire-gen   # public, verifiable source
 
 author:
   authorName: Huan Li
   url: https://github.com/huan
 
+tags:
+  - ai
+  - generation
+  - media
+  - utilities
+
 billingRequired: true
 
+# What users must enable in their project.
+apis:
+  - apiName: firestore.googleapis.com
+    reason: Needed to read/write task documents and statuses.
+  - apiName: cloudfunctions.googleapis.com
+    reason: Run the FireGen worker functions.
+  - apiName: eventarc.googleapis.com
+    reason: Wire Gen2 triggers.
+  - apiName: secretmanager.googleapis.com
+    reason: Store the FireGen API key or credential.
+  
 roles:
   - role: firebasedatabase.admin
     reason:

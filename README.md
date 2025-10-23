@@ -546,3 +546,12 @@ onValue(ref(db, `firegen-jobs/${jobId}`), (snapshot) => {
 - **Issues:** [GitHub Issues](your-repo-link)
 - **Documentation:** [Firebase Functions Docs](https://firebase.google.com/docs/functions)
 - **Vertex AI:** [Vertex AI Docs](https://cloud.google.com/vertex-ai/docs)
+
+## Authors
+
+- Huan Li ([@huan](https://github.com/huan))
+- Gemini & ChatGPT & Copilot - Shipfail Team ([@shipfail](https://github.com/shipfail))
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details

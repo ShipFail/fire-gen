@@ -24,5 +24,5 @@
 
 ## Supported Models
 
-- We always support the latest version of models (like the latest of Gemini, Sonnet, GPT)
-- We remove old version of models in the same family after we supported new ones, like for the Gemini 2.0 & 2.5 versions, when 2.5 is the latest, we do not need to keep 2.0 in our system.
+- We always support the latest version of models (like the latest of Veo, Sora, Gemini, GPT, Sonnet)
+- We remove old version of models in the same family after we supported new ones, like for the VEO 3.0 & 3.1 versions, when 3.1 is the latest, we do not need to keep 3.0 in our system, unless there are features that the new version is not supported yet.

@@ -17,7 +17,7 @@ FireGen is a Firebase extension that integrates Google Vertex AI's media generat
 - **RTDB Path**: `firegen-jobs/{jobId}`
 - **Storage Path**: `gs://{bucket}/firegen-jobs/{jobId}/{mediaType}-{modelId}.{ext}`
 - **Polling Strategy**: 1-second intervals (for async operations like Veo)
-- **Job TTL**: 90 minutes (configurable via `JOB_TTL_MINUTES`)
+- **Job TTL**: 90 minutes (hard-coded in source code)
 - **⚠️ IMPORTANT: Media Storage is Ephemeral (24 hours)**
   - Generated media (videos/images) are automatically deleted after 24 hours
   - You MUST download/copy media to your own storage before expiration
@@ -43,8 +43,6 @@ FireGen is a Firebase extension that integrates Google Vertex AI's media generat
   - `gemini-2.5-pro` (most powerful, extended thinking)
   - `gemini-2.5-flash` (best price/performance)
   - `gemini-2.5-flash-lite` (most cost-effective)
-  - `gemini-2.0-flash` (latest features)
-  - `gemini-2.0-flash-lite` (low latency)
 
 ## Job Schema
 
@@ -273,7 +271,7 @@ FireGen is a Firebase extension that integrates Google Vertex AI's media generat
 
   request: {
     type: "text",
-    model: "gemini-2.5-pro" | "gemini-2.5-flash" | "gemini-2.5-flash-lite" | "gemini-2.0-flash" | "gemini-2.0-flash-lite",
+    model: "gemini-2.5-pro" | "gemini-2.5-flash" | "gemini-2.5-flash-lite",
     prompt: string,               // User message/prompt
     systemInstruction?: string,   // Optional: System instruction
     temperature?: number,         // Optional: 0.0-2.0 (default: 1.0)

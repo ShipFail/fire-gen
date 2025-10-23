@@ -76,7 +76,7 @@ export const PROJECT_ID = resolveProjectId();
 /**
  * Resolve Firebase Storage bucket name.
  * Resolution order:
- * 1. FIREGEN_STORAGE_BUCKET - Explicit override
+ * 1. FIREGEN_BUCKET - Explicit override
  * 2. Firebase app config storageBucket (production)
  * 3. Query gcloud CLI for actual Firebase Storage bucket
  *
@@ -84,8 +84,8 @@ export const PROJECT_ID = resolveProjectId();
  */
 function resolveBucketName(): string {
   // 1. Try explicit override
-  if (process.env.FIREGEN_STORAGE_BUCKET) {
-    return process.env.FIREGEN_STORAGE_BUCKET.trim();
+  if (process.env.FIREGEN_BUCKET) {
+    return process.env.FIREGEN_BUCKET.trim();
   }
 
   // 2. Try Firebase app config (available in production)
@@ -117,7 +117,7 @@ function resolveBucketName(): string {
   throw new Error(
     "Unable to determine Firebase Storage bucket name. " +
     "Try one of: " +
-    "1) Set FIREGEN_STORAGE_BUCKET environment variable, " +
+    "1) Set FIREGEN_BUCKET environment variable, " +
     "2) Configure storageBucket in Firebase app initialization, " +
     "3) Ensure gcloud CLI is authenticated and project is set"
   );

@@ -21,3 +21,8 @@
 - Never use hard-coded keyword/substring rule engines for prompt tagging or classification.
 - create temp files in `/tmp` directory. i.e. log files, debug code files.
 - Never git commit without user approval.
+
+## Supported Models
+
+- We always support the latest version of models (like the latest of Gemini, Sonnet, GPT)
+- We remove old version of models in the same family after we supported new ones, like for the Gemini 2.0 & 2.5 versions, when 2.5 is the latest, we do not need to keep 2.0 in our system.

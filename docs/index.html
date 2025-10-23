@@ -711,14 +711,14 @@ Client         ──▶  RTDB /firegen-jobs  ──▶  Functions (onCreate)
     });
 
     // Copy code
-    document.getElementById('copyCode').addEventListener('click', () => {
+    const copyBtn = document.getElementById('copyCode');
+    copyBtn?.addEventListener('click', () => {
       const active = document.querySelector('.codecard pre:not(.hidden) code');
       const code = active?.textContent || '';
       navigator.clipboard.writeText(code).then(() => {
-        const btn = document.getElementById('copyCode');
-        const old = btn.textContent;
-        btn.textContent = 'Copied!';
-        setTimeout(() => (btn.textContent = old), 1200);
+        const old = copyBtn.textContent;
+        copyBtn.textContent = 'Copied!';
+        setTimeout(() => (copyBtn.textContent = old || 'Copy'), 1200);
       });
     });
 
@@ -747,7 +747,7 @@ Client         ──▶  RTDB /firegen-jobs  ──▶  Functions (onCreate)
       tabExplicit.classList.toggle('dark:text-slate-300', onAi);
       // Re-highlight visible block (for good measure)
       if (window.Prism && window.Prism.highlightAllUnder) {
-        Prism.highlightAllUnder(document.querySelector('.codecard'));
+        window.Prism.highlightAllUnder(document.querySelector('.codecard'));
       }
     }
 
@@ -817,7 +817,7 @@ Client         ──▶  RTDB /firegen-jobs  ──▶  Functions (onCreate)
         );
       }
       if (window.Prism && window.Prism.highlightAllUnder) {
-        Prism.highlightAllUnder(document.querySelector('.codecard'));
+        window.Prism.highlightAllUnder(document.querySelector('.codecard'));
       }
       // Update the quick “Copy” in step 2
       if (copyPushQuick) {

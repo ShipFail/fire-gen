@@ -74,6 +74,7 @@ resources:
         eventFilters:
           - attribute: ref
             value: firegen-jobs/{jobId}
+            operator: match-path-pattern
           - attribute: instance
             value: ${DATABASE_INSTANCE}
 

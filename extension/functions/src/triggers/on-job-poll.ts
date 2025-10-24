@@ -21,7 +21,7 @@ import type {JobNode} from "../types/index.js";
  * Task Queue handler for polling async operations (e.g., Veo).
  * Polls the operation status and updates the job when complete.
  */
-export const onFiregenJobPoll = onTaskDispatched(
+export const onJobPoll = onTaskDispatched(
   {
     rateLimits: {maxConcurrentDispatches: MAX_CONCURRENT_POLL_TASKS},
     timeoutSeconds: POLL_TASK_TIMEOUT_SECONDS,

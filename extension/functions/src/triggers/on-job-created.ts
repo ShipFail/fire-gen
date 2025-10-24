@@ -18,7 +18,7 @@ import type {JobNode} from "../types/index.js";
  * - If event.auth is null, write MUST be from Admin SDK (bypasses rules)
  * - Clients cannot fake admin access (rules block unauthenticated writes)
  */
-export const onFiregenJobCreated = onValueCreated(
+export const onJobCreated = onValueCreated(
   {ref: `firegen-jobs/{jobId}`, region: REGION},
   async (event) => {
     const jobId = event.params.jobId;

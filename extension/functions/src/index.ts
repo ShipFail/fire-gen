@@ -10,5 +10,5 @@ import "./env.js";
 import "./config.js";
 
 // Export all triggers
-export {onFiregenJobCreated} from "./triggers/on-job-created.js";
-export {onFiregenJobPoll} from "./triggers/on-job-poll.js";
+export { onJobCreated } from "./triggers/on-job-created.js";
+export { onJobPoll } from "./triggers/on-job-poll.js";

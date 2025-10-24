@@ -58,6 +58,9 @@ roles:
   - role: storage.objectAdmin
     reason:
       Allows the extension to manage generated media files in Cloud Storage.
+  - role: cloudtasks.enqueuer
+    reason:
+      Allows the extension to enqueue tasks for polling async video generation operations.
 
 resources:
   - name: onJobCreated

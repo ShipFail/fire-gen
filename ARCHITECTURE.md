@@ -1069,14 +1069,13 @@ await queue.enqueue(
 
 **Schema:**
 ```typescript
-fire-gen/
-  jobs/
-    {jobId}/
-      uid: string
-      status: "requested" | "starting" | "running" | "succeeded" | "failed" | "expired" | "canceled"
-      request: JobRequest
-      response?: JobResponse
-      _meta?: JobMeta
+firegen-jobs/
+  {jobId}/
+    uid: string
+    status: "requested" | "starting" | "running" | "succeeded" | "failed" | "expired" | "canceled"
+    request: JobRequest
+    response?: JobResponse
+    _meta?: JobMeta
 ```
 
 **Write Strategy:**
@@ -1248,12 +1247,10 @@ GCS (service account) → Write permissions
 **RTDB Security Rules:**
 ```json
 {
-  "fire-gen": {
-    "jobs": {
-      "$jobId": {
-        ".read": "auth != null && data.child('uid').val() === auth.uid",
-        ".write": "auth != null && (!data.exists() && newData.child('uid').val() === auth.uid)"
-      }
+  "firegen-jobs": {
+    "$jobId": {
+      ".read": "auth != null && data.child('uid').val() === auth.uid",
+      ".write": "auth != null && (!data.exists() && newData.child('uid').val() === auth.uid)"
     }
   }
 }

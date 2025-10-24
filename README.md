@@ -352,7 +352,7 @@ await uploadToYourStorage(blob); // Save to Firebase Storage, S3, etc.
 ```
 
 **URL Types:**
-- `uri`: `gs://bucket/fire-gen/jobs/{id}/video.mp4` (backend operations)
+- `uri`: `gs://bucket/firegen-jobs/{id}/video.mp4` (backend operations)
 - `url`: `https://storage.googleapis.com/...?Expires=...` (browser playback, expires 25h)
 
 ### Job Lifecycle

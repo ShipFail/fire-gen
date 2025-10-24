@@ -23,7 +23,7 @@ description: >
   and explicit mode (structured parameters). Results written back to Realtime Database with signed URLs.
 
 license: Apache-2.0
-sourceUrl: https://github.com/shipfail/fire-gen   # public, verifiable source
+sourceUrl: https://github.com/shipfail/firegen   # public, verifiable source
 
 author:
   authorName: Huan Li

@@ -61,24 +61,30 @@ roles:
 
 resources:
   - name: onJobCreated
-    type: firebaseextensions.v1beta.function
+    type: firebaseextensions.v1beta.v2function
     description: >
       Listens for new job requests in your specified Realtime Database path.
       Handles both AI-assisted mode (natural language strings) and explicit mode (structured objects).
       Routes jobs to appropriate model adapters and manages async operations for video generation.
     properties:
-      runtime: nodejs22
+      buildConfig:
+        runtime: nodejs22
       eventTrigger:
-        eventType: providers/google.firebase.database/eventTypes/ref.create
-        resource: projects/_/instances/${DATABASE_INSTANCE}/refs/firegen-jobs/{jobId}
+        eventType: google.firebase.database.ref.v1.created
+        eventFilters:
+          - attribute: instance
+            value: ${DATABASE_INSTANCE}
+        eventFilterPathPatterns:
+          ref: firegen-jobs/{jobId}
 
   - name: onJobPoll
-    type: firebaseextensions.v1beta.function
+    type: firebaseextensions.v1beta.v2function
     description: >
       Task Queue trigger for polling async video generation operations.
       Checks Vertex AI operation status, handles retries, and updates job status in Realtime Database.
     properties:
-      runtime: nodejs22
+      buildConfig:
+        runtime: nodejs22
       taskQueueTrigger: {}
 
 # No configurable parameters - extension uses hard-coded values:

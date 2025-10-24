@@ -60,7 +60,7 @@ roles:
       Allows the extension to manage generated media files in Cloud Storage.
 
 resources:
-  - name: firegenJobCreated
+  - name: onJobCreated
     type: firebaseextensions.v1beta.function
     description: >
       Listens for new job requests in your specified Realtime Database path.
@@ -72,7 +72,7 @@ resources:
         eventType: providers/google.firebase.database/eventTypes/ref.create
         resource: projects/_/instances/${DATABASE_INSTANCE}/refs/firegen-jobs/{jobId}
 
-  - name: firegenJobPoll
+  - name: onJobPoll
     type: firebaseextensions.v1beta.function
     description: >
       Task Queue trigger for polling async video generation operations.

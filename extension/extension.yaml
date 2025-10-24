@@ -72,10 +72,10 @@ resources:
       eventTrigger:
         eventType: google.firebase.database.ref.v1.created
         eventFilters:
+          - attribute: ref
+            value: firegen-jobs/{jobId}
           - attribute: instance
             value: ${DATABASE_INSTANCE}
-        eventFilterPathPatterns:
-          ref: firegen-jobs/{jobId}
 
   - name: onJobPoll
     type: firebaseextensions.v1beta.v2function
@@ -85,7 +85,15 @@ resources:
     properties:
       buildConfig:
         runtime: nodejs22
-      taskQueueTrigger: {}
+      serviceConfig:
+        availableMemory: 256M
+        timeoutSeconds: 540
+      taskQueueTrigger:
+        retryConfig:
+          maxAttempts: 3
+          maxRetrySeconds: 1800
+        rateLimits:
+          maxConcurrentDispatches: 10
 
 # No configurable parameters - extension uses hard-coded values:
 # - Database instance: ${DATABASE_INSTANCE} (default Firebase RTDB instance)

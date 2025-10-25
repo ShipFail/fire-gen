@@ -1,12 +1,11 @@
 // functions/src/models/veo/shared-polling.ts
 /**
  * Shared polling and output extraction logic for ALL Veo models.
- * All Veo models use the same polling mechanism via GenerateVideosOperation.
+ * All Veo models use the same polling mechanism via REST API operations.
  */
-import {GenerateVideosOperation} from "@google/genai";
 import * as logger from "firebase-functions/logger";
 
-import {ai} from "../_shared/ai-client.js";
+import {getOperation} from "../_shared/vertex-ai-client.js";
 import type {ModelOutput} from "../_shared/base.js";
 import type {OperationResult} from "../../poller.js";
 
@@ -15,12 +14,7 @@ import type {OperationResult} from "../../poller.js";
  * Used by ALL Veo models (2.0, 3.0, 3.1+).
  */
 export async function pollVeoOperation(operationName: string): Promise<OperationResult> {
-  const opForPolling = new GenerateVideosOperation();
-  opForPolling.name = operationName;
-
-  const updated = await ai.operations.getVideosOperation({
-    operation: opForPolling,
-  });
+  const updated = await getOperation(operationName);
 
   return {
     done: updated?.done ?? false,

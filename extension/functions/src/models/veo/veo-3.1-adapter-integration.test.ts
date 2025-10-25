@@ -1,25 +1,24 @@
-// Integration test to verify Veo 3.1 adapter uses new parameters correctly
+// Integration test to verify Veo 3.1 adapter uses REST API format correctly
 import {describe, it, expect, vi, beforeEach, afterEach} from "vitest";
 import {Veo31FastGeneratePreviewAdapter} from "./veo-3.1-fast-generate-preview.js";
-import {ai} from "../_shared/ai-client.js";
+import {Veo31GeneratePreviewAdapter} from "./veo-3.1-generate-preview.js";
+import * as vertexAiClient from "../_shared/vertex-ai-client.js";
 
-// Mock the AI client
-vi.mock("../_shared/ai-client.js", () => ({
-  ai: {
-    models: {
-      generateVideos: vi.fn(),
-    },
-  },
+// Mock the Vertex AI REST API client
+vi.mock("../_shared/vertex-ai-client.js", () => ({
+  predictLongRunning: vi.fn(),
 }));
 
-describe("Veo 3.1 Adapter Integration", () => {
-  let adapter: Veo31FastGeneratePreviewAdapter;
-  let mockGenerateVideos: any;
+describe("Veo 3.1 Adapter Integration (REST API)", () => {
+  let fastAdapter: Veo31FastGeneratePreviewAdapter;
+  let regularAdapter: Veo31GeneratePreviewAdapter;
+  let mockPredictLongRunning: any;
 
   beforeEach(() => {
-    adapter = new Veo31FastGeneratePreviewAdapter();
-    mockGenerateVideos = vi.mocked(ai.models.generateVideos);
-    mockGenerateVideos.mockResolvedValue({
+    fastAdapter = new Veo31FastGeneratePreviewAdapter();
+    regularAdapter = new Veo31GeneratePreviewAdapter();
+    mockPredictLongRunning = vi.mocked(vertexAiClient.predictLongRunning);
+    mockPredictLongRunning.mockResolvedValue({
       name: "operations/test-123",
       done: false,
     });
@@ -29,125 +28,153 @@ describe("Veo 3.1 Adapter Integration", () => {
     vi.clearAllMocks();
   });
 
-  it("should pass all new parameters to the SDK", async () => {
-    const request = {
-      type: "video" as const,
-      model: "veo-3.1-fast-generate-preview" as const,
-      prompt: "A cat driving a car",
-      duration: 8,
-      aspectRatio: "16:9" as const,
-      audio: true,
-      seed: 12345,
-      enhancePrompt: true,
-      personGeneration: "allow_adult" as const,
-      compressionQuality: "optimized" as const,
-      negativePrompt: "blurry, low quality",
-    };
+  describe("veo-3.1-fast-generate-preview adapter", () => {
+    it("should call REST API with correct format", async () => {
+      const request = {
+        model: "veo-3.1-fast-generate-preview",
+        instances: [{
+          prompt: "A cat driving a car",
+        }],
+        parameters: {
+          durationSeconds: 8,
+          aspectRatio: "16:9" as const,
+          generateAudio: true,
+          seed: 12345,
+          enhancePrompt: true,
+          personGeneration: "allow_adult" as const,
+          compressionQuality: "OPTIMIZED" as const,
+          negativePrompt: "blurry, low quality",
+        },
+      };
 
-    await adapter.start(request, "test-job-id");
+      await fastAdapter.start(request, "test-job-id");
 
-    expect(mockGenerateVideos).toHaveBeenCalledOnce();
-    const callArgs = mockGenerateVideos.mock.calls[0][0];
+      expect(mockPredictLongRunning).toHaveBeenCalledOnce();
+      const [modelId, payload] = mockPredictLongRunning.mock.calls[0];
 
-    // Verify basic structure
-    expect(callArgs.model).toBe("veo-3.1-fast-generate-preview");
-    expect(callArgs.source.prompt).toBe("A cat driving a car");
+      // Verify model ID
+      expect(modelId).toBe("veo-3.1-fast-generate-preview");
 
-    // Verify new parameters are passed in config
-    expect(callArgs.config.seed).toBe(12345);
-    expect(callArgs.config.enhancePrompt).toBe(true);
-    expect(callArgs.config.personGeneration).toBe("allow_adult");
-    expect(callArgs.config.compressionQuality).toBe("OPTIMIZED"); // Should be uppercase
-    expect(callArgs.config.negativePrompt).toBe("blurry, low quality");
+      // Verify payload structure matches REST API format
+      expect(payload.instances).toBeDefined();
+      expect(payload.parameters).toBeDefined();
+      expect(payload.instances[0].prompt).toBe("A cat driving a car");
+
+      // Verify all parameters are passed through
+      expect(payload.parameters.seed).toBe(12345);
+      expect(payload.parameters.enhancePrompt).toBe(true);
+      expect(payload.parameters.personGeneration).toBe("allow_adult");
+      expect(payload.parameters.compressionQuality).toBe("OPTIMIZED");
+      expect(payload.parameters.negativePrompt).toBe("blurry, low quality");
+      expect(payload.parameters.storageUri).toContain("test-job-id");
+    });
+
+    it("should handle minimal request (backward compatible)", async () => {
+      const request = {
+        model: "veo-3.1-fast-generate-preview",
+        instances: [{
+          prompt: "Simple video",
+        }],
+      };
+
+      await fastAdapter.start(request, "test-job-id");
+
+      const [, payload] = mockPredictLongRunning.mock.calls[0];
+      expect(payload.instances[0].prompt).toBe("Simple video");
+      expect(payload.parameters.storageUri).toContain("test-job-id");
+    });
+
+    it("should handle seed=0 correctly (falsy but valid)", async () => {
+      const request = {
+        model: "veo-3.1-fast-generate-preview",
+        instances: [{prompt: "Test"}],
+        parameters: {
+          seed: 0,
+        },
+      };
+
+      await fastAdapter.start(request, "test-job-id");
+
+      const [, payload] = mockPredictLongRunning.mock.calls[0];
+      expect(payload.parameters.seed).toBe(0);
+    });
+
+    it("should handle enhancePrompt=false correctly", async () => {
+      const request = {
+        model: "veo-3.1-fast-generate-preview",
+        instances: [{prompt: "Test"}],
+        parameters: {
+          enhancePrompt: false,
+        },
+      };
+
+      await fastAdapter.start(request, "test-job-id");
+
+      const [, payload] = mockPredictLongRunning.mock.calls[0];
+      expect(payload.parameters.enhancePrompt).toBe(false);
+    });
+
+    it("should combine new parameters with media inputs", async () => {
+      const request = {
+        model: "veo-3.1-fast-generate-preview",
+        instances: [{
+          prompt: "Animate this",
+          image: {gcsUri: "gs://bucket/image.jpg"},
+          referenceImages: [
+            {image: {gcsUri: "gs://bucket/ref1.jpg"}, referenceType: "ASSET" as const},
+            {image: {gcsUri: "gs://bucket/ref2.jpg"}, referenceType: "STYLE" as const},
+          ],
+        }],
+        parameters: {
+          negativePrompt: "blurry",
+          seed: 999,
+          enhancePrompt: true,
+          compressionQuality: "LOSSLESS" as const,
+        },
+      };
+
+      await fastAdapter.start(request, "test-job-id");
+
+      const [, payload] = mockPredictLongRunning.mock.calls[0];
+
+      // Media inputs
+      expect(payload.instances[0].image?.gcsUri).toBe("gs://bucket/image.jpg");
+      expect(payload.instances[0].referenceImages).toHaveLength(2);
+      expect(payload.instances[0].referenceImages[0].referenceType).toBe("ASSET");
+      expect(payload.instances[0].referenceImages[1].referenceType).toBe("STYLE");
+
+      // New parameters
+      expect(payload.parameters.negativePrompt).toBe("blurry");
+      expect(payload.parameters.seed).toBe(999);
+      expect(payload.parameters.enhancePrompt).toBe(true);
+      expect(payload.parameters.compressionQuality).toBe("LOSSLESS");
+    });
   });
 
-  it("should convert compressionQuality to uppercase", async () => {
-    const request = {
-      type: "video" as const,
-      model: "veo-3.1-fast-generate-preview" as const,
-      prompt: "Test",
-      compressionQuality: "lossless" as const,
-    };
+  describe("veo-3.1-generate-preview adapter (high quality variant)", () => {
+    it("should call REST API with same format as fast variant", async () => {
+      const request = {
+        model: "veo-3.1-generate-preview",
+        instances: [{
+          prompt: "Cinematic shot",
+        }],
+        parameters: {
+          durationSeconds: 8,
+          compressionQuality: "LOSSLESS" as const,
+          seed: 42,
+        },
+      };
 
-    await adapter.start(request, "test-job-id");
+      await regularAdapter.start(request, "test-job-id");
 
-    const callArgs = mockGenerateVideos.mock.calls[0][0];
-    expect(callArgs.config.compressionQuality).toBe("LOSSLESS");
-  });
+      expect(mockPredictLongRunning).toHaveBeenCalledOnce();
+      const [modelId, payload] = mockPredictLongRunning.mock.calls[0];
 
-  it("should not include optional parameters when not provided", async () => {
-    const request = {
-      type: "video" as const,
-      model: "veo-3.1-fast-generate-preview" as const,
-      prompt: "Simple video",
-    };
-
-    await adapter.start(request, "test-job-id");
-
-    const callArgs = mockGenerateVideos.mock.calls[0][0];
-    expect(callArgs.config.seed).toBeUndefined();
-    expect(callArgs.config.enhancePrompt).toBeUndefined();
-    expect(callArgs.config.personGeneration).toBeUndefined();
-    expect(callArgs.config.compressionQuality).toBeUndefined();
-    expect(callArgs.config.negativePrompt).toBeUndefined();
-  });
-
-  it("should handle seed=0 correctly (falsy but valid)", async () => {
-    const request = {
-      type: "video" as const,
-      model: "veo-3.1-fast-generate-preview" as const,
-      prompt: "Test",
-      seed: 0,
-    };
-
-    await adapter.start(request, "test-job-id");
-
-    const callArgs = mockGenerateVideos.mock.calls[0][0];
-    expect(callArgs.config.seed).toBe(0); // Should include even though falsy
-  });
-
-  it("should handle enhancePrompt=false correctly", async () => {
-    const request = {
-      type: "video" as const,
-      model: "veo-3.1-fast-generate-preview" as const,
-      prompt: "Test",
-      enhancePrompt: false,
-    };
-
-    await adapter.start(request, "test-job-id");
-
-    const callArgs = mockGenerateVideos.mock.calls[0][0];
-    expect(callArgs.config.enhancePrompt).toBe(false); // Should include even though falsy
-  });
-
-  it("should combine new parameters with existing features", async () => {
-    const request = {
-      type: "video" as const,
-      model: "veo-3.1-fast-generate-preview" as const,
-      prompt: "Animate this",
-      imageGcsUri: "gs://bucket/image.jpg",
-      referenceSubjectImages: ["gs://bucket/ref1.jpg", "gs://bucket/ref2.jpg"],
-      negativePrompt: "blurry",
-      seed: 999,
-      enhancePrompt: true,
-      compressionQuality: "lossless" as const,
-    };
-
-    await adapter.start(request, "test-job-id");
-
-    const callArgs = mockGenerateVideos.mock.calls[0][0];
-
-    // Existing features
-    expect(callArgs.config.image).toBe("gs://bucket/image.jpg");
-    expect(callArgs.config.referenceImages.subject).toEqual([
-      "gs://bucket/ref1.jpg",
-      "gs://bucket/ref2.jpg",
-    ]);
-
-    // New parameters
-    expect(callArgs.config.negativePrompt).toBe("blurry");
-    expect(callArgs.config.seed).toBe(999);
-    expect(callArgs.config.enhancePrompt).toBe(true);
-    expect(callArgs.config.compressionQuality).toBe("LOSSLESS");
+      expect(modelId).toBe("veo-3.1-generate-preview");
+      expect(payload.instances[0].prompt).toBe("Cinematic shot");
+      expect(payload.parameters.compressionQuality).toBe("LOSSLESS");
+      expect(payload.parameters.seed).toBe(42);
+      expect(payload.parameters.storageUri).toContain("test-job-id");
+    });
   });
 });

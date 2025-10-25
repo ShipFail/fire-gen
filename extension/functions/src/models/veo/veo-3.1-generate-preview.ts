@@ -2,45 +2,82 @@
 import {z} from "zod";
 import * as logger from "firebase-functions/logger";
 
-import {ai} from "../_shared/ai-client.js";
-import {UrlOrGcsUriSchema} from "../_shared/zod-helpers.js";
+import {predictLongRunning} from "../_shared/vertex-ai-client.js";
 import {getJobStorageUri} from "../../storage.js";
 import {ensureTrailingSlash} from "../../util.js";
 import type {ModelAdapter, StartResult, ModelOutput} from "../_shared/base.js";
 import type {OperationResult} from "../../poller.js";
-import {VEO_COMMON_FIELDS_SCHEMA} from "./shared-schemas.js";
 import {pollVeoOperation, extractVeoOutput} from "./shared-polling.js";
 
-// ============= VEO 3.1 SPECIFIC SCHEMAS =============
+// ============= OFFICIAL VERTEX AI REST API SCHEMA =============
 /**
- * Veo 3.1 specific parameters (not available in 2.0/3.0)
+ * Matches official Vertex AI API for veo-3.1-generate-preview (high quality variant):
+ * https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/veo
  *
- * Based on official Vertex AI documentation and SDK types:
- * - compressionQuality: Video file size optimization
- * - enhancePrompt: AI-powered prompt improvement
- * - personGeneration: Safety controls for human generation
- * - seed: Reproducible generation
- * - referenceType: How reference images are used (ASSET vs STYLE)
+ * Request body format:
+ * {
+ *   "instances": [{
+ *     "prompt": string,
+ *     "image": { "gcsUri": string } | { "bytesBase64Encoded": string },
+ *     "video": { "gcsUri": string } | { "bytesBase64Encoded": string },
+ *     "lastFrame": { "gcsUri": string } | { "bytesBase64Encoded": string },
+ *     "referenceImages": [{ "image": {...}, "referenceType": string }]
+ *   }],
+ *   "parameters": {
+ *     "aspectRatio": "16:9" | "9:16" | "1:1" | "21:9" | "3:4" | "4:3",
+ *     "compressionQuality": "OPTIMIZED" | "LOSSLESS",
+ *     "durationSeconds": 4 | 6 | 8,
+ *     "enhancePrompt": boolean,
+ *     "generateAudio": boolean,
+ *     "negativePrompt": string,
+ *     "personGeneration": "dont_allow" | "allow_adult",
+ *     "sampleCount": number,
+ *     "seed": number,
+ *     "storageUri": string  // gs:// path for output
+ *   }
+ * }
  */
-const VEO_31_COMPRESSION_QUALITY_SCHEMA = z.enum(["optimized", "lossless"]);
-const VEO_31_PERSON_GENERATION_SCHEMA = z.enum(["dont_allow", "allow_adult"]);
-const VEO_31_REFERENCE_TYPE_SCHEMA = z.enum(["asset", "style"]);
 
-// ============= SCHEMA (Single Source of Truth) =============
-export const Veo31GeneratePreviewRequestSchema = VEO_COMMON_FIELDS_SCHEMA.extend({
-  model: z.literal("veo-3.1-generate-preview"),
-  // Veo 3.1 specific fields - Image/Video inputs
-  imageGcsUri: UrlOrGcsUriSchema.optional(),
-  referenceSubjectImages: z.array(UrlOrGcsUriSchema).max(3).optional(),
-  videoGcsUri: UrlOrGcsUriSchema.optional(),
-  lastFrameGcsUri: UrlOrGcsUriSchema.optional(),
-  // Veo 3.1 specific fields - Generation controls
-  negativePrompt: z.string().optional(),
-  seed: z.number().int().optional(),
+// Image/Video input schemas
+const MediaSchema = z.object({
+  gcsUri: z.string().optional(),
+  bytesBase64Encoded: z.string().optional(),
+  mimeType: z.string().optional(),
+});
+
+const ReferenceImageSchema = z.object({
+  image: MediaSchema,
+  referenceType: z.enum(["ASSET", "STYLE"]).optional(),
+});
+
+// Instance schema (per-request input)
+const Veo31InstanceSchema = z.object({
+  prompt: z.string(),
+  image: MediaSchema.optional(),
+  video: MediaSchema.optional(),
+  lastFrame: MediaSchema.optional(),
+  referenceImages: z.array(ReferenceImageSchema).max(3).optional(),
+});
+
+// Parameters schema (generation config)
+const Veo31ParametersSchema = z.object({
+  aspectRatio: z.enum(["16:9", "9:16", "1:1", "21:9", "3:4", "4:3"]).default("16:9"),
+  compressionQuality: z.enum(["OPTIMIZED", "LOSSLESS"]).optional(),
+  durationSeconds: z.union([z.literal(4), z.literal(6), z.literal(8)]).default(8),
   enhancePrompt: z.boolean().optional(),
-  personGeneration: VEO_31_PERSON_GENERATION_SCHEMA.optional(),
-  compressionQuality: VEO_31_COMPRESSION_QUALITY_SCHEMA.optional(),
-  referenceType: VEO_31_REFERENCE_TYPE_SCHEMA.optional(),
+  generateAudio: z.boolean().default(true),
+  negativePrompt: z.string().optional(),
+  personGeneration: z.enum(["dont_allow", "allow_adult"]).optional(),
+  sampleCount: z.number().int().default(1),
+  seed: z.number().int().optional(),
+  storageUri: z.string().optional(), // Made optional - adapter adds this
+});
+
+// Complete REST API request schema
+export const Veo31GeneratePreviewRequestSchema = z.object({
+  model: z.literal("veo-3.1-generate-preview"),
+  instances: z.array(Veo31InstanceSchema),
+  parameters: Veo31ParametersSchema.optional(),
 });
 
 // ============= TYPE (Inferred from Schema) =============
@@ -58,10 +95,14 @@ export const VEO_3_1_GENERATE_PREVIEW_CONFIG = {
 
 // ============= AI HINT =============
 export const VEO_3_1_GENERATE_PREVIEW_AI_HINT = `
-- veo-3.1-generate-preview: High quality variant (60-120s generation)
-  - Use when: Prompt contains "high quality", "best quality", or "cinematic"
-  - Features: Same as veo-3.1-fast-generate-preview (see below for capabilities)
-  - Additional controls: seed, enhancePrompt, personGeneration, compressionQuality
+- veo-3.1-generate-preview (high quality, 60-120s generation)
+
+  Capabilities: Same as veo-3.1-fast-generate-preview plus:
+  1. Better quality output for professional/cinematic use
+  2. Longer generation time but higher fidelity
+  3. All same features: referenceImages, video input, frame transitions, etc.
+
+  Use when: Prompt contains "high quality", "best quality", "cinematic", "professional"
 `;
 
 // ============= ADAPTER (Standalone - No Inheritance) =============
@@ -72,61 +113,27 @@ export class Veo31GeneratePreviewAdapter implements ModelAdapter {
     // Validate with Zod schema
     const validated = Veo31GeneratePreviewRequestSchema.parse(request);
 
-    // Veo writes directly to GCS via outputGcsUri
-    const outputGcsUri = ensureTrailingSlash(getJobStorageUri(jobId));
+    // Set output storage URI
+    const storageUri = ensureTrailingSlash(getJobStorageUri(jobId));
 
-    logger.info("Starting Veo 3.1 generation", {
-      jobId,
-      model: this.modelId,
-      outputGcsUri,
-    });
-
-    // Build config for Veo 3.1 API
-    const config: Record<string, unknown> = {
-      numberOfVideos: 1,
-      durationSeconds: validated.duration,
-      aspectRatio: validated.aspectRatio,
-      generateAudio: validated.audio,
-      outputGcsUri,
+    // Update parameters with output location
+    const parameters = {
+      ...validated.parameters,
+      storageUri,
     };
 
-    // Veo 3.1 specific features - Image/Video inputs
-    if (validated.imageGcsUri) {
-      config.image = validated.imageGcsUri;
-    }
-    if (validated.referenceSubjectImages && validated.referenceSubjectImages.length > 0) {
-      config.referenceImages = {
-        subject: validated.referenceSubjectImages,
-      };
-    }
-    if (validated.videoGcsUri) {
-      config.video = validated.videoGcsUri;
-    }
-    if (validated.lastFrameGcsUri) {
-      config.lastFrame = validated.lastFrameGcsUri;
-    }
-
-    // Veo 3.1 specific features - Generation controls
-    if (validated.negativePrompt) {
-      config.negativePrompt = validated.negativePrompt;
-    }
-    if (validated.seed !== undefined) {
-      config.seed = validated.seed;
-    }
-    if (validated.enhancePrompt !== undefined) {
-      config.enhancePrompt = validated.enhancePrompt;
-    }
-    if (validated.personGeneration) {
-      config.personGeneration = validated.personGeneration;
-    }
-    if (validated.compressionQuality) {
-      config.compressionQuality = validated.compressionQuality.toUpperCase();
-    }
-
-    const op = await ai.models.generateVideos({
+    logger.info("Starting Veo 3.1 generation via REST API", {
+      jobId,
       model: this.modelId,
-      source: {prompt: validated.prompt},
-      config,
+      storageUri,
+      instances: validated.instances,
+      parameters,
+    });
+
+    // Call Vertex AI REST API
+    const op = await predictLongRunning(this.modelId, {
+      instances: validated.instances,
+      parameters,
     });
 
     if (!op?.name) {
@@ -149,3 +156,4 @@ export class Veo31GeneratePreviewAdapter implements ModelAdapter {
 
 // ============= EXPORTS =============
 export default Veo31GeneratePreviewAdapter;
+

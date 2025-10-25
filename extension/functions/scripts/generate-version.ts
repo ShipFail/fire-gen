@@ -11,7 +11,7 @@ try {
   // Read package.json
   const content = readFileSync(packageJsonPath, "utf8");
   const pkg = JSON.parse(content);
-  
+
   if (!pkg.version) {
     throw new Error("No version found in package.json");
   }

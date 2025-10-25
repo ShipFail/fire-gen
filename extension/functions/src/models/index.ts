@@ -7,19 +7,13 @@
 
 // Import all model families
 import {VEO_MODELS, VEO_AI_HINTS} from "./veo/index.js";
-import {IMAGEN_MODELS, IMAGEN_AI_HINTS} from "./imagen/index.js";
 import {GEMINI_FLASH_IMAGE_MODELS, GEMINI_25_FLASH_IMAGE_AI_HINT} from "./gemini-flash-image/index.js";
 import {GEMINI_TTS_MODELS, GEMINI_TTS_AI_HINTS} from "./gemini-tts/index.js";
-import {GEMINI_TEXT_MODELS, GEMINI_TEXT_AI_HINTS} from "./gemini-text/index.js";
-import {LYRIA_MODELS, LYRIA_AI_HINTS} from "./lyria/index.js";
 
 // Re-export everything from model families
 export * from "./veo/index.js";
-export * from "./imagen/index.js";
 export * from "./gemini-flash-image/index.js";
 export * from "./gemini-tts/index.js";
-export * from "./gemini-text/index.js";
-export * from "./lyria/index.js";
 
 // Re-export shared base types
 export * from "./_shared/base.js";
@@ -31,11 +25,8 @@ export * from "./_shared/zod-helpers.js";
  */
 export const MODEL_REGISTRY = {
   ...VEO_MODELS,
-  ...IMAGEN_MODELS,
   ...GEMINI_FLASH_IMAGE_MODELS,
   ...GEMINI_TTS_MODELS,
-  ...GEMINI_TEXT_MODELS,
-  ...LYRIA_MODELS,
 } as const;
 
 /**
@@ -95,15 +86,9 @@ Given a user's natural language request, analyze it and return a structured JobR
 
 ${GEMINI_TTS_AI_HINTS}
 
-${LYRIA_AI_HINTS}
-
 ${VEO_AI_HINTS}
 
 ${GEMINI_25_FLASH_IMAGE_AI_HINT}
-
-${IMAGEN_AI_HINTS}
-
-${GEMINI_TEXT_AI_HINTS}
 
 ## Analysis Rules
 
@@ -111,25 +96,18 @@ ${GEMINI_TEXT_AI_HINTS}
 
    **CRITICAL FIRST: Check for TTS (Text-to-Speech)**
    - TTS: "say", "speak", "voice", "read", "narrate", "announce", "tell", "pronounce"
-     * If request contains ANY SPOKEN WORDS → ALWAYS classify as TTS, NOT music
+     * If request contains ANY SPOKEN WORDS → ALWAYS classify as TTS
      * Semantic understanding: "speak hello" = someone speaking words out loud = TTS
      * Examples: "speak hello", "say welcome", "read this text", "narrate story" → TTS
-     * NOT music, NOT instrumental, NOT soundtrack
 
    **Then check other types:**
-   - Music: "music", "song", "soundtrack", "audio background", "instrumental", "melody", "beat"
-     * ONLY if NO TTS/speech keywords present
-     * Must be MUSICAL COMPOSITION (instruments playing), not spoken words
    - Video: "video", "clip", "footage", "movie", "animation", "motion"
    - Image: "image", "picture", "photo", "illustration", "drawing", "render"
-   - Text: "write", "generate text", "explain", "describe", "summarize", "analyze"
 
 2. **ALWAYS choose fastest model by default (CRITICAL):**
    - Video: **veo-3.1-fast-generate-preview** is the smart default (fast, high quality)
    - Image: gemini-2.5-flash-image - fast image generation
    - TTS: gemini-2.5-flash-preview-tts
-   - Music: lyria-002 (only option)
-   - Text: gemini-2.5-flash (ONLY use Pro if "complex", "detailed", "high quality" mentioned)
 
 3. **Extract parameters intelligently:**
    - Duration from "4 second", "short", "long", "brief" (video: 4/6/8s only)
@@ -157,13 +135,10 @@ ${GEMINI_TEXT_AI_HINTS}
 
 4. **Handle ambiguity:**
    - If request could be multiple types, choose most likely based on context
-   - If truly ambiguous, default to text generation with explanation
 
 5. **Prompt refinement:**
    - For video/image: Extract visual description, remove meta instructions
    - For TTS: Extract exact text to speak
-   - For music: Extract style/mood/instruments
-   - For text: Keep full request as prompt
 
 ## Response Format
 

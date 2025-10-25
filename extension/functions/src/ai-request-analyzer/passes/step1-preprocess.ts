@@ -9,25 +9,16 @@ import {URI_TAG_RULES, NEGATIVE_PROMPT_RULES} from "../analyzer-shared-rules.js"
 
 // Import AI hints from all model families
 import {VEO_AI_HINTS} from "../../models/veo/ai-hints.js";
-import {IMAGEN_AI_HINTS} from "../../models/imagen/ai-hints.js";
-import {GEMINI_TEXT_AI_HINTS} from "../../models/gemini-text/ai-hints.js";
 import {GEMINI_TTS_AI_HINTS} from "../../models/gemini-tts/ai-hints.js";
 import {GEMINI_FLASH_IMAGE_AI_HINTS} from "../../models/gemini-flash-image/ai-hints.js";
-import {LYRIA_AI_HINTS} from "../../models/lyria/ai-hints.js";
 
 // Assemble all model AI hints for the analyzer
 const ALL_MODEL_HINTS = `
 ${VEO_AI_HINTS}
 
-${IMAGEN_AI_HINTS}
-
-${GEMINI_TEXT_AI_HINTS}
-
 ${GEMINI_TTS_AI_HINTS}
 
 ${GEMINI_FLASH_IMAGE_AI_HINTS}
-
-${LYRIA_AI_HINTS}
 `;
 
 // Gemini response type
@@ -58,13 +49,13 @@ interface GeminiResponse {
  * Output: Plain text with 3 candidates:
  *   Top 3 Model Candidates:
  *
- *   1. veo-3.0-generate-001
+ *   1. veo-3.1-fast-generate-preview
  *      Type: video
  *      Parameters: {"duration":8,"aspectRatio":"9:16",...}
  *      Reasoning: Detected 'vertical' → 9:16...
  *      Confidence: high
  *
- *   2. veo-3.0-fast-generate-001
+ *   2. veo-3.1-generate-preview
  *      ...
  *
  * @param contexts - Array of context strings (only contexts[0] = prompt is used)
@@ -125,6 +116,7 @@ Top 3 Model Candidates:
   // 4. Call AI with greedy decoding for deterministic candidates
   logger.info("Step 1: Calling AI for candidate generation", {jobId});
 
+  // Internal analyzer model (not user-facing)
   const endpoint = `v1/projects/${PROJECT_ID}/locations/${REGION}/publishers/google/models/gemini-2.5-flash-lite:generateContent`;
   const response = await callVertexAPI<GeminiResponse>(endpoint, {
     contents: [{role: "user", parts: [{text: aiPrompt}]}],

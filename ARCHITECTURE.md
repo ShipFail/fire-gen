@@ -163,8 +163,7 @@ export class GeminiTextAdapter implements ModelAdapter { }
 export type JobRequest =
   | VideoJobRequest    // type: "video"
   | ImageJobRequest    // type: "image"
-  | AudioJobRequest    // type: "audio", subtype: "tts" | "music" | "chirp-tts" | "chirp-stt"
-  | TextJobRequest;    // type: "text"
+  | AudioJobRequest;   // type: "audio", subtype: "tts"
 
 // TypeScript enforces exhaustive checking
 function getModelAdapter(request: JobRequest): ModelAdapter {
@@ -340,15 +339,9 @@ Routes request to appropriate adapter based on discriminant fields.
 **Routing Table:**
 ```typescript
 request.type === "video"  → VeoAdapter
-request.type === "image"
-  ├─ model === "nano-banana" → NanoBananaAdapter
-  └─ else → ImagenAdapter
+request.type === "image"  → GeminiFlashImageAdapter
 request.type === "audio"
-  ├─ subtype === "tts" → GeminiTTSAdapter
-  ├─ subtype === "chirp-tts" → ChirpTTSAdapter
-  ├─ subtype === "chirp-stt" → ChirpSTTAdapter
-  └─ subtype === "music" → LyriaAdapter
-request.type === "text" → GeminiTextAdapter
+  └─ subtype === "tts" → GeminiTTSAdapter
 ```
 
 **Validation:** Checks model ID against allowlists before routing.
@@ -384,13 +377,9 @@ Orchestrates the complete job start process.
 
 **Model Allowlists:** Hardcoded validation sets
 ```typescript
-const ALLOWED_VEO_MODELS = new Set(["veo-3.0-generate-001", ...]);
-const ALLOWED_IMAGE_MODELS = new Set(["nano-banana", "imagen-4.0-generate-001", ...]);
-const ALLOWED_TTS_MODELS = new Set(["gemini-2.5-flash-preview-tts", ...]);
-const ALLOWED_CHIRP_TTS_MODELS = new Set(["chirp-3-hd"]);
-const ALLOWED_CHIRP_STT_MODELS = new Set(["chirp"]);
-const ALLOWED_MUSIC_MODELS = new Set(["lyria-002"]);
-const ALLOWED_TEXT_MODELS = new Set(["gemini-2.5-pro", "gemini-2.5-flash", ...]);
+const ALLOWED_VEO_MODELS = new Set(["veo-3.1-generate-preview", "veo-3.1-fast-generate-preview"]);
+const ALLOWED_IMAGE_MODELS = new Set(["gemini-2.5-flash-image"]);
+const ALLOWED_TTS_MODELS = new Set(["gemini-2.5-flash-preview-tts", "gemini-2.5-pro-preview-tts"]);
 ```
 
 **TODO:** Extract to config or derive from types
@@ -460,9 +449,9 @@ async function analyzePrompt(userPrompt: string, jobId: string): Promise<Analyze
    ```typescript
    // src/models/index.ts
    export const MODEL_REGISTRY = {
-     "veo-3.0-generate-001": {adapter: Veo3Adapter, config: {...}},
-     "nano-banana": {adapter: NanoBananaAdapter, config: {...}},
-     // ... all models
+     "veo-3.1-generate-preview": {adapter: Veo31Adapter, config: {...}},
+     "gemini-2.5-flash-image": {adapter: GeminiFlashImageAdapter, config: {...}},
+     // ... all 5 models
    };
    ```
 
@@ -695,10 +684,6 @@ Generates consistent filename patterns:
 video → "video-{model}.mp4"
 image → "image-{model}.png"
 audio/tts → "audio-tts-{model}.wav"
-audio/music → "audio-music-{model}.wav"
-audio/chirp-tts → "audio-chirp-tts-{model}.wav"
-audio/chirp-stt → throw Error (no file created)
-text → throw Error (no file created)
 ```
 
 **Design Rationale:** Filename includes model ID for traceability
@@ -711,7 +696,7 @@ Builds complete GCS URI:
 gs://{bucket}/firegen-jobs/{jobId}/{filename}
 ```
 
-Example: `gs://my-bucket/firegen-jobs/abc123/video-veo-3.0-generate-001.mp4`
+Example: `gs://my-bucket/firegen-jobs/abc123/video-veo-3.1-fast-generate-preview.mp4`
 
 ##### `generateSignedUrl(gcsUri: string): Promise<string>`
 
@@ -812,11 +797,10 @@ When you type `request.` after narrowing, IDE shows only valid fields.
    Input: "Create a 4-second sunset video"
    Output: {
      type: "video",
-     model: "veo-3.0-fast-generate-001",
+     model: "veo-3.1-fast-generate-preview",
      prompt: "A serene sunset over majestic mountains",
      duration: 8,
      aspectRatio: "16:9",
-     resolution: "1080p",
      audio: true
    }
    Time: ~1-2 seconds
@@ -872,10 +856,10 @@ Total time: Normal time + 1-2s for AI analysis
 
 5. Vertex AI → Returns inline base64 image data
 
-6. ImagenAdapter → uploadToGcs()
-   Writes to: gs://.../firegen-jobs/{id}/image-imagen-4.0-generate-001.png
+6. GeminiFlashImageAdapter → uploadToGcs()
+   Writes to: gs://.../firegen-jobs/{id}/image-gemini-2.5-flash-image.png
 
-7. ImagenAdapter → Returns {output: {uri, metadata}}
+7. GeminiFlashImageAdapter → Returns {output: {uri, metadata}}
 
 8. orchestrator → generateSignedUrl(uri)
    Creates signed URL (25h expiry)
@@ -1504,7 +1488,7 @@ export function generateStorageFilename(request: JobRequest): string {
 **Status:** ✅ Completed - No technical debt from SDK
 
 **Achievement:**
-- All 18 models migrated to pure REST API
+- All 5 models migrated to pure REST API
 - Removed `@google/genai` SDK completely
 - No type assertions (`as any`) needed
 - Direct Vertex AI REST API calls
@@ -1531,7 +1515,7 @@ export function generateStorageFilename(request: JobRequest): string {
 **Improvement:** Derive from types or extract to config
 ```typescript
 // Current:
-const ALLOWED_VEO_MODELS = new Set(["veo-3.0-generate-001", ...]);
+const ALLOWED_VEO_MODELS = new Set(["veo-3.1-generate-preview", "veo-3.1-fast-generate-preview"]);
 
 // Better:
 import {VEO_MODEL_IDS} from "./types/video.js";

@@ -734,16 +734,14 @@ const fixtures = [
     id: "image:cat",
     prompt: "Generate an image of a fluffy orange cat sitting on a windowsill",
     expected: {
-      model: expect.stringMatching(/^(gemini-2\.5-flash-image|imagen-4\.0-generate-001)$/),
-      // Gemini Flash Image uses contents/generationConfig, Imagen uses instances/parameters
-      // Just check that one of these structures exists
+      model: "gemini-2.5-flash-image",
     },
   },
   {
     id: "image:scientist-portrait",
     prompt: "generate a Portrait photo image of a scientist in a modern laboratory, professional lighting",
     expected: {
-      model: expect.stringMatching(/^(gemini-2\.5-flash-image|imagen-4\.0-(fast-)?generate-001)$/),
+      model: "gemini-2.5-flash-image",
       // Note: "portrait of X" is ambiguous - could mean portrait subject (1:1) or portrait orientation (2:3/3:4/9:16)
       // AI interprets this as portrait subject, so 1:1 is acceptable
     },
@@ -752,7 +750,7 @@ const fixtures = [
     id: "image:photorealistic-portrait",
     prompt: "Photorealistic ultra-detailed portrait, 9:16 aspect ratio",
     expected: {
-      model: expect.stringMatching(/^(gemini-2\.5-flash-image|imagen-4\.0-(ultra-)?generate-001)$/),
+      model: "gemini-2.5-flash-image",
     },
   },
 
@@ -810,113 +808,6 @@ const fixtures = [
             }),
           }),
         }),
-      }),
-    },
-  },
-
-  // ============================================
-  // AUDIO - MUSIC
-  // ============================================
-  {
-    id: "audio:music-upbeat",
-    prompt: "Generate upbeat background music with electronic beats for a workout video",
-    expected: {
-      model: "lyria-002",
-      instances: expect.arrayContaining([
-        expect.objectContaining({
-          prompt: expect.stringMatching(/.+/),
-        }),
-      ]),
-      parameters: expect.objectContaining({
-        sample_count: 1,
-      }),
-    },
-  },
-  {
-    id: "audio:music-meditation",
-    prompt: "Generate music of calm ambient background music for meditation",
-    expected: {
-      model: "lyria-002",
-      instances: expect.arrayContaining([
-        expect.objectContaining({
-          prompt: expect.stringMatching(/.+/),
-        }),
-      ]),
-      parameters: expect.objectContaining({
-        sample_count: 1,
-      }),
-    },
-  },
-
-  // ============================================
-  // TEXT
-  // ============================================
-  {
-    id: "text:explain-ai",
-    prompt: "Write a text explanation of artificial intelligence and how it works",
-    expected: {
-      model: expect.stringMatching(/^gemini-2\.5-(flash|pro)$/),
-      contents: expect.arrayContaining([
-        expect.objectContaining({
-          role: "user",
-          parts: expect.arrayContaining([
-            expect.objectContaining({
-              text: expect.stringMatching(/.+/),
-            }),
-          ]),
-        }),
-      ]),
-      generationConfig: expect.objectContaining({
-        temperature: expect.any(Number),
-        topP: expect.any(Number),
-        topK: expect.any(Number),
-        maxOutputTokens: expect.any(Number),
-      }),
-    },
-  },
-  {
-    id: "text:neural-networks-beginner",
-    prompt: "Write a short text description of how neural networks work for a beginner",
-    expected: {
-      model: "gemini-2.5-flash",
-      contents: expect.arrayContaining([
-        expect.objectContaining({
-          role: "user",
-          parts: expect.arrayContaining([
-            expect.objectContaining({
-              text: expect.stringMatching(/.+/),
-            }),
-          ]),
-        }),
-      ]),
-      generationConfig: expect.objectContaining({
-        temperature: expect.any(Number),
-        topP: expect.any(Number),
-        topK: expect.any(Number),
-        maxOutputTokens: expect.any(Number),
-      }),
-    },
-  },
-  {
-    id: "text:transformer-analysis",
-    prompt: "Provide a comprehensive technical analysis of transformer architecture in modern large language models",
-    expected: {
-      model: expect.stringMatching(/^gemini-2\.5-(flash|pro)$/),
-      contents: expect.arrayContaining([
-        expect.objectContaining({
-          role: "user",
-          parts: expect.arrayContaining([
-            expect.objectContaining({
-              text: expect.stringMatching(/.+/),
-            }),
-          ]),
-        }),
-      ]),
-      generationConfig: expect.objectContaining({
-        temperature: expect.any(Number),
-        topP: expect.any(Number),
-        topK: expect.any(Number),
-        maxOutputTokens: expect.any(Number),
       }),
     },
   },

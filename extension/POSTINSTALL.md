@@ -20,7 +20,7 @@ You can test out this extension right away!
   "status": "requested",
   "request": {
     "type": "video",
-    "model": "veo-3.0-fast-generate-001",
+    "model": "veo-3.1-fast-generate-preview",
     "prompt": "a cat playing with a ball in a sunny garden",
     "durationSeconds": 8,
     "aspectRatio": "16:9",
@@ -68,6 +68,7 @@ The AI analyzer will:
 For production workflows with precise control:
 
 ```javascript
+```javascript
 const db = getDatabase();
 
 // Video generation
@@ -76,7 +77,7 @@ const videoJob = await push(ref(db, "firegen-jobs"), {
   status: "requested",
   request: {
     type: "video",
-    model: "veo-3.0-generate-001",
+    model: "veo-3.1-generate-preview",
     prompt: "a serene mountain landscape at dawn",
     durationSeconds: 8,
     aspectRatio: "16:9",
@@ -91,12 +92,12 @@ const imageJob = await push(ref(db, "firegen-jobs"), {
   status: "requested",
   request: {
     type: "image",
-    model: "imagen-4.0-fast-generate-001",
+    model: "gemini-2.5-flash-image",
     prompt: "a futuristic robot in a cyberpunk city",
-    aspectRatio: "1:1",
-    numberOfImages: 1
+    aspectRatio: "1:1"
   }
 });
+```
 
 // Audio generation (Text-to-Speech)
 const audioJob = await push(ref(db, "firegen-jobs"), {
@@ -107,17 +108,6 @@ const audioJob = await push(ref(db, "firegen-jobs"), {
     model: "gemini-2.5-flash-preview-tts",
     text: "Hello world! This is text-to-speech generation.",
     voiceName: "Puck"
-  }
-});
-
-// Text generation
-const textJob = await push(ref(db, "firegen-jobs"), {
-  uid: "user-123",
-  status: "requested",
-  request: {
-    type: "text",
-    model: "gemini-2.5-pro",
-    prompt: "Explain quantum computing in simple terms"
   }
 });
 ```
@@ -157,48 +147,29 @@ onValue(jobRef, (snapshot) => {
 
 ### Supported models and parameters
 
-#### VIDEO (Veo models)
-**Models:** `veo-3.0-generate-001`, `veo-3.0-fast-generate-001`, `veo-2.0-generate-001`
+#### VIDEO (Veo 3.1 models)
+**Models:** `veo-3.1-generate-preview`, `veo-3.1-fast-generate-preview`
 
 **Parameters:**
 - `prompt` (required) - Text description of the video
-- `durationSeconds` (optional) - Length: 1-8 seconds (default: 8)
-- `aspectRatio` (optional) - `"16:9"` or `"9:16"` (default: `"16:9"`)
-- `resolution` (optional) - `"720p"` or `"1080p"` (default: `"720p"`)
+- `durationSeconds` (optional) - Length: 4, 6, or 8 seconds (default: 8)
+- `aspectRatio` (optional) - `"16:9"`, `"9:16"`, or `"1:1"` (default: `"16:9"`)
+- `resolution` (optional) - `"720p"` or `"1080p"` (default: `"1080p"`)
 - `generateAudio` (optional) - Include audio (default: `true`)
 
-#### IMAGE (Imagen & Nano Banana)
-**Models:** `imagen-4.0-ultra-generate-001`, `imagen-4.0-generate-001`, `imagen-4.0-fast-generate-001`, `nano-banana`
+#### IMAGE (Gemini Flash Image)
+**Models:** `gemini-2.5-flash-image`
 
 **Parameters:**
 - `prompt` (required) - Text description of the image
-- `aspectRatio` (optional) - `"1:1"`, `"16:9"`, `"9:16"`, `"4:3"`, `"3:4"` (default: `"1:1"`)
-- `numberOfImages` (optional) - Images to generate: 1-4 (default: 1)
+- `aspectRatio` (optional) - `"1:1"`, `"2:3"`, `"3:2"`, `"9:16"`, `"16:9"`, `"3:4"`, `"4:3"` (default: `"1:1"`)
 
-#### AUDIO
-**Text-to-Speech Models:** `gemini-2.5-flash-preview-tts`, `gemini-2.5-pro-preview-tts`
+#### AUDIO (Text-to-Speech)
+**Models:** `gemini-2.5-flash-preview-tts`, `gemini-2.5-pro-preview-tts`
 
 **Parameters:**
 - `text` (required) - Text to convert to speech
 - `voiceName` (optional) - Voice: `"Puck"`, `"Charon"`, `"Kore"`, `"Fenrir"`, `"Aoede"` (default: `"Puck"`)
-
-**Speech-to-Text Models:** `chirp-3-hd`, `chirp`
-
-**Parameters:**
-- `audioUri` (required) - GCS URI of audio file to transcribe
-
-**Music Generation:** `lyria-002`
-
-**Parameters:**
-- `prompt` (required) - Music description (style, mood, instruments)
-
-#### TEXT (Gemini models)
-**Models:** `gemini-2.5-pro`, `gemini-2.5-flash`
-
-**Parameters:**
-- `prompt` (required) - Text generation prompt
-- `temperature` (optional) - Creativity: 0.0-2.0 (default: 1.0)
-- `maxOutputTokens` (optional) - Max length: 1-8192 (default: 2048)
 
 ### Job lifecycle
 
@@ -217,7 +188,7 @@ onValue(jobRef, (snapshot) => {
   "status": "succeeded",
   "response": {
     "url": "https://storage.googleapis.com/...?Expires=...",
-    "uri": "gs://bucket/firegen-jobs/abc123/video-veo-3.0-fast-generate-001.mp4"
+    "uri": "gs://bucket/firegen-jobs/abc123/video-veo-3.1-fast-generate-preview.mp4"
   },
   "_meta": {
     "reasons": ["AI analysis step 1", "AI analysis step 2"]

@@ -2,7 +2,7 @@
 
 <p align="center"><img src="./docs/firegen-logo.webp" width="256" alt="FireGen Logo" /></p>
 
-> Serverless AI media generation using Google Vertex AI. Supports 18 models across video, image, audio, and text generation through a unified Firebase RTDB job queue.
+> Serverless AI media generation using Google Vertex AI. MVP supports 5 models across video, image, and audio generation through a unified Firebase RTDB job queue.
 
 [![Firebase](https://img.shields.io/badge/Firebase-Cloud%20Functions-orange)](https://firebase.google.com/docs/functions)
 [![Vertex AI](https://img.shields.io/badge/Vertex%20AI-Powered-blue)](https://cloud.google.com/vertex-ai)
@@ -16,16 +16,15 @@ FireGen is a Firebase Cloud Functions extension that provides serverless AI medi
 
 **Key Features:**
 - 🤖 **AI-Assisted Mode** - Natural language prompts (just write a string!)
-- 🎬 **Video Generation** - Veo 2.0/3.0/3.1 models (async, 4-8s videos, 720p/1080p)
-- 🖼️ **Image Generation** - Imagen 4, Nano Banana (sync, 2K resolution)
-- 🎵 **Audio Generation** - Gemini TTS, Lyria music generation
-- 📝 **Text Generation** - Gemini 2.0/2.5 Pro/Flash/Lite models
+- 🎬 **Video Generation** - Veo 3.1 models (async, 4-8s videos, 720p/1080p)
+- 🖼️ **Image Generation** - Gemini 2.5 Flash Image (sync, multimodal)
+- �️ **Audio Generation** - Gemini TTS (text-to-speech)
 - ⚡ **Pure REST API** - No SDK dependencies, direct Vertex AI calls
 - ⏱️ **Async & Sync** - Video polling, instant for other models
 - 🔒 **Secure** - User-scoped jobs, signed URLs, auto-cleanup
 - 💾 **Ephemeral Storage** - Auto-delete after 24h (cost optimization)
 
-**Supported Models:** 18 models across 6 categories
+**Supported Models:** 5 models across 3 families (MVP focus)
 **Generation Speed:** 1-120 seconds depending on model
 **Storage:** Temporary (24h lifetime - must download/copy media)
 **Operation Modes:**
@@ -82,7 +81,7 @@ const job = {
   status: "requested",
   request: {
     type: "video",
-    model: "veo-3.0-fast-generate-001",
+    model: "veo-3.1-fast-generate-preview",
     prompt: "A serene sunset over majestic mountains",
     duration: 8,
     aspectRatio: "16:9",
@@ -202,12 +201,9 @@ functions/
 │   │   ├── _shared/                # Shared adapter utilities
 │   │   │   ├── base.ts             # ModelAdapter interface
 │   │   │   └── zod-helpers.ts      # Zod schema helpers
-│   │   ├── veo/                    # Video: Veo 2.0/3.0/3.1 (async)
+│   │   ├── veo/                    # Video: Veo 3.1 (async)
 │   │   ├── gemini-flash-image/     # Image: Gemini 2.5 Flash (sync)
-│   │   ├── imagen/                 # Image: Imagen 4.0 (sync)
-│   │   ├── gemini-tts/             # Audio: Gemini TTS (sync)
-│   │   ├── lyria/                  # Audio: Lyria music (async)
-│   │   └── gemini-text/            # Text: Gemini 2.5 (sync)
+│   │   └── gemini-tts/             # Audio: Gemini TTS (sync)
 │   │
 │   └── types/                      # TypeScript type definitions
 │       ├── index.ts                # Central exports + JobRequest union
@@ -291,41 +287,22 @@ const ALLOWED_NEW_MODELS = new Set(["new-model-v1"]);
 
 ## Supported Models
 
-### Video (3 models - Async)
+### Video (2 models - Async)
 | Model | Speed | Quality | Operation | Resolution | Notes |
 |-------|-------|---------|-----------|------------|-------|
-| `veo-3.0-generate-001` | 30-120s | Highest | Async (polling) | 720p/1080p | Best quality, longer generation |
-| `veo-3.0-fast-generate-001` | 15-60s | High | Async (polling) | 720p/1080p | Balanced speed/quality |
-| `veo-2.0-generate-001` | 30-120s | High | Async (polling) | 720p/1080p | Previous generation |
+| `veo-3.1-generate-preview` | 30-120s | Highest | Async (polling) | 720p/1080p | Best quality |
+| `veo-3.1-fast-generate-preview` | 15-60s | High | Async (polling) | 720p/1080p | **Default** - fast & high quality |
 
-### Image (4 models - Sync)
+### Image (1 model - Sync)
 | Model | Speed | Quality | Operation | Notes |
 |-------|-------|---------|-----------|-------|
-| `gemini-2.5-flash-image` | 2-5s | Good | Instant | Gemini 2.5 Flash Image, cost-effective |
-| `imagen-4.0-generate-001` | 3-8s | Highest | Instant | Imagen 4 (2K, superior text generation) |
-| `imagen-4.0-fast-generate-001` | 2-5s | High | Instant | Imagen 4 Fast, balanced quality/speed |
-| `imagen-4.0-ultra-generate-001` | 5-12s | Ultra | Instant | Imagen 4 Ultra, most creative |
+| `gemini-2.5-flash-image` | 2-5s | High | Instant | Multimodal, cost-effective, fast generation |
 
 ### Audio - TTS (2 models - Sync)
 | Model | Voices | Languages | Operation | Notes |
 |-------|--------|-----------|-----------|-------|
-| `gemini-2.5-flash-preview-tts` | 30 | 24 | Instant | Natural language control |
+| `gemini-2.5-flash-preview-tts` | 30 | 24 | Instant | **Default** - natural language control |
 | `gemini-2.5-pro-preview-tts` | 30 | 24 | Instant | Higher quality TTS |
-
-### Audio - Music (1 model - Async)
-| Model | Type | Operation | Output | Notes |
-|-------|------|-----------|--------|-------|
-| `lyria-002` | Music Generation | Async (polling) | 30s WAV | Instrumental music from text prompts |
-| `lyria-002` | Music Generation | Instant | 32.8s WAV | Instrumental music creation |
-
-### Text (5 models - Sync)
-| Model | Speed | Quality | Operation | Notes |
-|-------|-------|---------|-----------|-------|
-| `gemini-2.5-pro` | 2-10s | Highest | Instant | Extended reasoning, most powerful |
-| `gemini-2.5-flash` | 1-5s | High | Instant | Best price/performance |
-| `gemini-2.5-flash-lite` | 1-3s | Good | Instant | Most cost-effective |
-| `gemini-2.0-flash` | 1-5s | High | Instant | Latest features |
-| `gemini-2.0-flash-lite` | 1-3s | Good | Instant | Low latency |
 
 **See [LLMS.md](./LLMS.md) for complete API reference and job schemas.**
 

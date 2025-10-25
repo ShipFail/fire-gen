@@ -55,15 +55,9 @@
 
 ## Model Naming Rules
 
-**CRITICAL: Use actual REST API model names everywhere - NO aliases, NO nicknames**
-
-1. **Registry Keys**: Must match exact REST API model name (e.g., `"gemini-2.5-flash-image"`, NOT `"nano-banana"`)
-2. **File Names**: Use actual model name (e.g., `gemini-2.5-flash-image.ts`, NOT `nano-banana.ts`)
-3. **Directory Names**: Use descriptive but accurate names (e.g., `gemini-flash-image/`, NOT `nano-banana/`)
-4. **Variable Names**: Use model-based names (e.g., `Gemini25FlashImageAdapter`, NOT `NanoBananaAdapter`)
-5. **Constants**: Use model-based names (e.g., `GEMINI_25_FLASH_IMAGE_CONFIG`, NOT `NANO_BANANA_CONFIG`)
-6. **AI Hints**: Primary reference must be actual model name (can mention nickname in parentheses for context only)
-
+- Use actual REST API model names everywhere
+- AI Hints: Primary reference must be actual model name (can mention nickname in parentheses for context only)
+- use `zod` for schema definition and validation
 
 ## AI Hints & Documentation
 

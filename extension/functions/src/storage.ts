@@ -12,12 +12,9 @@ type JobRequest = any;
  * Pattern: {mediaType}-{modelId}.{ext}
  *
  * Examples:
- * - video-veo-3.0-generate-001.mp4
+ * - video-veo-3.1-fast-generate-preview.mp4
  * - image-gemini-2.5-flash-image.png
  * - audio-tts-gemini-2.5-flash-preview-tts.wav
- * - audio-music-lyria-002.wav
- * - (text has no file, stored in RTDB only)
- * - (chirp-stt has no file, transcription stored in RTDB only)
  */
 export function generateStorageFilename(request: JobRequest): string {
   if (request.type === "video") {
@@ -28,15 +25,7 @@ export function generateStorageFilename(request: JobRequest): string {
     const audioReq = request as any;
     if (audioReq.subtype === "tts") {
       return `audio-tts-${audioReq.model}.wav`;
-    } else if (audioReq.subtype === "music") {
-      return `audio-music-${audioReq.model}.wav`;
-    } else if (audioReq.subtype === "chirp-tts") {
-      return `audio-chirp-tts-${audioReq.model}.wav`;
-    } else if (audioReq.subtype === "chirp-stt") {
-      throw new Error("Chirp STT does not produce a storage file (transcription in metadata)");
     }
-  } else if (request.type === "text") {
-    throw new Error("Text responses do not produce a storage file (text in metadata)");
   }
   throw new Error(`Unsupported job type: ${(request as any).type}`);
 }

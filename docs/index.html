@@ -215,11 +215,10 @@ const jobRef = push(ref(rtdb, "firegen-jobs"), {
   status: "requested",
   request: {
     type: "video",
-    model: "veo-3.0-fast-generate-001",
+    model: "veo-3.1-fast-generate-preview",
     prompt: "a neon city cat skateboarding at night",
     duration: 8,
     aspectRatio: "16:9",
-    resolution: "1080p",
     audio: true
   }
 });
@@ -279,11 +278,10 @@ onValue(jobRef, (snap) => {
   "status": "requested",
   "request": {
     "type": "video",
-    "model": "veo-3.0-fast-generate-001",
+    "model": "veo-3.1-fast-generate-preview",
     "prompt": "Vertical video of a waterfall with ambient sound",
     "duration": 8,
     "aspectRatio": "9:16",
-    "resolution": "1080p",
     "audio": true
   },
   "_meta": {
@@ -299,7 +297,7 @@ onValue(jobRef, (snap) => {
             </div>
             <pre id="reasonsBlock" class="mt-2 text-sm overflow-auto hidden"><code class="language-json">[
   "Step 1: Top 3 candidates with parameters and confidence…",
-  "Selected Model: veo-3.0-fast-generate-001 with final parameters…",
+  "Selected Model: veo-3.1-fast-generate-preview with final parameters…",
   "Validation: (if any) Zod error corrected on retry…"
 ]</code></pre>
             <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">Stored at <code>firegen-jobs/{jobId}/_meta/reasons</code>

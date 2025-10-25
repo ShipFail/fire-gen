@@ -40,29 +40,18 @@ Usage of this extension will be billed according to Vertex AI pricing. Different
 
 ## Supported Models
 
-This extension supports **14 AI models** across **4 media types**:
+This extension supports **5 AI models** across **3 media types**:
 
-### VIDEO (3 models)
-- `veo-3.0-generate-001` - Highest quality Veo 3 model (1-8s, 720p/1080p)
-- `veo-3.0-fast-generate-001` - Faster Veo 3 with reduced latency (1-8s, 720p/1080p)
-- `veo-2.0-generate-001` - Previous generation Veo 2 model (1-8s, 720p/1080p)
+### VIDEO (2 models)
+- `veo-3.1-generate-preview` - Highest quality Veo 3.1 (4-8s, 720p/1080p)
+- `veo-3.1-fast-generate-preview` - Fast Veo 3.1 with reduced latency (4-8s, 720p/1080p) **[Default]**
 
-### IMAGE (4 models)
-- `imagen-4.0-ultra-generate-001` - Highest quality Imagen 4 (1024×1024 to 2048×2048)
-- `imagen-4.0-generate-001` - Balanced quality Imagen 4 (1024×1024 to 2048×2048)
-- `imagen-4.0-fast-generate-001` - Fast Imagen 4 generation (1024×1024 to 2048×2048)
-- `nano-banana` - Ultra-fast image generation (512×512)
+### IMAGE (1 model)
+- `gemini-2.5-flash-image` - Fast multimodal image generation (sync, instant)
 
-### AUDIO (5 models)
-- `gemini-2.5-flash-preview-tts` - Fast text-to-speech via Gemini 2.5 Flash
+### AUDIO - Text-to-Speech (2 models)
+- `gemini-2.5-flash-preview-tts` - Fast text-to-speech via Gemini 2.5 Flash **[Default]**
 - `gemini-2.5-pro-preview-tts` - High-quality text-to-speech via Gemini 2.5 Pro
-- `chirp-3-hd` - HD speech-to-text transcription (Chirp 3)
-- `chirp` - Standard speech-to-text transcription
-- `lyria-002` - Music generation (10-20s clips, sync mode)
-
-### TEXT (2 models)
-- `gemini-2.5-pro` - Advanced reasoning and long-form text generation
-- `gemini-2.5-flash` - Fast text generation with balanced quality
 
 ## AI-Assisted vs Explicit Mode
 

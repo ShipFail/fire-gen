@@ -2,7 +2,7 @@
 
 > **For AI Agents:** This document provides complete API schemas and examples for integrating FireGen into applications. Use this as your primary reference when consuming FireGen from other projects/codebases.
 
-> FireGen is a Firebase Cloud Functions extension that provides serverless AI media generation using Google's Vertex AI models (via REST API). It supports video generation (Veo), image generation (Imagen, Gemini Flash Image), audio generation (Gemini TTS, Lyria music), and text generation (Gemini 2.5). It manages job queuing, polling, and storage orchestration for AI-powered media creation applications.
+> FireGen is a Firebase Cloud Functions extension that provides serverless AI media generation using Google's Vertex AI models (via REST API). It supports video generation (Veo 3.1), image generation (Gemini Flash Image), and audio generation (Gemini TTS). It manages job queuing, polling, and storage orchestration for AI-powered media creation applications.
 
 **For Human Developers:**
 - Setup guide: [README.md](./README.md)
@@ -22,28 +22,13 @@ FireGen is a Firebase extension that integrates Google Vertex AI's media generat
   - You MUST download/copy media to your own storage before expiration
   - FireGen only provides temporary generation - long-term storage is your responsibility
 - **Supported Video Models** (async):
-  - `veo-3.1-generate-preview` (latest, highest quality) - **DEFAULT for AI requests**
-  - `veo-3.1-fast-generate-preview` (faster generation) - **DEFAULT for standard video requests**
-  - `veo-3.0-generate-001` (previous generation) - **Implicit requests only, not used by AI analyzer**
-  - `veo-3.0-fast-generate-001` (previous generation) - **Implicit requests only, not used by AI analyzer**
-  - `veo-2.0-generate-001` (legacy) - **Implicit requests only, not used by AI analyzer**
+  - `veo-3.1-generate-preview` (highest quality) - **[Default]**
+  - `veo-3.1-fast-generate-preview` (faster generation)
 - **Supported Image Models** (sync):
-  - `nano-banana` (Gemini 2.5 Flash Image - instant generation)
-  - `imagen-4.0-generate-001` (Imagen 4 - highest quality, 2K resolution)
-  - `imagen-4.0-fast-generate-001` (Imagen 4 Fast)
-  - `imagen-4.0-ultra-generate-001` (Imagen 4 Ultra)
+  - `gemini-2.5-flash-image` (instant multimodal generation) - **[Default]**
 - **Supported Audio Models - TTS** (sync):
-  - `gemini-2.5-flash-preview-tts` (30 voices, 24 languages)
+  - `gemini-2.5-flash-preview-tts` (fast, 30 voices, 24 languages) - **[Default]**
   - `gemini-2.5-pro-preview-tts` (high quality TTS)
-  - `chirp-3-hd` (Chirp TTS - 248 voices, 31 languages)
-- **Supported Audio Models - STT** (sync):
-  - `chirp` (Chirp STT - universal speech recognition)
-- **Supported Audio Models - Music** (sync):
-  - `lyria-002` (instrumental music, 32.8s clips)
-- **Supported Text Models** (sync):
-  - `gemini-2.5-pro` (most powerful, extended thinking)
-  - `gemini-2.5-flash` (best price/performance)
-  - `gemini-2.5-flash-lite` (most cost-effective)
 
 ## Job Schema
 
@@ -59,7 +44,7 @@ FireGen is a Firebase extension that integrates Google Vertex AI's media generat
   request: {
     type: "video",
     
-    // Veo 3.1 models (recommended - used by AI analyzer)
+    // Veo 3.1 models
     model: "veo-3.1-generate-preview" | "veo-3.1-fast-generate-preview",
     prompt: string,               // Video generation prompt
     duration: 4 | 6 | 8,          // Video duration in seconds
@@ -74,15 +59,6 @@ FireGen is a Firebase extension that integrates Google Vertex AI's media generat
     
     // NEW in Veo 3.1: Frame-specific generation
     lastFrameGcsUri?: string,     // GCS URI of frame to start from
-    
-    // --- OR for Veo 3.0/2.0 models (implicit requests only) ---
-    model: "veo-3.0-generate-001" | "veo-3.0-fast-generate-001" | "veo-2.0-generate-001",
-    prompt: string,
-    duration: 4 | 6 | 8,
-    aspectRatio: "16:9" | "9:16" | "1:1" | "21:9" | "3:4" | "4:3",
-    resolution: "720p" | "1080p", // DEPRECATED in 3.1, only for 3.0/2.0
-    audio: boolean,
-    referenceImageGcsUri?: string // DEPRECATED in 3.1, replaced by referenceSubjectImages
   },
 
   response?: {
@@ -105,17 +81,6 @@ FireGen is a Firebase extension that integrates Google Vertex AI's media generat
 }
 ```
 
-**Veo 3.1 vs 3.0 Comparison:**
-
-| Feature | Veo 3.1 | Veo 3.0/2.0 |
-|---------|---------|-------------|
-| Model IDs | `veo-3.1-generate-preview`, `veo-3.1-fast-generate-preview` | `veo-3.0-*`, `veo-2.0-*` |
-| AI Analyzer | ✅ Used by default | ❌ Not used (implicit requests only) |
-| Multi-subject | ✅ `referenceSubjectImages` (up to 3) | ❌ Single `referenceImageGcsUri` |
-| Video extension | ✅ `videoGcsUri` | ❌ Not supported |
-| Frame-specific | ✅ `lastFrameGcsUri` | ❌ Not supported |
-| Resolution param | ❌ Deprecated | ✅ Required |
-
 ### Image Job Example
 
 ```typescript
@@ -126,7 +91,7 @@ FireGen is a Firebase extension that integrates Google Vertex AI's media generat
 
   request: {
     type: "image",
-    model: "nano-banana",         // Gemini 2.5 Flash Image
+    model: "gemini-2.5-flash-image",  // Gemini Flash Image (multimodal)
     prompt: string,               // Image generation prompt
     aspectRatio?: "1:1" | "3:2" | "2:3" | "3:4" | "4:3" | "4:5" | "5:4" | "9:16" | "16:9" | "21:9", // Optional, defaults to 1:1
     safetySettings?: Array<{      // Optional safety filters
@@ -136,7 +101,7 @@ FireGen is a Firebase extension that integrates Google Vertex AI's media generat
   },
 
   response?: {
-    uri?: string,                 // gs://bucket/firegen-jobs/{id}/image-nano-banana.png (ephemeral, 24h lifetime)
+    uri?: string,                 // gs://bucket/firegen-jobs/{id}/image-gemini-2.5-flash-image.png (ephemeral, 24h lifetime)
     url?: string,                 // https://storage.googleapis.com/...?Expires=... (signed URL, 25h expiry, file deleted after 24h)
     metadata?: {
       mimeType: string,           // e.g., "image/png"
@@ -180,145 +145,6 @@ FireGen is a Firebase extension that integrates Google Vertex AI's media generat
       duration: number,           // Audio duration in seconds
       sampleRate: 24000,          // Always 24kHz
       channels: 1                 // Always mono
-    },
-    error?: {
-      message: string,
-      code?: string
-    }
-  }
-}
-```
-
-**Music Job (Lyria):**
-```typescript
-{
-  uid: string,                    // User ID (required)
-  status: "requested" | "starting" | "succeeded" | "failed" | "expired" | "canceled",
-
-  request: {
-    type: "audio",
-    subtype: "music",             // Music generation
-    model: "lyria-002",           // Lyria 2 model
-    prompt: string,               // Music description (US English)
-    negativePrompt?: string,      // Optional: Terms to exclude (e.g., "vocals, singing")
-    seed?: number                 // Optional: Seed for reproducible generation
-  },
-
-  response?: {
-    uri?: string,                 // gs://bucket/firegen-jobs/{id}/audio-music-lyria-002.wav (ephemeral, 24h lifetime)
-    url?: string,                 // https://storage.googleapis.com/...?Expires=... (signed URL, 25h expiry, file deleted after 24h)
-    metadata?: {
-      mimeType: "audio/wav",
-      size: number,               // File size in bytes
-      duration: 32.8,             // Always 32.8 seconds
-      sampleRate: 48000,          // Always 48kHz
-      channels: 2,                // Always stereo
-      seed?: number               // Seed used (if provided)
-    },
-    error?: {
-      message: string,
-      code?: string
-    }
-  }
-}
-```
-
-**Chirp TTS Job:**
-```typescript
-{
-  uid: string,                    // User ID (required)
-  status: "requested" | "starting" | "succeeded" | "failed" | "expired" | "canceled",
-
-  request: {
-    type: "audio",
-    subtype: "chirp-tts",         // Chirp Text-to-Speech
-    model: "chirp-3-hd",          // Chirp 3 HD model
-    text: string,                 // Text to synthesize
-    voice: string,                // Voice ID (required, 248 voices available)
-    language?: string,            // Optional: BCP-47 language code (supports 31 languages)
-    sampleRate?: number           // Optional: Output sample rate in Hz (default: 24000)
-  },
-
-  response?: {
-    uri?: string,                 // gs://bucket/firegen-jobs/{id}/audio-chirp-tts-chirp-3-hd.wav (ephemeral, 24h lifetime)
-    url?: string,                 // https://storage.googleapis.com/...?Expires=... (signed URL, 25h expiry, file deleted after 24h)
-    metadata?: {
-      mimeType: "audio/wav",
-      size: number,               // File size in bytes
-      voice: string,              // Voice ID used
-      language?: string,          // Language code
-      sampleRate: number          // Sample rate (default: 24000)
-    },
-    error?: {
-      message: string,
-      code?: string
-    }
-  }
-}
-```
-
-**Chirp STT Job:**
-```typescript
-{
-  uid: string,                    // User ID (required)
-  status: "requested" | "starting" | "succeeded" | "failed" | "expired" | "canceled",
-  // Note: No file output - transcription text in response.text
-
-  request: {
-    type: "audio",
-    subtype: "chirp-stt",         // Chirp Speech-to-Text
-    model: "chirp",               // Chirp STT model
-    audioUri: string,             // GCS URI of audio file to transcribe (gs://bucket/path/audio.wav)
-    language?: string,            // Optional: BCP-47 language code (auto-detected if omitted)
-    encoding?: string,            // Optional: Audio encoding (e.g., "LINEAR16", "FLAC")
-    sampleRate?: number           // Optional: Audio sample rate in Hz
-  },
-
-  response?: {
-    text: string,                 // Transcription text
-    metadata?: {
-      model: "chirp",
-      audioUri: string,           // Source audio URI
-      language?: string,          // Language specified
-      detectedLanguage?: string,  // Auto-detected language
-      confidence?: number         // Confidence score (0-1)
-    },
-    error?: {
-      message: string,
-      code?: string
-    }
-  }
-}
-```
-
-### Text Job Example
-
-```typescript
-{
-  uid: string,                    // User ID (required)
-  status: "requested" | "starting" | "succeeded" | "failed" | "expired" | "canceled",
-  // Note: No file output - text in response.text
-
-  request: {
-    type: "text",
-    model: "gemini-2.5-pro" | "gemini-2.5-flash" | "gemini-2.5-flash-lite",
-    prompt: string,               // User message/prompt
-    systemInstruction?: string,   // Optional: System instruction
-    temperature?: number,         // Optional: 0.0-2.0 (default: 1.0)
-    maxOutputTokens?: number,     // Optional: Max response length
-    topP?: number,                // Optional: Nucleus sampling (0.0-1.0)
-    topK?: number,                // Optional: Top-K sampling
-    stopSequences?: string[]      // Optional: Stop generation at these sequences
-  },
-
-  response?: {
-    text: string,                 // Generated text response
-    metadata?: {
-      model: string,              // Model used
-      promptTokens: number,       // Input token count
-      completionTokens: number,   // Output token count
-      totalTokens: number,        // Total token count
-      finishReason: string        // Completion reason (e.g., "STOP")
     },
     error?: {
       message: string,
@@ -405,18 +231,12 @@ await set(jobRef, "A heartwarming short film about human resilience");
 
 **Image Generation with Contextual Intelligence:**
 ```typescript
-// Professional visualization
+// Instant image generation
 await set(jobRef, "Design a futuristic technology conference poster");
 → Chooses:
-   - Model: "imagen-4.0-generate-001" (high detail)
+   - Model: "gemini-2.5-flash-image" (instant multimodal)
    - Aspect Ratio: 3:2 (poster-friendly)
    - Enhanced professional prompt
-
-// Creative exploration
-await set(jobRef, "Surreal landscape blending natural and technological elements");
-→ Chooses:
-   - Model: "imagen-4.0-ultra-generate-001" (highest creativity)
-   - Aspect Ratio: 16:9 (cinematic)
 ```
 
 **Audio Generation with Emotional Intelligence:**
@@ -427,21 +247,7 @@ await set(jobRef, "Narrate a motivational message with inspiring energy");
    - Model: "gemini-2.5-pro-preview-tts"
    - Voice: "Zephyr" (inspirational tone)
    - Language: Auto-detected
-
-// Instrumental Composition
-await set(jobRef, "Create an epic soundtrack for a science documentary");
-→ Chooses:
-   - Model: "lyria-002"
-   - Negative Prompt: "vocals, singing"
-   - Instrumental, cinematic generation
 ```
-
-**Text Generation with Reasoning Depth:**
-```typescript
-// Analytical writing
-await set(jobRef, "Comprehensive analysis of AI's societal impact, balancing technical and ethical perspectives");
-→ Chooses:
-   - Model: "gemini-2.5-pro"
    - Enhanced system instruction for balanced analysis
    - Nuanced, multi-perspective generation
 ```
@@ -554,36 +360,11 @@ async function createMultiSubjectVideoJob(
   return newJobRef.key;
 }
 
-// Legacy image-to-video example (Veo 3.0 - implicit request)
-async function createImageToVideoJob(userId: string, prompt: string, imageGcsUri: string) {
-  const db = getDatabase();
-  const jobsRef = ref(db, 'firegen-jobs');
-  const newJobRef = push(jobsRef);
-
-  await set(newJobRef, {
-    uid: userId,
-    status: 'requested',
-    request: {
-      type: 'video',
-      model: 'veo-3.0-fast-generate-001',
-      prompt: prompt,
-      duration: 8,
-      aspectRatio: '16:9',
-      resolution: '720p',
-      audio: true,
-      referenceImageGcsUri: imageGcsUri // GCS URI (gs://bucket/path/image.jpg)
-    }
-  });
-
-  return newJobRef.key; // Job ID
-}
-
 // Example usage
 const videoJobId = await createVideoJob('user123', 'A serene sunset over mountains');
-const imageToVideoJobId = await createImageToVideoJob('user123', 'Camera zooming through mountains', 'gs://my-bucket/images/keyframe.jpg');
 ```
 
-#### Image Generation (Nano Banana)
+#### Image Generation (Gemini Flash Image)
 
 ```typescript
 import { getDatabase, ref, push, set } from 'firebase/database';
@@ -599,7 +380,7 @@ async function createImageJob(userId: string, prompt: string, aspectRatio?: stri
     status: 'requested',
     request: {
       type: 'image',
-      model: 'nano-banana',
+      model: 'gemini-2.5-flash-image',
       prompt: prompt,
       aspectRatio: aspectRatio || '1:1' // Optional: defaults to 1:1
     }
@@ -609,10 +390,14 @@ async function createImageJob(userId: string, prompt: string, aspectRatio?: stri
 }
 
 // Example usage
+// Example usage
 const imageJobId = await createImageJob('user123', 'A futuristic cityscape at sunset', '16:9');
 ```
 
-#### Image Generation (Imagen)
+#### Audio Generation - Text-to-Speech
+```
+
+#### Audio Generation - TTS (Gemini)
 
 ```typescript
 import { getDatabase, ref, push, set } from 'firebase/database';
@@ -672,7 +457,11 @@ async function createTTSJob(userId: string, text: string, voice?: string) {
 }
 
 // Example usage
+// Example usage
 const ttsJobId = await createTTSJob('user123', 'Say cheerfully: Welcome to FireGen!', 'Zephyr');
+```
+
+## Job Lifecycle
 ```
 
 #### Audio Generation - Music (Lyria)
@@ -809,11 +598,8 @@ const textJobId = await createTextJob(
 
 **Key Differences:**
 - **Video jobs** (Veo): Async (~30-120 seconds) - status goes `requested` → `starting` → `running` → `succeeded`
-- **Image jobs** (Nano Banana, Imagen): Sync (~2-5 seconds) - status goes `requested` → `starting` → `succeeded`
-- **Audio jobs** (TTS, Chirp TTS, Lyria): Sync (~2-20 seconds) - status goes `requested` → `starting` → `succeeded`
-- **Text jobs** (Gemini): Sync (~1-10 seconds) - status goes `requested` → `starting` → `succeeded`
-- **Chirp STT**: No file output - transcription text in `response.text`
-- **Text**: No file output - generated text in `response.text`
+- **Image jobs** (Gemini Flash): Sync (~2-5 seconds) - status goes `requested` → `starting` → `succeeded`
+- **Audio jobs** (Gemini TTS): Sync (~2-10 seconds) - status goes `requested` → `starting` → `succeeded`
 
 ### 2. Monitor Job Status
 
@@ -978,42 +764,23 @@ Media files are stored temporarily (24h) using the pattern `{mediaType}-{modelId
 
 **Videos:**
 ```
-uri: gs://{bucket}/firegen-jobs/{jobId}/video-veo-3.0-generate-001.mp4
-url: https://storage.googleapis.com/{bucket}/firegen-jobs/{jobId}/video-veo-3.0-generate-001.mp4?Expires=...&Signature=...
+uri: gs://{bucket}/firegen-jobs/{jobId}/video-veo-3.1-fast-generate-preview.mp4
+url: https://storage.googleapis.com/{bucket}/firegen-jobs/{jobId}/video-veo-3.1-fast-generate-preview.mp4?Expires=...&Signature=...
 ```
 
 **Images:**
 ```
-uri: gs://{bucket}/firegen-jobs/{jobId}/image-nano-banana.png
-uri: gs://{bucket}/firegen-jobs/{jobId}/image-imagen-4.0-generate-001.png
-url: https://storage.googleapis.com/{bucket}/firegen-jobs/{jobId}/image-{model}.png?Expires=...&Signature=...
+uri: gs://{bucket}/firegen-jobs/{jobId}/image-gemini-2.5-flash-image.png
+url: https://storage.googleapis.com/{bucket}/firegen-jobs/{jobId}/image-gemini-2.5-flash-image.png?Expires=...&Signature=...
 ```
 
 **Audio (TTS):**
 ```
 uri: gs://{bucket}/firegen-jobs/{jobId}/audio-tts-gemini-2.5-flash-preview-tts.wav
-url: https://storage.googleapis.com/{bucket}/firegen-jobs/{jobId}/audio-tts-{model}.wav?Expires=...&Signature=...
+url: https://storage.googleapis.com/{bucket}/firegen-jobs/{jobId}/audio-tts-gemini-2.5-flash-preview-tts.wav?Expires=...&Signature=...
 ```
 
-**Audio (Music):**
-```
-uri: gs://{bucket}/firegen-jobs/{jobId}/audio-music-lyria-002.wav
-url: https://storage.googleapis.com/{bucket}/firegen-jobs/{jobId}/audio-music-{model}.wav?Expires=...&Signature=...
-```
-
-**Audio (Chirp TTS):**
-```
-uri: gs://{bucket}/firegen-jobs/{jobId}/audio-chirp-tts-chirp-3-hd.wav
-url: https://storage.googleapis.com/{bucket}/firegen-jobs/{jobId}/audio-chirp-tts-{model}.wav?Expires=...&Signature=...
-```
-
-**Audio (Chirp STT) & Text (Gemini):**
-```
-text: "..."                     # Transcription or generated text (no file created)
-# uri and url fields are omitted (not present in response)
-```
-
-The storage path mirrors the RTDB job path for easy correlation. All media files are automatically deleted after 24 hours. Text and transcription responses don't create files - they're stored directly in `response.text` with `uri` and `url` fields omitted.
+The storage path mirrors the RTDB job path for easy correlation. All media files are automatically deleted after 24 hours.
 
 ## Error Handling
 
@@ -1079,7 +846,7 @@ Common error scenarios:
 - **Cold start**: ~2-5 seconds (first function invocation)
 - **Warm start**: <500ms
 - **Polling overhead**: 1 second between checks (Veo only)
-- **Audio output**: PCM/WAV format (TTS: 24kHz mono, Lyria: 48kHz stereo)
+- **Audio output**: PCM/WAV format (24kHz mono for Gemini TTS)
 
 ## Best Practices
 
@@ -1091,21 +858,12 @@ Common error scenarios:
 6. **Error retry**: For transient errors, create a new job rather than retrying failed ones
 7. **Storage lifecycle**: FireGen automatically deletes media after 24 hours - no additional lifecycle rules needed
 8. **Cost monitoring**: Track Vertex AI usage and implement budget alerts
-   - Videos: Veo pricing varies by model
-   - Images: ~$0.039 per image (Nano Banana), Imagen pricing varies
-   - Audio: TTS ~$0.016 per 1M characters, Lyria pricing varies
 9. **Use `url` field**: For browser playback, use `response.url` (signed URL valid for 25h, but file deleted after 24h)
 10. **Choose the right model**:
-    - **Videos**: Veo 3.0 (quality) vs Veo 3.0 Fast (speed)
-    - **Images**: Imagen 4.0 (quality) vs Imagen 4.0 Fast (speed) vs Nano Banana (instant)
-    - **Audio TTS**: Chirp 3 HD (248 voices, 31 languages) vs Gemini TTS (30 voices, 24 languages)
-    - **Audio Music**: Lyria (instrumental music)
-    - **Text**: Gemini 2.5 Pro (highest quality) vs Gemini 2.5 Flash (speed) vs Flash Lite (cost)
+    - **Videos**: veo-3.1-generate-preview (quality) vs veo-3.1-fast-generate-preview (speed)
+    - **Images**: gemini-2.5-flash-image (instant multimodal generation)
+    - **Audio TTS**: gemini-2.5-pro-preview-tts (quality) vs gemini-2.5-flash-preview-tts (speed)
 11. **TTS voice selection**: Test Gemini voices at [Google AI Studio](https://aistudio.google.com/generate-speech) before implementation
-12. **Music reproducibility**: Use `seed` parameter in Lyria for consistent music generation
-13. **Text responses**: Access generated text from `response.text` (not a file, stored in RTDB)
-14. **Chirp STT**: Provide audio as GCS URI, get transcription from `response.text`
-15. **Token tracking**: Monitor `response.metadata.totalTokens` for text generation to track costs
 
 ## Security Considerations
 

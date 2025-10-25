@@ -8,25 +8,16 @@ import {DEFAULT_VALUES} from "../analyzer-shared-rules.js";
 
 // Import AI hints from all model families
 import {VEO_AI_HINTS} from "../../models/veo/ai-hints.js";
-import {IMAGEN_AI_HINTS} from "../../models/imagen/ai-hints.js";
-import {GEMINI_TEXT_AI_HINTS} from "../../models/gemini-text/ai-hints.js";
 import {GEMINI_TTS_AI_HINTS} from "../../models/gemini-tts/ai-hints.js";
 import {GEMINI_FLASH_IMAGE_AI_HINTS} from "../../models/gemini-flash-image/ai-hints.js";
-import {LYRIA_AI_HINTS} from "../../models/lyria/ai-hints.js";
 
 // Assemble all model AI hints for the analyzer
 const ALL_MODEL_HINTS = `
 ${VEO_AI_HINTS}
 
-${IMAGEN_AI_HINTS}
-
-${GEMINI_TEXT_AI_HINTS}
-
 ${GEMINI_TTS_AI_HINTS}
 
 ${GEMINI_FLASH_IMAGE_AI_HINTS}
-
-${LYRIA_AI_HINTS}
 `;
 
 // Gemini response type
@@ -58,13 +49,13 @@ interface GeminiResponse {
  *   contexts[2+] = validation errors (if retry)
  *
  * Output: Plain text with JobRequest JSON + reasoning:
- *   Selected Model: veo-3.0-generate-001
+ *   Selected Model: veo-3.1-fast-generate-preview
  *
  *   Job Request:
- *   {"type":"video","model":"veo-3.0-generate-001","prompt":"waterfall","duration":8,"aspectRatio":"9:16"...}
+ *   {"type":"video","model":"veo-3.1-fast-generate-preview","prompt":"waterfall","duration":8,"aspectRatio":"9:16"...}
  *
  *   Selection Reasoning:
- *   Chose veo-3.0-generate-001 over fast variant because...
+ *   Chose veo-3.1-fast-generate-preview for balance of speed and quality...
  *
  *   Parameter Reasoning:
  *   - aspectRatio: "9:16" - Vertical means TALLER (height > width), so 9:16
@@ -182,6 +173,7 @@ Parameter Reasoning:
   // Call AI with greedy decoding for deterministic decisions
   logger.info("Step 2: Calling AI for final selection", {jobId});
 
+  // Internal analyzer model (not user-facing)
   const endpoint = `v1/projects/${PROJECT_ID}/locations/${REGION}/publishers/google/models/gemini-2.5-flash-lite:generateContent`;
   const response = await callVertexAPI<GeminiResponse>(endpoint, {
     contents: [{role: "user", parts: [{text: aiPrompt}]}],

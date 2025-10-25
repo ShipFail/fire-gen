@@ -64,6 +64,9 @@ roles:
   - role: iam.serviceAccountUser
     reason:
       Allows the extension service account to act as itself when creating Cloud Tasks and other resources.
+  - role: iam.serviceAccountTokenCreator
+    reason:
+      Allows the extension to generate signed URLs for Cloud Storage files, enabling temporary authenticated access to generated media.
 
 resources:
   - name: onJobCreated

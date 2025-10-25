@@ -55,161 +55,59 @@ export async function step1Preprocess(
   // 3. Build AI prompt for candidate generation
   const aiPrompt = `User Prompt: ${prompt}
 
-Available Models (with AI hints):
+Available Models:
 ${allHints}
 
 ---
 
-**🚨 CRITICAL RULE: DO NOT EXECUTE THE USER'S CREATIVE REQUEST 🚨**
+Task: Generate TOP 3 model candidates for this request.
 
-Your job is to ANALYZE and ROUTE the request, NOT to PERFORM the creative task.
+URL Placeholders:
+- <GS_VIDEO_URI_REF_N mimeType='...'/>: Video file
+- <GS_IMAGE_URI_REF_N mimeType='...'/>: Image file  
+- <GS_AUDIO_URI_REF_N mimeType='...'/>: Audio file
 
-**For prompt/text fields:**
-- Video/Image/Text/Music: Use the ORIGINAL user prompt VERBATIM (copy exactly as-is)
-- TTS ONLY: Extract quoted text OR imperative object (e.g., "Say hello" → "hello")
-- NEVER generate content yourself
-- NEVER rephrase or rewrite the prompt
-- NEVER execute the creative task
+URL Rules:
+1. Check mimeType attribute to determine file type
+2. Copy FULL tag to appropriate field (videoGcsUri, imageGcsUri, referenceSubjectImages, lastFrameGcsUri)
+3. Remove tag from prompt IF used in a field, keep IF unused
 
-**Why this matters:**
-- The FINAL MODEL will execute the user's creative request
-- Your job is ONLY to choose the right model and parameters (metadata)
-- Preserving the original prompt ensures user's creative intent reaches the final model
+Prompt Preservation:
+- Video/Image/Text/Music: Copy user prompt VERBATIM (do NOT rewrite)
+- TTS only: Extract quoted text or imperative object
 
----
+Default Values (when not specified):
+- Video: duration=8, aspectRatio="16:9", audio=true
+- Image: aspectRatio="1:1"
 
-Task: Analyze the user prompt and generate the TOP 3 most suitable model candidates.
+Negative Prompts:
+Extract from phrases: "avoid", "without", "no", "don't want", "exclude", "negative prompt:"
+Examples:
+- "avoid cartoon style" → negativePrompt: "cartoon style"
+- "without people" → negativePrompt: "people"
+- "no text overlays" → negativePrompt: "text overlays"
 
-**Understanding URL Placeholders:**
-User prompts may contain URL placeholders in semantic XML format:
-- <GS_VIDEO_URI_REF_N mimeType='video/...'/>  - Video files (.mp4, .mov, .webm, etc.)
-- <GS_VIDEO_URI_REF_N mimeType='application/mp4'/> - Also video (standard MIME type for MP4)
-- <GS_IMAGE_URI_REF_N mimeType='image/...'/>  - Image files (.jpg, .png, .webp, etc.)
-- <GS_AUDIO_URI_REF_N mimeType='audio/...'/>  - Audio files (.mp3, .wav, etc.)
+For EACH candidate (1-3):
+1. Model ID
+2. Type (video/image/audio/text)
+3. Parameters JSON (use model schema from hints)
+4. Parameter Reasoning (explain WHY each field has its value)
+5. Confidence (high/medium/low)
 
-**How to Use URL Placeholders:**
-1. Look at the mimeType attribute to determine file type
-2. Use GS_VIDEO_URI_REF_* tags for video-related fields (videoGcsUri, etc.)
-3. Use GS_IMAGE_URI_REF_* tags for image-related fields (imageGcsUri, referenceSubjectImages, etc.)
-4. Copy the FULL XML tag exactly as-is to the appropriate field
-5. Remove the tag from the final prompt field if you use it in a parameter field
-6. Keep the tag in the prompt if NOT used in any parameter field
-
-**Example:**
-Input: "Continue from <GS_VIDEO_URI_REF_1 mimeType='application/mp4'/> with the hero discovering treasure"
-Output: {
-  "type": "video",
-  "model": "veo-3.1-generate-preview",
-  "videoGcsUri": "<GS_VIDEO_URI_REF_1 mimeType='application/mp4'/>",  // Used in field
-  "prompt": "Continue with the hero discovering treasure"  // Removed from prompt
-}
-
-**Think step-by-step before generating candidates:**
-1. What media type is the user requesting? (video/image/audio/text)
-2. What are the key indicators in the prompt?
-   - Spoken words → TTS audio
-   - Music/melody/beat → Music audio
-   - Visual content → Video or Image
-   - Text generation → Text
-   - **CRITICAL**: URL placeholders with video mimeType → Video with videoGcsUri or imageGcsUri (for image-to-video)
-   - **CRITICAL**: URL placeholders with image mimeType → Check context (animation vs subject reference vs frame transition)
-3. What parameters are explicitly mentioned? (duration, aspect ratio, quality, voice)
-4. Which models best match these requirements?
-
-For EACH candidate (1-3), provide:
-1. Model ID (exact ID from available models above)
-2. Media type (video, image, audio, or text)
-3. Predicted parameters (as JSON object - use model hints for correct schema structure)
-4. **Parameter-by-Parameter Reasoning:**
-   For EVERY field in your parameters JSON, explain:
-   - WHY you chose this specific value
-   - WHICH part of the user prompt led to this decision (quote relevant words)
-   - If using a default value, WHY this default is appropriate
-
-   **SPECIAL RULES FOR CONTENT FIELDS:**
-   - prompt (video/image/text/music): Copy ORIGINAL prompt VERBATIM - preserve user's creative intent
-   - text (TTS): Extract quoted text or imperative object only (e.g., "Say hello world" → "hello world")
-
-   Format for each parameter:
-   - <field>: <value> → Because [reason] (from prompt: "..." OR default because [reason])
-
-5. Model Selection Reasoning (why THIS model over others)
-6. Confidence level (high, medium, or low)
-
-Order candidates by confidence (most confident first).
-
-Format your response as plain text (NOT JSON), clearly structured:
+Format:
 
 Top 3 Model Candidates:
 
 1. <model-id>
    Type: <type>
    Parameters: <json>
-
+   
    Parameter Reasoning:
-   - type: "<value>" → Because [explanation] (from prompt: "..." OR default)
-   - model: "<value>" → Because [explanation]
-   - [field]: <value> → Because [explanation] (from prompt: "..." OR default because [reason])
-   [... explain EVERY parameter in your JSON]
-
-   Model Selection: [why this model]
+   - <field>: <value> → [why] (from prompt: "..." OR default)
+   
    Confidence: <level>
 
-2. ...
-
-3. ...
-
-Examples:
-
-**Example 1: Video Request**
-User Prompt: "Create a 4-second portrait video of a city at night with ambient sounds"
-
-1. veo-3.1-fast-generate-preview
-   Type: video
-   Parameters: {"type":"video","model":"veo-3.1-fast-generate-preview","prompt":"Create a 4-second portrait video of a city at night with ambient sounds","duration":4,"aspectRatio":"9:16","audio":true}
-
-   Parameter Reasoning:
-   - type: "video" → User requested video generation (from prompt: "Create a...video")
-   - model: "veo-3.1-fast-generate-preview" → Default fast model, no quality preference stated
-   - prompt: "Create a 4-second portrait video of a city at night with ambient sounds" → ORIGINAL prompt VERBATIM - preserved for final model to execute (from prompt: entire user prompt)
-   - duration: 4 → User specified duration (from prompt: "4-second")
-   - aspectRatio: "9:16" → User said "portrait" = TALLER (from prompt: "portrait video")
-   - audio: true → User wants sound (from prompt: "with ambient sounds")
-
-   Model Selection: Fast variant for standard quality video request
-   Confidence: high
-
-**Example 2: TTS Request (EXTRACTION ALLOWED)**
-User Prompt: "Say hello world in a cheerful voice"
-
-1. gemini-2.5-flash-preview-tts
-   Type: audio
-   Parameters: {"type":"audio","subtype":"tts","model":"gemini-2.5-flash-preview-tts","text":"hello world","voice":"Puck"}
-
-   Parameter Reasoning:
-   - type: "audio" → User wants spoken output (from prompt: "Say")
-   - subtype: "tts" → Text-to-speech request (from prompt: "Say...")
-   - model: "gemini-2.5-flash-preview-tts" → Default TTS model
-   - text: "hello world" → EXTRACTED imperative object from "Say X" (from prompt: "Say hello world")
-   - voice: "Puck" → Cheerful voice matches user request (from prompt: "cheerful voice")
-
-   Model Selection: TTS model for speech synthesis
-   Confidence: high
-
-**Example 3: Text Request (NO EXTRACTION - PRESERVE VERBATIM)**
-User Prompt: "Write a text explanation of artificial intelligence"
-
-1. gemini-2.5-flash
-   Type: text
-   Parameters: {"type":"text","model":"gemini-2.5-flash","prompt":"Write a text explanation of artificial intelligence"}
-
-   Parameter Reasoning:
-   - type: "text" → User wants written output (from prompt: "Write a text")
-   - model: "gemini-2.5-flash" → Default text generation model
-   - prompt: "Write a text explanation of artificial intelligence" → ORIGINAL prompt VERBATIM - final model will execute this creative task (from prompt: entire user prompt)
-
-   Model Selection: Text model for written content generation
-   Confidence: high`;
+2. ...`;
 
   // 4. Call AI with greedy decoding for deterministic candidates
   logger.info("Step 1: Calling AI for candidate generation", {jobId});

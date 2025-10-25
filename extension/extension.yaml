@@ -61,6 +61,9 @@ roles:
   - role: cloudtasks.enqueuer
     reason:
       Allows the extension to enqueue tasks for polling async video generation operations.
+  - role: iam.serviceAccountUser
+    reason:
+      Allows the extension service account to act as itself when creating Cloud Tasks and other resources.
 
 resources:
   - name: onJobCreated

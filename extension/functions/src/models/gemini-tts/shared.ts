@@ -2,10 +2,54 @@
 import {z} from "zod";
 import * as logger from "firebase-functions/logger";
 
-import {ai} from "../_shared/ai-client.js";
+import {callVertexAPI} from "../_shared/vertex-ai-client.js";
+import {PROJECT_ID} from "../../firebase-admin.js";
+import {REGION} from "../../env.js";
 import {TextContentSchema} from "../_shared/zod-helpers.js";
 import {getOutputFileUri, uploadToGcs} from "../../storage.js";
 import type {ModelAdapter, StartResult, ModelOutput} from "../_shared/base.js";
+
+/**
+ * Gemini TTS-specific types (uses same generateContent API as text)
+ */
+
+interface GeminiTTSResponse {
+  candidates: Array<{
+    content: {
+      parts: Array<{
+        inlineData?: {
+          mimeType: string;
+          data: string;
+        };
+        [key: string]: unknown;
+      }>;
+      role?: string;
+    };
+    finishReason?: string;
+  }>;
+  usageMetadata?: {
+    promptTokenCount: number;
+    candidatesTokenCount: number;
+    totalTokenCount: number;
+  };
+}
+
+/**
+ * Call Gemini generateContent API for TTS
+ */
+async function generateSpeech(
+  model: string,
+  payload: {
+    contents: Array<{role?: string; parts: Array<{text: string}>}>;
+    generationConfig: {
+      responseModalities: string[];
+      speechConfig?: Record<string, unknown>;
+    };
+  }
+): Promise<GeminiTTSResponse> {
+  const endpoint = `v1/projects/${PROJECT_ID}/locations/${REGION}/publishers/google/models/${model}:generateContent`;
+  return callVertexAPI<GeminiTTSResponse>(endpoint, payload);
+}
 
 /**
  * Shared Zod schemas for Gemini TTS models
@@ -25,13 +69,40 @@ export const GeminiTTSModelIdSchema = z.enum([
 ]);
 export type GeminiTTSModelId = z.infer<typeof GeminiTTSModelIdSchema>;
 
+/**
+ * REST API schemas matching Vertex AI Gemini API with TTS configuration
+ */
+
+const GeminiTTSContentSchema = z.object({
+  role: z.literal("user").optional(),
+  parts: z.array(z.object({
+    text: TextContentSchema,
+  })),
+});
+
+const GeminiTTSSpeechConfigSchema = z.object({
+  voiceConfig: z.object({
+    prebuiltVoiceConfig: z.object({
+      voiceName: GeminiTTSVoiceSchema,
+    }).optional(),
+  }).optional(),
+}).optional();
+
+const GeminiTTSGenerationConfigSchema = z.object({
+  responseModalities: z.array(z.literal("AUDIO")),
+  speechConfig: GeminiTTSSpeechConfigSchema,
+}).optional();
+
 export const GeminiTTSRequestBaseSchema = z.object({
-  type: z.literal("audio"),
-  subtype: z.literal("tts"),
   model: GeminiTTSModelIdSchema,
-  text: TextContentSchema,
-  voice: GeminiTTSVoiceSchema.optional(),
-  language: z.string().optional(),
+  contents: z.union([
+    TextContentSchema.transform(text => [{role: "user" as const, parts: [{text}]}]),
+    z.array(GeminiTTSContentSchema),
+  ]),
+  generationConfig: GeminiTTSGenerationConfigSchema.transform(config => ({
+    responseModalities: ["AUDIO"],
+    speechConfig: config?.speechConfig,
+  })),
 });
 
 export type GeminiTTSRequestBase = z.infer<typeof GeminiTTSRequestBaseSchema>;
@@ -49,36 +120,18 @@ export abstract class GeminiTTSAdapterBase implements ModelAdapter {
     logger.info("Starting Gemini TTS generation", {
       jobId,
       model: this.modelId,
-      voice: validated.voice,
+      speechConfig: validated.generationConfig?.speechConfig,
     });
 
-    // Build speech config
-    const speechConfig: Record<string, unknown> = {};
+    // Call Gemini TTS via REST API
+    const response = await generateSpeech(this.modelId, {
+      contents: validated.contents,
+      generationConfig: validated.generationConfig,
+    });
 
-    if (validated.voice) {
-      speechConfig.voiceConfig = {
-        prebuiltVoiceConfig: {
-          voiceName: validated.voice,
-        },
-      };
-    }
-
-    // Call Gemini TTS
-    const response = await ai.models.generateContent({
-      model: this.modelId,
-      contents: [{
-        role: "user",
-        parts: [{text: validated.text}],
-      }],
-      config: {
-        responseModalities: ["AUDIO"],
-        speechConfig,
-      },
-    } as any);
-
-    // Extract audio data
+    // Extract audio data from first candidate
     const audioPart = response.candidates?.[0]?.content?.parts?.find(
-      (part: any) => part.inlineData?.mimeType?.startsWith("audio/")
+      (part) => part.inlineData?.mimeType?.startsWith("audio/")
     );
 
     if (!audioPart?.inlineData?.data) {
@@ -89,7 +142,7 @@ export abstract class GeminiTTSAdapterBase implements ModelAdapter {
     const mimeType = audioPart.inlineData.mimeType || "audio/wav";
 
     // Upload to GCS
-    const outputUri = getOutputFileUri(jobId, validated);
+    const outputUri = getOutputFileUri(jobId, {model: this.modelId, type: "audio"});
     await uploadToGcs(audioData, outputUri, mimeType);
 
     logger.info("Gemini TTS generation completed", {jobId, uri: outputUri});
@@ -102,8 +155,7 @@ export abstract class GeminiTTSAdapterBase implements ModelAdapter {
       metadata: {
         mimeType,
         size: audioData.length,
-        voice: validated.voice || "auto",
-        language: validated.language || "auto",
+        voice: validated.generationConfig?.speechConfig?.voiceConfig?.prebuiltVoiceConfig?.voiceName || "auto",
         duration: durationSeconds,
         sampleRate: 24000,
         channels: 1,

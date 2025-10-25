@@ -1,7 +1,10 @@
 // functions/src/models/veo/index.ts
 
-// Export all types and schemas
-export * from "./shared.js";
+// Export shared utilities (only truly universal values)
+export * from "./shared-schemas.js";
+export * from "./shared-polling.js";
+
+// Export all model-specific types and schemas
 export * from "./veo-3.1-generate-preview.js";
 export * from "./veo-3.1-fast-generate-preview.js";
 export * from "./veo-3.0-generate-001.js";

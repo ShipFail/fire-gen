@@ -51,7 +51,7 @@ Veo 3.1 has THREE distinct creative capabilities:
 
 **3. FIRST AND LAST FRAME (Image-to-image transitions)**
    * **imageGcsUri** + **lastFrameGcsUri**: Bridge two images with smooth transition
-   * **DETECTION**: 
+   * **DETECTION**:
      - Prompt explicitly mentions "from [image1] to [image2]", "transition between", "bridge these images"
      - OR: Two image references with transition language
    * **USAGE**: Include both fields: "imageGcsUri": "<GS_HTTPS_URI_REF_1/>", "lastFrameGcsUri": "<GS_HTTPS_URI_REF_2/>"
@@ -76,7 +76,7 @@ Veo 3.1 has THREE distinct creative capabilities:
      - Semantic negation: "no [element]", "remove [element]", "never show [element]"
      - Quality negations: "no blur", "no distortion", "no watermark"
    * **USAGE**: Include the field "negativePrompt": "extracted negative elements"
-   * **IMPORTANT**: 
+   * **IMPORTANT**:
      - Extract ALL negative content, not just the first few items
      - Remove markers like "Negative:" or "avoid:" from the actual negative prompt value
      - Keep comma-separated format when multiple items are listed

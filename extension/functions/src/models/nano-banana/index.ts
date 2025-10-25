@@ -6,9 +6,10 @@ import NanoBananaAdapter, {NANO_BANANA_CONFIG, NANO_BANANA_AI_HINT} from "./nano
 
 /**
  * Nano Banana model registry (single model family).
+ * Registry key must match actual REST API model name.
  */
 export const NANO_BANANA_MODELS = {
-  "nano-banana": {
+  "gemini-2.5-flash-image": {
     adapter: NanoBananaAdapter,
     config: NANO_BANANA_CONFIG,
   },

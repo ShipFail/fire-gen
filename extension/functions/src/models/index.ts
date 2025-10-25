@@ -8,7 +8,7 @@
 // Import all model families
 import {VEO_MODELS, VEO_AI_HINTS} from "./veo/index.js";
 import {IMAGEN_MODELS, IMAGEN_AI_HINTS} from "./imagen/index.js";
-import {NANO_BANANA_MODELS, NANO_BANANA_AI_HINT} from "./nano-banana/index.js";
+import {GEMINI_FLASH_IMAGE_MODELS, GEMINI_25_FLASH_IMAGE_AI_HINT} from "./gemini-flash-image/index.js";
 import {GEMINI_TTS_MODELS, GEMINI_TTS_AI_HINTS} from "./gemini-tts/index.js";
 import {GEMINI_TEXT_MODELS, GEMINI_TEXT_AI_HINTS} from "./gemini-text/index.js";
 import {LYRIA_MODELS, LYRIA_AI_HINTS} from "./lyria/index.js";
@@ -16,7 +16,7 @@ import {LYRIA_MODELS, LYRIA_AI_HINTS} from "./lyria/index.js";
 // Re-export everything from model families
 export * from "./veo/index.js";
 export * from "./imagen/index.js";
-export * from "./nano-banana/index.js";
+export * from "./gemini-flash-image/index.js";
 export * from "./gemini-tts/index.js";
 export * from "./gemini-text/index.js";
 export * from "./lyria/index.js";
@@ -32,7 +32,7 @@ export * from "./_shared/zod-helpers.js";
 export const MODEL_REGISTRY = {
   ...VEO_MODELS,
   ...IMAGEN_MODELS,
-  ...NANO_BANANA_MODELS,
+  ...GEMINI_FLASH_IMAGE_MODELS,
   ...GEMINI_TTS_MODELS,
   ...GEMINI_TEXT_MODELS,
   ...LYRIA_MODELS,
@@ -99,7 +99,7 @@ ${LYRIA_AI_HINTS}
 
 ${VEO_AI_HINTS}
 
-${NANO_BANANA_AI_HINT}
+${GEMINI_25_FLASH_IMAGE_AI_HINT}
 
 ${IMAGEN_AI_HINTS}
 
@@ -126,7 +126,7 @@ ${GEMINI_TEXT_AI_HINTS}
 
 2. **ALWAYS choose fastest model by default (CRITICAL):**
    - Video: **veo-3.1-fast-generate-preview** is the smart default (fast, high quality)
-   - Image: nano-banana (gemini-2.5-flash-image) - fast image generation
+   - Image: gemini-2.5-flash-image - fast image generation
    - TTS: gemini-2.5-flash-preview-tts
    - Music: lyria-002 (only option)
    - Text: gemini-2.5-flash (ONLY use Pro if "complex", "detailed", "high quality" mentioned)

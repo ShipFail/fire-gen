@@ -22,6 +22,7 @@
 - Never use hard-coded keyword/substring rule engines for prompt tagging or classification.
 - create temp files in `/tmp` directory. i.e. log files, debug code files.
 - Avoid git operations (clone, commit, push, pull, etc.) unless user approved.
+- use `gcloud auth application-default login` to authenticate gcloud API requests in development environment
 
 ## Supported Models
 
@@ -52,6 +53,42 @@
 4. **No Version Flags** - Create separate files for new versions instead of if-else branches (e.g., `veo-3.1.ts`, not `isVeo31` flag)
 5. **Single Responsibility** - Each class handles one concern only
 6. **Open/Closed** - New model versions = new files, not modifications to existing base classes
+
+## Model Naming Rules
+
+**CRITICAL: Use actual REST API model names everywhere - NO aliases, NO nicknames**
+
+1. **Registry Keys**: Must match exact REST API model name (e.g., `"gemini-2.5-flash-image"`, NOT `"nano-banana"`)
+2. **File Names**: Use actual model name (e.g., `gemini-2.5-flash-image.ts`, NOT `nano-banana.ts`)
+3. **Directory Names**: Use descriptive but accurate names (e.g., `gemini-flash-image/`, NOT `nano-banana/`)
+4. **Variable Names**: Use model-based names (e.g., `Gemini25FlashImageAdapter`, NOT `NanoBananaAdapter`)
+5. **Constants**: Use model-based names (e.g., `GEMINI_25_FLASH_IMAGE_CONFIG`, NOT `NANO_BANANA_CONFIG`)
+6. **AI Hints**: Primary reference must be actual model name (can mention nickname in parentheses for context only)
+
+**Why**: 
+- Prevents confusion between registry keys and actual model names
+- Schema validation expects actual REST API model names
+- AI analyzer outputs actual model names, not aliases
+- Makes codebase searchable and maintainable
+
+**Example**:
+```typescript
+// ✅ CORRECT
+export const GEMINI_FLASH_IMAGE_MODELS = {
+  "gemini-2.5-flash-image": {  // Actual REST API model name
+    adapter: Gemini25FlashImageAdapter,
+    config: GEMINI_25_FLASH_IMAGE_CONFIG,
+  },
+};
+
+// ❌ WRONG
+export const NANO_BANANA_MODELS = {
+  "nano-banana": {  // Alias/nickname - causes validation failures
+    adapter: NanoBananaAdapter,
+    config: NANO_BANANA_CONFIG,
+  },
+};
+```
 
 ## AI Hints & Documentation
 

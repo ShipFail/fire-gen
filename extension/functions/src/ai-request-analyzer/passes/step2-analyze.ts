@@ -143,10 +143,10 @@ CRITICAL: Each model family uses DIFFERENT REST API schema!
   }
 }
 
-5. **NANO-BANANA** - contents/generationConfig with IMAGE modality:
+5. **GEMINI-2.5-FLASH-IMAGE (Nano-Banana)** - contents/generationConfig with IMAGE modality:
 {
   "model": "gemini-2.5-flash-image",
-  "contents": [{"role": "user", "parts": [{"text": "..."}]}],
+  "contents": [{\"role\": \"user\", \"parts\": [{\"text\": \"...\"}]}],
   "generationConfig": {
     "responseModalities": ["IMAGE"],
     "imageConfig": {"aspectRatio": "1:1"}
@@ -158,7 +158,7 @@ CRITICAL: Each model family uses DIFFERENT REST API schema!
 Default Values:
 - Veo: durationSeconds=8, aspectRatio="16:9", generateAudio=true
 - Imagen: aspectRatio="1:1", sampleCount=1
-- Nano-banana: aspectRatio="1:1"
+- Gemini-2.5-flash-image: aspectRatio="1:1"
 - Gemini text: temperature=1.0, topP=0.95
 
 URL Extraction Rules:

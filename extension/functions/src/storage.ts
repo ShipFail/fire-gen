@@ -13,10 +13,9 @@ type JobRequest = any;
  *
  * Examples:
  * - video-veo-3.0-generate-001.mp4
- * - image-nano-banana.png
+ * - image-gemini-2.5-flash-image.png
  * - audio-tts-gemini-2.5-flash-preview-tts.wav
  * - audio-music-lyria-002.wav
- * - audio-chirp-tts-chirp-3-hd.wav
  * - (text has no file, stored in RTDB only)
  * - (chirp-stt has no file, transcription stored in RTDB only)
  */

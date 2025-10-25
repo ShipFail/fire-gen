@@ -110,10 +110,10 @@ CRITICAL: Each model family uses a DIFFERENT REST API schema format!
   }
 }
 
-5. **NANO-BANANA** - Uses contents/generationConfig with IMAGE modality:
+5. **GEMINI-2.5-FLASH-IMAGE (Nano-Banana)** - Uses contents/generationConfig with IMAGE modality:
 {
   "model": "gemini-2.5-flash-image",
-  "contents": [{"role": "user", "parts": [{"text": "..."}]}],
+  "contents": [{\"role\": \"user\", \"parts\": [{\"text\": \"...\"}]}],
   "generationConfig": {
     "responseModalities": ["IMAGE"],
     "imageConfig": {"aspectRatio": "1:1"}

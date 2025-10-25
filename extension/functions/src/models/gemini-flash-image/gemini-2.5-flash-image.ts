@@ -1,4 +1,4 @@
-// functions/src/models/nano-banana/nano-banana.ts
+// functions/src/models/gemini-flash-image/gemini-2.5-flash-image.ts
 import {z} from "zod";
 import * as logger from "firebase-functions/logger";
 
@@ -10,14 +10,14 @@ import {getOutputFileUri, uploadToGcs} from "../../storage.js";
 import type {ModelAdapter, StartResult, ModelOutput} from "../_shared/base.js";
 
 /**
- * Nano Banana (Gemini 2.5 Flash Image) - Fast image generation
+ * Gemini 2.5 Flash Image - Fast image generation
  * Uses Gemini generateContent API with IMAGE modality
  */
 
 /**
- * Nano Banana-specific types (uses generateContent API like Gemini text/TTS)
+ * Gemini 2.5 Flash Image response types (uses generateContent API like Gemini text/TTS)
  */
-interface NanoBananaResponse {
+interface Gemini25FlashImageResponse {
   candidates: Array<{
     content: {
       parts: Array<{
@@ -53,12 +53,12 @@ async function generateImage(
     };
     safetySettings?: Array<{category: string; threshold: string}>;
   }
-): Promise<NanoBananaResponse> {
+): Promise<Gemini25FlashImageResponse> {
   const endpoint = `v1/projects/${PROJECT_ID}/locations/${REGION}/publishers/google/models/${model}:generateContent`;
-  return callVertexAPI<NanoBananaResponse>(endpoint, payload);
+  return callVertexAPI<Gemini25FlashImageResponse>(endpoint, payload);
 }
 
-export const NanoBananaAspectRatioSchema = z.enum([
+export const Gemini25FlashImageAspectRatioSchema = z.enum([
   "1:1",
   "3:2",
   "2:3",
@@ -70,7 +70,7 @@ export const NanoBananaAspectRatioSchema = z.enum([
   "16:9",
   "21:9",
 ]);
-export type NanoBananaAspectRatio = z.infer<typeof NanoBananaAspectRatioSchema>;
+export type Gemini25FlashImageAspectRatio = z.infer<typeof Gemini25FlashImageAspectRatioSchema>;
 
 const SafetySettingSchema = z.object({
   category: z.string(),
@@ -81,28 +81,28 @@ const SafetySettingSchema = z.object({
  * REST API schemas matching Vertex AI Gemini API with IMAGE modality
  */
 
-const NanoBananaContentSchema = z.object({
+const Gemini25FlashImageContentSchema = z.object({
   role: z.literal("user").optional(),
   parts: z.array(z.object({
     text: PromptSchema,
   })),
 });
 
-const NanoBananaGenerationConfigSchema = z.object({
+const Gemini25FlashImageGenerationConfigSchema = z.object({
   responseModalities: z.array(z.literal("IMAGE")),
   imageConfig: z.object({
-    aspectRatio: NanoBananaAspectRatioSchema.optional(),
+    aspectRatio: Gemini25FlashImageAspectRatioSchema.optional(),
   }).optional(),
 }).optional();
 
 // ============= SCHEMA =============
-export const NanoBananaRequestSchema = z.object({
+export const Gemini25FlashImageRequestSchema = z.object({
   model: z.literal("gemini-2.5-flash-image"),
   contents: z.union([
     PromptSchema.transform(text => [{role: "user" as const, parts: [{text}]}]),
-    z.array(NanoBananaContentSchema),
+    z.array(Gemini25FlashImageContentSchema),
   ]),
-  generationConfig: NanoBananaGenerationConfigSchema.transform(config => ({
+  generationConfig: Gemini25FlashImageGenerationConfigSchema.transform(config => ({
     responseModalities: ["IMAGE" as const],
     imageConfig: config?.imageConfig,
   })),
@@ -110,36 +110,36 @@ export const NanoBananaRequestSchema = z.object({
 });
 
 // ============= TYPE =============
-export type NanoBananaRequest = z.infer<typeof NanoBananaRequestSchema>;
+export type Gemini25FlashImageRequest = z.infer<typeof Gemini25FlashImageRequestSchema>;
 
 // ============= CONSTANTS =============
-export const NANO_BANANA_CONFIG = {
+export const GEMINI_25_FLASH_IMAGE_CONFIG = {
   modelId: "gemini-2.5-flash-image" as const,
-  displayName: "Nano Banana (Gemini 2.5 Flash Image)",
+  displayName: "Gemini 2.5 Flash Image",
   category: "image" as const,
   isAsync: false,
   generationTime: "2-5s",
-  schema: NanoBananaRequestSchema,
+  schema: Gemini25FlashImageRequestSchema,
 } as const;
 
 // ============= AI HINT =============
-export const NANO_BANANA_AI_HINT = `
-- **gemini-2.5-flash-image**: Fast image generation (Gemini 2.5 Flash Image, aka Nano Banana)
+export const GEMINI_25_FLASH_IMAGE_AI_HINT = `
+- **gemini-2.5-flash-image**: Fast image generation (Gemini 2.5 Flash Image)
   - Use when: User requests "image" without quality modifiers, or mentions "quick", "fast", "simple"
   - Generation time: 2-5 seconds
   - DEFAULT CHOICE for image requests
 `;
 
 // ============= ADAPTER =============
-export class NanoBananaAdapter implements ModelAdapter {
-  protected schema = NanoBananaRequestSchema;
+export class Gemini25FlashImageAdapter implements ModelAdapter {
+  protected schema = Gemini25FlashImageRequestSchema;
   protected modelId = "gemini-2.5-flash-image";
 
   async start(request: any, jobId: string): Promise<StartResult> {
     // Validate with Zod schema
     const validated = this.schema.parse(request);
 
-    logger.info("Starting Nano Banana generation", {
+    logger.info("Starting Gemini 2.5 Flash Image generation", {
       jobId,
       model: this.modelId,
       imageConfig: validated.generationConfig?.imageConfig,
@@ -184,7 +184,7 @@ export class NanoBananaAdapter implements ModelAdapter {
     return {output};
   }
 
-  // Nano Banana is synchronous - no polling needed
+  // Gemini 2.5 Flash Image is synchronous - no polling needed
 }
 
-export default NanoBananaAdapter;
+export default Gemini25FlashImageAdapter;

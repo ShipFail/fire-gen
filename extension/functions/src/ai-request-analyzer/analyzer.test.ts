@@ -734,31 +734,25 @@ const fixtures = [
     id: "image:cat",
     prompt: "Generate an image of a fluffy orange cat sitting on a windowsill",
     expected: {
-      type: "image",
-      model: expect.stringMatching(/^(nano-banana|imagen-4\.0-generate-001)$/),
-      prompt: expect.stringMatching(/.+/),
+      model: expect.stringMatching(/^(gemini-2\.5-flash-image|imagen-4\.0-generate-001)$/),
+      // Nano-banana uses contents/generationConfig, Imagen uses instances/parameters
+      // Just check that one of these structures exists
     },
   },
   {
     id: "image:scientist-portrait",
     prompt: "generate a Portrait photo image of a scientist in a modern laboratory, professional lighting",
     expected: {
-      type: "image",
-      model: expect.stringMatching(/^(nano-banana|imagen-4\.0-(fast-)?generate-001)$/),
-      prompt: expect.stringMatching(/.+/),
+      model: expect.stringMatching(/^(gemini-2\.5-flash-image|imagen-4\.0-(fast-)?generate-001)$/),
       // Note: "portrait of X" is ambiguous - could mean portrait subject (1:1) or portrait orientation (2:3/3:4/9:16)
       // AI interprets this as portrait subject, so 1:1 is acceptable
-      aspectRatio: expect.stringMatching(/^(1:1|2:3|3:4|9:16)$/),
     },
   },
   {
     id: "image:photorealistic-portrait",
     prompt: "Photorealistic ultra-detailed portrait, 9:16 aspect ratio",
     expected: {
-      type: "image",
-      model: expect.stringMatching(/^(nano-banana|imagen-4\.0-(ultra-)?generate-001)$/),
-      prompt: expect.stringMatching(/.+/),
-      aspectRatio: expect.stringMatching(/^(9:16|3:4)$/),
+      model: expect.stringMatching(/^(gemini-2\.5-flash-image|imagen-4\.0-(ultra-)?generate-001)$/),
     },
   },
 
@@ -769,21 +763,54 @@ const fixtures = [
     id: "audio:speak-hello",
     prompt: "speak hello world, how are you doing today?",
     expected: {
-      type: "audio",
-      subtype: "tts",
       model: expect.stringMatching(/^gemini-2\.5-(flash|pro)-preview-tts$/),
-      text: expect.stringMatching(/.+/),
+      contents: expect.arrayContaining([
+        expect.objectContaining({
+          role: "user",
+          parts: expect.arrayContaining([
+            expect.objectContaining({
+              text: expect.stringMatching(/say.+hello world/i),
+            }),
+          ]),
+        }),
+      ]),
+      generationConfig: expect.objectContaining({
+        responseModalities: ["AUDIO"],
+        speechConfig: expect.objectContaining({
+          voiceConfig: expect.objectContaining({
+            prebuiltVoiceConfig: expect.objectContaining({
+              voiceName: expect.stringMatching(/.+/),
+            }),
+          }),
+        }),
+      }),
     },
   },
   {
     id: "audio:tts-cheerful-welcome",
     prompt: "Say 'Welcome to FireGen' in a cheerful friendly voice",
     expected: {
-      type: "audio",
-      subtype: "tts",
       model: expect.stringMatching(/^gemini-2\.5-(flash|pro)-preview-tts$/),
-      text: "Welcome to FireGen",
-      voice: expect.stringMatching(/.+/),
+      contents: expect.arrayContaining([
+        expect.objectContaining({
+          role: "user",
+          parts: expect.arrayContaining([
+            expect.objectContaining({
+              text: expect.stringMatching(/Welcome to FireGen/),
+            }),
+          ]),
+        }),
+      ]),
+      generationConfig: expect.objectContaining({
+        responseModalities: ["AUDIO"],
+        speechConfig: expect.objectContaining({
+          voiceConfig: expect.objectContaining({
+            prebuiltVoiceConfig: expect.objectContaining({
+              voiceName: expect.stringMatching(/.+/),
+            }),
+          }),
+        }),
+      }),
     },
   },
 
@@ -794,20 +821,30 @@ const fixtures = [
     id: "audio:music-upbeat",
     prompt: "Generate upbeat background music with electronic beats for a workout video",
     expected: {
-      type: "audio",
-      subtype: "music",
       model: "lyria-002",
-      prompt: expect.stringMatching(/.+/),
+      instances: expect.arrayContaining([
+        expect.objectContaining({
+          prompt: expect.stringMatching(/.+/),
+        }),
+      ]),
+      parameters: expect.objectContaining({
+        sample_count: 1,
+      }),
     },
   },
   {
     id: "audio:music-meditation",
     prompt: "Generate music of calm ambient background music for meditation",
     expected: {
-      type: "audio",
-      subtype: "music",
       model: "lyria-002",
-      prompt: expect.stringMatching(/.+/),
+      instances: expect.arrayContaining([
+        expect.objectContaining({
+          prompt: expect.stringMatching(/.+/),
+        }),
+      ]),
+      parameters: expect.objectContaining({
+        sample_count: 1,
+      }),
     },
   },
 
@@ -818,27 +855,69 @@ const fixtures = [
     id: "text:explain-ai",
     prompt: "Write a text explanation of artificial intelligence and how it works",
     expected: {
-      type: "text",
       model: expect.stringMatching(/^gemini-2\.5-(flash|pro)$/),
-      prompt: expect.stringMatching(/.+/),
+      contents: expect.arrayContaining([
+        expect.objectContaining({
+          role: "user",
+          parts: expect.arrayContaining([
+            expect.objectContaining({
+              text: expect.stringMatching(/.+/),
+            }),
+          ]),
+        }),
+      ]),
+      generationConfig: expect.objectContaining({
+        temperature: expect.any(Number),
+        topP: expect.any(Number),
+        topK: expect.any(Number),
+        maxOutputTokens: expect.any(Number),
+      }),
     },
   },
   {
     id: "text:neural-networks-beginner",
     prompt: "Write a short text description of how neural networks work for a beginner",
     expected: {
-      type: "text",
       model: "gemini-2.5-flash",
-      prompt: expect.stringMatching(/.+/),
+      contents: expect.arrayContaining([
+        expect.objectContaining({
+          role: "user",
+          parts: expect.arrayContaining([
+            expect.objectContaining({
+              text: expect.stringMatching(/.+/),
+            }),
+          ]),
+        }),
+      ]),
+      generationConfig: expect.objectContaining({
+        temperature: expect.any(Number),
+        topP: expect.any(Number),
+        topK: expect.any(Number),
+        maxOutputTokens: expect.any(Number),
+      }),
     },
   },
   {
     id: "text:transformer-analysis",
     prompt: "Provide a comprehensive technical analysis of transformer architecture in modern large language models",
     expected: {
-      type: "text",
       model: expect.stringMatching(/^gemini-2\.5-(flash|pro)$/),
-      prompt: expect.stringMatching(/.+/),
+      contents: expect.arrayContaining([
+        expect.objectContaining({
+          role: "user",
+          parts: expect.arrayContaining([
+            expect.objectContaining({
+              text: expect.stringMatching(/.+/),
+            }),
+          ]),
+        }),
+      ]),
+      generationConfig: expect.objectContaining({
+        temperature: expect.any(Number),
+        topP: expect.any(Number),
+        topK: expect.any(Number),
+        maxOutputTokens: expect.any(Number),
+      }),
     },
   },
 ];

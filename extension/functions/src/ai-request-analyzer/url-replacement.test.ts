@@ -6,8 +6,6 @@ import {
   getMimeCategory,
   replaceUrisWithSemanticTags,
   restoreSemanticTagsToUris,
-  restoreUrisInText,
-  preprocessAllUris,
   type UriReplacement
 } from './url-replacement';
 

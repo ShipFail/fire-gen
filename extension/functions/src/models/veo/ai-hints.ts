@@ -14,12 +14,30 @@ export const VEO_AI_HINTS = `
 ### VIDEO (async, requires polling, 30-120s generation time)
 **IMPORTANT: DEFAULT VIDEO MODEL IS veo-3.1-fast-generate-preview - use this unless explicitly stated otherwise**
 
-**CRITICAL: URL HANDLING IN PROMPTS**
-- When extracting image/video URLs to request parameters (imageGcsUri, videoGcsUri, etc.), you MUST REMOVE them from the final prompt
-- The prompt should describe the scene/action WITHOUT containing any URLs
-- URLs should ONLY appear in their respective URI fields, never in the prompt text
-- Example: "Animate https://example.com/img.jpg with wind" → prompt: "Animate with wind", imageGcsUri: "gs://..."
-- Example: "Show gs://b/p1.jpg and gs://b/p2.jpg dancing" → prompt: "Show dancing", referenceSubjectImages: ["gs://b/p1.jpg", "gs://b/p2.jpg"]
+**CRITICAL: URL Placeholder Format**
+User prompts contain URL placeholders as semantic XML tags with MIME type information:
+- <GS_VIDEO_URI_REF_N mimeType='video/...'/>  or  <GS_VIDEO_URI_REF_N mimeType='application/mp4'/>
+- <GS_IMAGE_URI_REF_N mimeType='image/...'/>
+- <GS_AUDIO_URI_REF_N mimeType='audio/...'/>
+
+**URL Handling Rules:**
+1. **Check mimeType attribute** to determine file type (video/image/audio)
+2. **Copy the FULL XML tag exactly** to the appropriate request field
+3. **Remove from prompt** if used in a request parameter field
+4. **Keep in prompt** if NOT used in any parameter field
+
+**Example:**
+Input: "Continue from <GS_VIDEO_URI_REF_1 mimeType='application/mp4'/> with hero finding treasure"
+Output: {
+  "videoGcsUri": "<GS_VIDEO_URI_REF_1 mimeType='application/mp4'/>",  // Used - copy tag
+  "prompt": "Continue with hero finding treasure"  // Removed from prompt
+}
+
+**Example (unused URL):**
+Input: "Show character finding sword <GS_IMAGE_URI_REF_2 mimeType='image/png'/> in temple"
+Output: {
+  "prompt": "Show character finding sword <GS_IMAGE_URI_REF_2 mimeType='image/png'/> in temple"  // Kept - not used
+}
 
 ${VEO_3_1_FAST_GENERATE_PREVIEW_AI_HINT}
 ${VEO_3_1_GENERATE_PREVIEW_AI_HINT}

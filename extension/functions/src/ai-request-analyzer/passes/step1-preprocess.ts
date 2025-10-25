@@ -42,11 +42,11 @@ export async function step1Preprocess(
   logger.info("Step 1: Generating candidates", {jobId});
 
   // 1. Preprocess URLs in prompt
-  const {processedContexts, urlMap} = preprocessAllUrls(contexts);
+  const {processedContexts, replacements} = preprocessAllUrls(contexts);
   const prompt = processedContexts[0];
 
-  if (urlMap.size > 0) {
-    logger.info("Step 1: URLs preprocessed", {jobId, urlCount: urlMap.size});
+  if (replacements.length > 0) {
+    logger.info("Step 1: URLs preprocessed", {jobId, urlCount: replacements.length});
   }
 
   // 2. Gather ALL AI hints from ALL models
@@ -80,6 +80,30 @@ Your job is to ANALYZE and ROUTE the request, NOT to PERFORM the creative task.
 
 Task: Analyze the user prompt and generate the TOP 3 most suitable model candidates.
 
+**Understanding URL Placeholders:**
+User prompts may contain URL placeholders in semantic XML format:
+- <GS_VIDEO_URI_REF_N mimeType='video/...'/>  - Video files (.mp4, .mov, .webm, etc.)
+- <GS_VIDEO_URI_REF_N mimeType='application/mp4'/> - Also video (standard MIME type for MP4)
+- <GS_IMAGE_URI_REF_N mimeType='image/...'/>  - Image files (.jpg, .png, .webp, etc.)
+- <GS_AUDIO_URI_REF_N mimeType='audio/...'/>  - Audio files (.mp3, .wav, etc.)
+
+**How to Use URL Placeholders:**
+1. Look at the mimeType attribute to determine file type
+2. Use GS_VIDEO_URI_REF_* tags for video-related fields (videoGcsUri, etc.)
+3. Use GS_IMAGE_URI_REF_* tags for image-related fields (imageGcsUri, referenceSubjectImages, etc.)
+4. Copy the FULL XML tag exactly as-is to the appropriate field
+5. Remove the tag from the final prompt field if you use it in a parameter field
+6. Keep the tag in the prompt if NOT used in any parameter field
+
+**Example:**
+Input: "Continue from <GS_VIDEO_URI_REF_1 mimeType='application/mp4'/> with the hero discovering treasure"
+Output: {
+  "type": "video",
+  "model": "veo-3.1-generate-preview",
+  "videoGcsUri": "<GS_VIDEO_URI_REF_1 mimeType='application/mp4'/>",  // Used in field
+  "prompt": "Continue with the hero discovering treasure"  // Removed from prompt
+}
+
 **Think step-by-step before generating candidates:**
 1. What media type is the user requesting? (video/image/audio/text)
 2. What are the key indicators in the prompt?
@@ -87,7 +111,8 @@ Task: Analyze the user prompt and generate the TOP 3 most suitable model candida
    - Music/melody/beat → Music audio
    - Visual content → Video or Image
    - Text generation → Text
-   - **CRITICAL**: URL placeholders (<GS_HTTPS_URI_REF_1/>, etc.) → Image-to-video (video with referenceImageGcsUri)
+   - **CRITICAL**: URL placeholders with video mimeType → Video with videoGcsUri or imageGcsUri (for image-to-video)
+   - **CRITICAL**: URL placeholders with image mimeType → Check context (animation vs subject reference vs frame transition)
 3. What parameters are explicitly mentioned? (duration, aspect ratio, quality, voice)
 4. Which models best match these requirements?
 
@@ -211,7 +236,7 @@ User Prompt: "Write a text explanation of artificial intelligence"
   });
 
   // 5. Restore URLs in result
-  const restored = restoreUrlsInText(responseText, urlMap);
+  const restored = restoreUrlsInText(responseText, replacements);
 
   logger.info("Step 1 complete", {
     jobId,

@@ -2,6 +2,7 @@
 import * as logger from "firebase-functions/logger";
 
 import {MODEL_REGISTRY} from "../models/index.js";
+import {preprocessAllUrls, restoreUrlsInRequest, restoreUrlsInText} from "./url-utils.js";
 import {step1Preprocess} from "./passes/step1-preprocess.js";
 import {step2Analyze} from "./passes/step2-analyze.js";
 
@@ -30,6 +31,7 @@ const MAX_RETRIES = 3;
  *
  * Step 1: Pre-Analysis (Candidate Generation)
  *   - Input: [prompt]
+ *   - URL preprocessing: Replace URLs with semantic XML tags
  *   - Gather all AI hints, call AI to generate top 3 model candidates
  *   - Output: Plain text with candidates, parameters, and reasoning
  *
@@ -37,6 +39,7 @@ const MAX_RETRIES = 3;
  *   - Input: [prompt, step1Context, validationErrors...]
  *   - Review candidates, make final decision
  *   - Output: Plain text with JobRequest JSON + reasoning
+ *   - URL restoration: Convert XML tags to gs:// URIs, clean prompt
  *
  * Orchestrator (Validation & Retry):
  *   - Parse JobRequest from Step 2
@@ -52,6 +55,7 @@ const MAX_RETRIES = 3;
  * - AI-native: Semantic understanding throughout
  * - Augmented context: Full reasoning chain preserved
  * - Retry at orchestrator level: Clean separation of concerns
+ * - Smart URL handling: MIME-type-aware tags, automatic cleanup
  *
  * @param {string} userPrompt - User's natural language prompt
  * @param {string} jobId - Job ID for logging (optional, defaults to "default")
@@ -75,12 +79,24 @@ export async function analyzePrompt(
     throw new Error("Prompt too long (max 10000 characters)");
   }
 
+  //  Preprocess URLs at top level
+  const {processedContexts, replacements} = preprocessAllUrls([userPrompt]);
+  const processedPrompt = processedContexts[0];
+
+  if (replacements.length > 0) {
+    logger.info("URLs preprocessed for analysis", {
+      jobId,
+      urlCount: replacements.length,
+      categories: replacements.map(r => r.category).join(", ")
+    });
+  }
+
   const reasons: string[] = [];
 
   try {
-    // Step 1: Generate top 3 candidates
+    // Step 1: Generate top 3 candidates (uses processed prompt)
     logger.info("Step 1: Generating candidates", {jobId});
-    const step1Context = await step1Preprocess([userPrompt], jobId);
+    const step1Context = await step1Preprocess([processedPrompt], jobId);
     reasons.push(step1Context);
 
     // Step 2: Make final selection (with retry on validation failure)
@@ -90,8 +106,8 @@ export async function analyzePrompt(
       try {
         logger.info(`Step 2: Final selection (attempt ${attempt}/${MAX_RETRIES})`, {jobId});
 
-        // Build contexts for Step 2
-        const contexts = [userPrompt, ...reasons]; // prompt + all reasoning so far
+        // Build contexts for Step 2 (use processed prompt)
+        const contexts = [processedPrompt, ...reasons]; // prompt + all reasoning so far
 
         // Call Step 2
         const step2Context = await step2Analyze(contexts, jobId);
@@ -99,6 +115,26 @@ export async function analyzePrompt(
 
         // Extract Job Request from Step 2 output
         request = extractJobRequestFromText(step2Context);
+
+        // Restore URLs in request and prompt
+        const {cleanedRequest, cleanedPrompt} = restoreUrlsInRequest(
+          request,
+          request.prompt || "",
+          replacements
+        );
+
+        // Update request with cleaned versions
+        request = cleanedRequest;
+        if (request.prompt) {
+          request.prompt = cleanedPrompt;
+        }
+
+        logger.info("URLs restored in final request", {
+          jobId,
+          hasVideoGcsUri: !!request.videoGcsUri,
+          hasImageGcsUri: !!request.imageGcsUri,
+          hasReferenceImages: !!request.referenceSubjectImages,
+        });
 
         // Validate with Zod
         validateJobRequest(request);
@@ -125,14 +161,17 @@ export async function analyzePrompt(
       }
     }
 
+    // Restore URLs in reasoning texts
+    const restoredReasons = reasons.map(reason => restoreUrlsInText(reason, replacements));
+
     logger.info("Analysis pipeline complete", {
       jobId,
       model: request.model,
       type: request.type,
-      reasonsCount: reasons.length,
+      reasonsCount: restoredReasons.length,
     });
 
-    return {request, reasons};
+    return {request, reasons: restoredReasons};
 
   } catch (err: unknown) {
     const message =

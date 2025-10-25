@@ -1,57 +1,84 @@
 // functions/src/ai-request-analyzer/url-utils.ts
 
-/**
- * URL pattern matching http://, https://, and gs:// URIs
- */
-const URL_PATTERN = /https?:\/\/\S+|gs:\/\/\S+/gi;
+import {replaceUrlsWithTags, restoreAndCleanUrls, type UrlReplacement} from "./storage-url.js";
 
 /**
- * Preprocess ALL contexts: replace URLs with placeholders.
+ * Preprocess ALL contexts: replace URLs with semantic XML tags.
+ *
+ * Uses MIME-type-aware tags (e.g., <GS_VIDEO_URI_REF_1 mimeType='video/mp4'/>)
+ * so the AI can distinguish between video, image, and audio URLs.
+ *
  * This prevents URLs from:
- * - Wasting tokens in AI calls
+ * - Wasting tokens in AI calls (long filenames)
  * - Confusing hint detection
  * - Affecting model selection
+ * - Being misclassified (video URL in imageGcsUri field)
  *
  * @param contexts - Array of context strings (prompt + contexts from previous steps)
- * @returns Processed contexts with URLs replaced by placeholders, and URL mapping
+ * @returns Processed contexts with URLs replaced by semantic tags, and replacements metadata
  */
 export function preprocessAllUrls(contexts: string[]): {
   processedContexts: string[];
-  urlMap: Map<string, string>;
+  replacements: UrlReplacement[];
 } {
-  const urlMap = new Map<string, string>();
-  let counter = 1;
+  // Collect all replacements from all contexts
+  const allReplacements: UrlReplacement[] = [];
 
   const processedContexts = contexts.map((context) => {
-    return context.replace(URL_PATTERN, (url) => {
-      const placeholder = `<GS_HTTPS_URI_REF_${counter}/>`;
-      urlMap.set(placeholder, url);
-      counter++;
-      return placeholder;
-    });
+    const {processedPrompt, replacements} = replaceUrlsWithTags(context);
+    allReplacements.push(...replacements);
+    return processedPrompt;
   });
 
-  return {processedContexts, urlMap};
+  return {processedContexts, replacements: allReplacements};
 }
 
 /**
- * Restore URLs in text by replacing placeholders with original URLs.
+ * Restore URLs in AI-generated request and prompt.
+ *
+ * Process:
+ * 1. Replace XML tags in request fields with actual gs:// URIs
+ * 2. Remove used tags from prompt
+ * 3. Restore unused tags back to original URLs in prompt
+ *
+ * @param aiRequest - Request object from AI (may contain XML tags)
+ * @param aiPrompt - Prompt from AI (may contain XML tags)
+ * @param replacements - Replacement metadata from preprocessAllUrls
+ * @returns Cleaned request and prompt with real gs:// URIs
+ */
+export function restoreUrlsInRequest(
+  aiRequest: any,
+  aiPrompt: string,
+  replacements: UrlReplacement[]
+): {
+  cleanedRequest: any;
+  cleanedPrompt: string;
+} {
+  return restoreAndCleanUrls(aiRequest, aiPrompt, replacements);
+}
+
+/**
+ * Restore URLs in plain text by replacing XML tags with original URLs.
+ *
+ * Used for restoring URLs in non-request text (e.g., reasoning, error messages).
  *
  * @param text - Text containing URL placeholders
- * @param urlMap - Mapping of placeholders to original URLs
+ * @param replacements - Replacement metadata from preprocessAllUrls
  * @returns Text with URLs restored
  */
 export function restoreUrlsInText(
   text: string,
-  urlMap: Map<string, string>
+  replacements: UrlReplacement[]
 ): string {
   let restored = text;
 
-  urlMap.forEach((url, placeholder) => {
-    // Escape special regex characters in placeholder
-    const escapedPlaceholder = placeholder.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    restored = restored.replace(new RegExp(escapedPlaceholder, "g"), url);
-  });
+  for (const replacement of replacements) {
+    // Replace all occurrences of the placeholder with original URL
+    restored = restored.replace(
+      new RegExp(replacement.placeholder.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"),
+      replacement.original
+    );
+  }
 
   return restored;
 }

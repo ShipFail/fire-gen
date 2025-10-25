@@ -81,34 +81,54 @@ REQUIRED Video Fields (ALWAYS include):
 - type, model, prompt, duration, aspectRatio, audio
 - Defaults: duration=8, aspectRatio="16:9", audio=true
 
-URL Extraction (self-describing tags):
+URL Extraction Rules:
 
-**CRITICAL: Every URL tag MUST be extracted to a field. Never discard URLs.**
+⚠️ CRITICAL: Every <GS_*> or <HTTPS_*> tag MUST be extracted to a request field!
+❌ NEVER leave URL tags in the prompt only - they MUST go into a field!
+✅ Remove tag from prompt AND add to appropriate field
 
-Tag Format: <{PROTOCOL}_{CATEGORY}_{FORMAT}_{INDEX}/>
-- Examples: <GS_VIDEO_MP4_1/>, <HTTPS_IMAGE_JPEG_1/>, <GS_AUDIO_MPEG_1/>
+Tag Categories:
+- <GS_IMAGE_*_N/> or <HTTPS_IMAGE_*_N/> → Image files
+- <GS_VIDEO_*_N/> or <HTTPS_VIDEO_*_N/> → Video files  
+- <GS_AUDIO_*_N/> or <HTTPS_AUDIO_*_N/> → Audio files
 
-Decision Tree:
-1. Video URL (<GS_VIDEO_*> or <HTTPS_VIDEO_*>):
-   - With image URL → videoGcsUri + lastFrameGcsUri (video extension)
-   - Alone → videoGcsUri (video extension)
+EXTRACTION RULES:
 
-2. Single Image URL (<GS_IMAGE_*_1> or <HTTPS_IMAGE_*_1>):
-   - Words "animate", "bring to life" → imageGcsUri (base image animation)
-   - Words "show", "character", "person", "walking" → referenceSubjectImages
-   - **URL at END or standalone (no animation words)** → referenceSubjectImages (DEFAULT)
-   - In middle of sentence → referenceSubjectImages
+1. VIDEO tag (<*_VIDEO_*/>):
+   - Extract to: videoGcsUri
+   - If also has IMAGE tag → add IMAGE to lastFrameGcsUri
+   
+2. SINGLE IMAGE tag:
+   - "animate this", "bring to life" → imageGcsUri (base image to animate)
+   - ALL OTHER cases → referenceSubjectImages: ["<tag>"]
+   - Examples of referenceSubjectImages:
+     * "Show <IMAGE_TAG/> walking" 
+     * "character <IMAGE_TAG/> in scene"
+     * "mountain climber <IMAGE_TAG/>"  ← Tag at END
+     * "portrait <IMAGE_TAG/>"           ← Tag at END
 
-3. Multiple Image URLs (2-3 images):
-   - If first + "with" + second → imageGcsUri (first) + referenceSubjectImages (rest)
-   - Otherwise → ALL go to referenceSubjectImages (max 3)
+3. MULTIPLE IMAGE tags (2-3):
+   - Extract ALL to: referenceSubjectImages: ["<tag1/>", "<tag2/>", ...]
+   - Max 3 images
 
-Examples:
-- "Animate <GS_IMAGE_JPEG_1/>" → imageGcsUri: "<GS_IMAGE_JPEG_1/>", prompt: "Animate"
-- "Mountain climber <GS_IMAGE_JPEG_1/>" → referenceSubjectImages: ["<GS_IMAGE_JPEG_1/>"], prompt: "Mountain climber"
-- "Show <HTTPS_IMAGE_PNG_1/> walking" → referenceSubjectImages: ["<HTTPS_IMAGE_PNG_1/>"], prompt: "Show walking"
-- "Person <GS_IMAGE_JPEG_1/> in city" → referenceSubjectImages: ["<GS_IMAGE_JPEG_1/>"], prompt: "Person in city"
-- "Continue <GS_VIDEO_MP4_1/>" → videoGcsUri: "<GS_VIDEO_MP4_1/>", prompt: "Continue"
+EXAMPLES WITH EXTRACTION:
+
+Input: "Animate <GS_IMAGE_JPEG_1/>"
+→ imageGcsUri: "<GS_IMAGE_JPEG_1/>", prompt: "Animate"
+
+Input: "Mountain climber reaching summit <GS_IMAGE_JPEG_1/>"
+→ referenceSubjectImages: ["<GS_IMAGE_JPEG_1/>"], prompt: "Mountain climber reaching summit"
+→ JSON: {"type":"video","model":"veo-3.1-fast-generate-preview","prompt":"Mountain climber reaching summit","referenceSubjectImages":["<GS_IMAGE_JPEG_1/>"],"duration":8,"aspectRatio":"16:9","audio":true}
+
+Input: "Show <GS_IMAGE_PNG_1/> walking in park"
+→ referenceSubjectImages: ["<GS_IMAGE_PNG_1/>"], prompt: "Show walking in park"
+
+Input: "Continue <GS_VIDEO_MP4_1/>"
+→ videoGcsUri: "<GS_VIDEO_MP4_1/>", prompt: "Continue"
+
+Input: "Person <HTTPS_IMAGE_JPEG_1/> in futuristic city"
+→ referenceSubjectImages: ["<HTTPS_IMAGE_JPEG_1/>"], prompt: "Person in futuristic city"
+→ JSON: {"type":"video","model":"veo-3.1-fast-generate-preview","prompt":"Person in futuristic city","referenceSubjectImages":["<HTTPS_IMAGE_JPEG_1/>"],"duration":8,"aspectRatio":"16:9","audio":true}
 
 Negative Prompts:
 IF you see: "avoid X", "without X", "no X", "exclude X" → Extract X to negativePrompt field

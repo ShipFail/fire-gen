@@ -83,18 +83,18 @@ REQUIRED Video Fields (ALWAYS include):
 
 URL Extraction Rules:
 
-⚠️ CRITICAL: Every <GS_*> or <HTTPS_*> tag MUST be extracted to a request field!
+⚠️ CRITICAL: Every <VIDEO_URI_N/>, <IMAGE_URI_N/>, or <AUDIO_URI_N/> tag MUST be extracted to a request field!
 ❌ NEVER leave URL tags in the prompt only - they MUST go into a field!
 ✅ Remove tag from prompt AND add to appropriate field
 
 Tag Categories:
-- <GS_IMAGE_*_N/> or <HTTPS_IMAGE_*_N/> → Image files
-- <GS_VIDEO_*_N/> or <HTTPS_VIDEO_*_N/> → Video files
-- <GS_AUDIO_*_N/> or <HTTPS_AUDIO_*_N/> → Audio files
+- <IMAGE_URI_N/> → Image files (JPG, PNG, WEBP, etc.)
+- <VIDEO_URI_N/> → Video files (MP4, MOV, etc.)
+- <AUDIO_URI_N/> → Audio files (MP3, WAV, etc.)
 
 EXTRACTION RULES:
 
-1. VIDEO tag (<*_VIDEO_*/>):
+1. VIDEO tag (<VIDEO_URI_N/>):
    - Extract to: videoGcsUri
    - If also has IMAGE tag → add IMAGE to lastFrameGcsUri
 
@@ -102,10 +102,10 @@ EXTRACTION RULES:
    - "animate this", "bring to life" → imageGcsUri (base image to animate)
    - ALL OTHER cases → referenceSubjectImages: ["<tag>"]
    - Examples of referenceSubjectImages:
-     * "Show <IMAGE_TAG/> walking"
-     * "character <IMAGE_TAG/> in scene"
-     * "mountain climber <IMAGE_TAG/>"  ← Tag at END
-     * "portrait <IMAGE_TAG/>"           ← Tag at END
+     * "Show <IMAGE_URI_1/> walking"
+     * "character <IMAGE_URI_1/> in scene"
+     * "mountain climber <IMAGE_URI_1/>"  ← Tag at END
+     * "portrait <IMAGE_URI_1/>"           ← Tag at END
 
 3. MULTIPLE IMAGE tags (2-3):
    - Extract ALL to: referenceSubjectImages: ["<tag1/>", "<tag2/>", ...]
@@ -113,22 +113,22 @@ EXTRACTION RULES:
 
 EXAMPLES WITH EXTRACTION:
 
-Input: "Animate <GS_IMAGE_JPEG_1/>"
-→ imageGcsUri: "<GS_IMAGE_JPEG_1/>", prompt: "Animate"
+Input: "Animate <IMAGE_URI_1/>"
+→ imageGcsUri: "<IMAGE_URI_1/>", prompt: "Animate"
 
-Input: "Mountain climber reaching summit <GS_IMAGE_JPEG_1/>"
-→ referenceSubjectImages: ["<GS_IMAGE_JPEG_1/>"], prompt: "Mountain climber reaching summit"
-→ JSON: {"type":"video","model":"veo-3.1-fast-generate-preview","prompt":"Mountain climber reaching summit","referenceSubjectImages":["<GS_IMAGE_JPEG_1/>"],"duration":8,"aspectRatio":"16:9","audio":true}
+Input: "Mountain climber reaching summit <IMAGE_URI_1/>"
+→ referenceSubjectImages: ["<IMAGE_URI_1/>"], prompt: "Mountain climber reaching summit"
+→ JSON: {"type":"video","model":"veo-3.1-fast-generate-preview","prompt":"Mountain climber reaching summit","referenceSubjectImages":["<IMAGE_URI_1/>"],"duration":8,"aspectRatio":"16:9","audio":true}
 
-Input: "Show <GS_IMAGE_PNG_1/> walking in park"
-→ referenceSubjectImages: ["<GS_IMAGE_PNG_1/>"], prompt: "Show walking in park"
+Input: "Show <IMAGE_URI_1/> walking in park"
+→ referenceSubjectImages: ["<IMAGE_URI_1/>"], prompt: "Show walking in park"
 
-Input: "Continue <GS_VIDEO_MP4_1/>"
-→ videoGcsUri: "<GS_VIDEO_MP4_1/>", prompt: "Continue"
+Input: "Continue <VIDEO_URI_1/>"
+→ videoGcsUri: "<VIDEO_URI_1/>", prompt: "Continue"
 
-Input: "Person <HTTPS_IMAGE_JPEG_1/> in futuristic city"
-→ referenceSubjectImages: ["<HTTPS_IMAGE_JPEG_1/>"], prompt: "Person in futuristic city"
-→ JSON: {"type":"video","model":"veo-3.1-fast-generate-preview","prompt":"Person in futuristic city","referenceSubjectImages":["<HTTPS_IMAGE_JPEG_1/>"],"duration":8,"aspectRatio":"16:9","audio":true}
+Input: "Person <IMAGE_URI_1/> in futuristic city"
+→ referenceSubjectImages: ["<IMAGE_URI_1/>"], prompt: "Person in futuristic city"
+→ JSON: {"type":"video","model":"veo-3.1-fast-generate-preview","prompt":"Person in futuristic city","referenceSubjectImages":["<IMAGE_URI_1/>"],"duration":8,"aspectRatio":"16:9","audio":true}
 
 Negative Prompts:
 IF you see: "avoid X", "without X", "no X", "exclude X" → Extract X to negativePrompt field

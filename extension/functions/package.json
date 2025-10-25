@@ -29,10 +29,12 @@
     "@google/genai": "^1.27.0",
     "firebase-admin": "^12.7.0",
     "firebase-functions": "^6.6.0",
+    "mime-types": "^3.0.1",
     "zod": "^3.25.76",
     "zod-to-json-schema": "^3.24.6"
   },
   "devDependencies": {
+    "@types/mime-types": "^3.0.1",
     "@typescript-eslint/eslint-plugin": "^5.12.0",
     "@typescript-eslint/parser": "^5.12.0",
     "eslint": "^8.9.0",

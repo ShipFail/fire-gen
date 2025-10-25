@@ -503,6 +503,181 @@ const fixtures = [
   },
 
   // ============================================
+  // VIDEO - VEO 3.1 FIRST-AND-LAST-FRAME TRANSITION
+  // ============================================
+  {
+    id: "video:veo31-first-last-frame-product-demo",
+    prompt: "First frame: https://firebasestorage.googleapis.com/v0/b/studio-3670859293-6f970.firebasestorage.app/o/users%2FnZ86oPazPgT3yZjTHhFFjkj7sR42%2Fprojects%2Fx5f8I6Tq99AGgj4HJrzF%2Fkeyframes%2Ffd3d84c9-9331-49ed-9739-7b35e76d9f9b.png?alt=media&token=8b570af6-92f9-4040-8f0c-c3ac0ae8ce17 Last frame: https://firebasestorage.googleapis.com/v0/b/studio-3670859293-6f970.firebasestorage.app/o/users%2FnZ86oPazPgT3yZjTHhFFjkj7sR42%2Fprojects%2Fx5f8I6Tq99AGgj4HJrzF%2Fkeyframes%2F5879bd22-6927-4549-9199-9281a6cd8115.png?alt=media&token=8c223589-0167-46e7-b2e0-6518d0611a53 base_style: \"cinematic, photorealistic, 4K\" aspect_ratio: \"9:16\" key_elements: - \"MAN\" - \"AMAZON ESSENTIALS LONG-SLEEVE HENLEY\" negative_prompts: [\"no text overlays\", \"no distracting music\"] timeline: - sequence: 1 timestamp: \"00:00-00:04\" action: \"The man stretches and smiles, his Amazon Essentials Henley moving comfortably with his body. A voiceover begins, describing the product's comfort. The dialogue for this shot is: 'Meet your everyday upgrade: The Amazon Essentials Men's Slim-Fit Henley.'\" - sequence: 2 timestamp: \"00:04-00:08\" action: \"the man takes a sip of his coffee and goes back to work\" audio: Sounds appropriate to the scene. The VO should say: 'It's comfort that keeps up with your day.'\"",
+    expected: {
+      type: "video",
+      model: "veo-3.1-generate-preview", // "cinematic, photorealistic, 4K" = high quality
+      // Prompt should describe the action/scene WITHOUT URLs
+      prompt: expect.stringMatching(/^(?!.*firebasestorage).*man.*stretches.*smiles.*Henley.*coffee.*work/i),
+      // URLs converted to exact GCS format (gs:// URI requirement)
+      imageGcsUri: "gs://studio-3670859293-6f970.firebasestorage.app/users/nZ86oPazPgT3yZjTHhFFjkj7sR42/projects/x5f8I6Tq99AGgj4HJrzF/keyframes/fd3d84c9-9331-49ed-9739-7b35e76d9f9b.png",
+      lastFrameGcsUri: "gs://studio-3670859293-6f970.firebasestorage.app/users/nZ86oPazPgT3yZjTHhFFjkj7sR42/projects/x5f8I6Tq99AGgj4HJrzF/keyframes/5879bd22-6927-4549-9199-9281a6cd8115.png",
+      // Negative prompts: array combined into single string, "no" prefix stripped
+      negativePrompt: expect.stringMatching(/text overlays.*distracting music/i),
+      aspectRatio: "9:16",
+      duration: 8, // Timeline: 00:00-00:08
+      audio: true,
+    },
+  },
+
+  // ============================================
+  // VIDEO - VEO 3.1 URL REMOVAL EDGE CASES
+  // ============================================
+  {
+    id: "video:veo31-url-removed-from-prompt",
+    prompt: "Animate https://storage.googleapis.com/example/sunset.jpg with dramatic lighting and camera pan",
+    expected: {
+      type: "video",
+      model: expect.stringMatching(/^veo-3\.1-(fast-)?generate-preview$/),
+      // Prompt must NOT contain URLs but should have action description
+      prompt: expect.stringMatching(/^(?!.*https:\/\/)(?!.*storage\.googleapis\.com).*dramatic lighting.*camera pan/i),
+      imageGcsUri: "gs://example/sunset.jpg",
+    },
+  },
+  {
+    id: "video:veo31-multiple-urls-removed",
+    prompt: "Show gs://bucket/person1.jpg and gs://bucket/person2.jpg walking together in a park having a conversation",
+    expected: {
+      type: "video",
+      model: expect.stringMatching(/^veo-3\.1-(fast-)?generate-preview$/),
+      // Prompt must NOT contain gs:// URLs
+      prompt: expect.stringMatching(/^(?!.*gs:\/\/).*walking together.*park.*conversation/i),
+      referenceSubjectImages: [
+        "gs://bucket/person1.jpg",
+        "gs://bucket/person2.jpg"
+      ],
+    },
+  },
+  {
+    id: "video:veo31-url-at-end",
+    prompt: "Create a cinematic shot of a mountain climber reaching the summit gs://example/climber.jpg",
+    expected: {
+      type: "video",
+      model: expect.stringMatching(/^veo-3\.1-(fast-)?generate-preview$/),
+      prompt: expect.stringMatching(/^(?!.*gs:\/\/).*cinematic.*mountain climber.*summit/i),
+      referenceSubjectImages: ["gs://example/climber.jpg"],
+    },
+  },
+  {
+    id: "video:veo31-url-in-middle",
+    prompt: "A person https://firebasestorage.googleapis.com/v0/b/proj/o/person.jpg?token=123 walking through a futuristic city at night",
+    expected: {
+      type: "video",
+      model: expect.stringMatching(/^veo-3\.1-(fast-)?generate-preview$/),
+      prompt: expect.stringMatching(/^(?!.*firebasestorage).*person.*walking.*futuristic city.*night/i),
+      referenceSubjectImages: ["gs://proj/person.jpg"],
+    },
+  },
+
+  // ============================================
+  // VIDEO - VEO 3.1 GCS URI FORMAT VALIDATION
+  // ============================================
+  {
+    id: "video:veo31-gcs-uri-exact-format-storage-api",
+    prompt: "Animate this image https://storage.googleapis.com/my-bucket/images/landscape.jpg",
+    expected: {
+      type: "video",
+      model: expect.stringMatching(/^veo-3\.1-(fast-)?generate-preview$/),
+      // Must be exact GCS URI format (not HTTP URL)
+      imageGcsUri: "gs://my-bucket/images/landscape.jpg",
+      prompt: expect.stringMatching(/^(?!.*https:\/\/)/i),
+    },
+  },
+  {
+    id: "video:veo31-gcs-uri-exact-format-firebase",
+    prompt: "Animate https://firebasestorage.googleapis.com/v0/b/my-project.appspot.com/o/users%2Ftest%2Fvideo.mp4?alt=media",
+    expected: {
+      type: "video",
+      model: expect.stringMatching(/^veo-3\.1-(fast-)?generate-preview$/),
+      imageGcsUri: "gs://my-project.appspot.com/users/test/video.mp4",
+      prompt: expect.stringMatching(/^(?!.*firebasestorage)/i),
+    },
+  },
+  {
+    id: "video:veo31-gcs-uri-already-correct",
+    prompt: "Show this character gs://example-bucket/characters/hero.png in an action scene",
+    expected: {
+      type: "video",
+      model: expect.stringMatching(/^veo-3\.1-(fast-)?generate-preview$/),
+      referenceSubjectImages: ["gs://example-bucket/characters/hero.png"],
+      prompt: expect.stringMatching(/^(?!.*gs:\/\/).*character.*action scene/i),
+    },
+  },
+
+  // ============================================
+  // VIDEO - VEO 3.1 NEGATIVE PROMPT EDGE CASES
+  // ============================================
+  {
+    id: "video:veo31-negative-array-to-string",
+    prompt: "A peaceful forest scene. Negative prompts: [\"people\", \"buildings\", \"cars\", \"modern structures\"]",
+    expected: {
+      type: "video",
+      model: expect.stringMatching(/^veo-3\.1-(fast-)?generate-preview$/),
+      prompt: expect.stringMatching(/peaceful forest/i),
+      // Must be a single string, not array
+      negativePrompt: expect.stringMatching(/people.*buildings.*cars.*modern structures/i),
+    },
+  },
+  {
+    id: "video:veo31-negative-no-prefix-stripped",
+    prompt: "Mountain landscape without no people, no vehicles, no buildings",
+    expected: {
+      type: "video",
+      model: expect.stringMatching(/^veo-3\.1-(fast-)?generate-preview$/),
+      prompt: expect.stringMatching(/mountain landscape/i),
+      // "no" prefix should be stripped per Veo best practices - NOT contain word "no"
+      negativePrompt: expect.stringMatching(/^(?!.*\bno\b).*people.*vehicles.*buildings/i),
+    },
+  },
+  {
+    id: "video:veo31-negative-combined-sources",
+    prompt: "Ocean waves. Avoid: boats, people. Don't include: stormy weather. Negative: dark colors, gloomy atmosphere",
+    expected: {
+      type: "video",
+      model: expect.stringMatching(/^veo-3\.1-(fast-)?generate-preview$/),
+      prompt: expect.stringMatching(/ocean waves/i),
+      // All negative indicators combined into one string
+      negativePrompt: expect.stringMatching(/boats.*people.*stormy weather.*dark colors.*gloomy atmosphere/i),
+    },
+  },
+
+  // ============================================
+  // VIDEO - VEO 3.1 COMPLEX REAL-WORLD SCENARIOS
+  // ============================================
+  {
+    id: "video:veo31-complex-product-demo",
+    prompt: "Product demo: Show https://storage.googleapis.com/products/shoe-left.jpg and https://storage.googleapis.com/products/shoe-right.jpg rotating on a pedestal. Studio lighting, 9:16 vertical. Avoid: text overlays, price tags, distracting elements. Duration: 6 seconds.",
+    expected: {
+      type: "video",
+      model: expect.stringMatching(/^veo-3\.1-(fast-)?generate-preview$/),
+      prompt: expect.stringMatching(/^(?!.*https:\/\/)(?!.*gs:\/\/).*rotating.*pedestal.*studio lighting/i),
+      referenceSubjectImages: [
+        "gs://products/shoe-left.jpg",
+        "gs://products/shoe-right.jpg"
+      ],
+      negativePrompt: expect.stringMatching(/text overlays.*price tags.*distracting elements/i),
+      aspectRatio: "9:16",
+      duration: 6,
+    },
+  },
+  {
+    id: "video:veo31-character-consistency-narrative",
+    prompt: "Continue the story from gs://stories/chapter1.mp4 where the hero gs://characters/hero.jpg discovers a hidden temple. Cinematic 4K quality. Negative: modern elements, technology, urban background.",
+    expected: {
+      type: "video",
+      model: "veo-3.1-generate-preview", // "Cinematic 4K" = high quality
+      prompt: expect.stringMatching(/^(?!.*gs:\/\/).*hero.*discovers.*hidden temple/i),
+      videoGcsUri: "gs://stories/chapter1.mp4",
+      referenceSubjectImages: ["gs://characters/hero.jpg"],
+      negativePrompt: expect.stringMatching(/modern elements.*technology.*urban background/i),
+    },
+  },
+
+  // ============================================
   // IMAGE - BASELINE
   // ============================================
   {
@@ -637,7 +812,7 @@ describe("AI Request Analyzer", () => {
   // Separate test for validation error cases
   test("validation error: too many subject images (>3)", async () => {
     const prompt = "Show all 5 characters in a scene gs://example/c1.jpg gs://example/c2.jpg gs://example/c3.jpg gs://example/c4.jpg gs://example/c5.jpg";
-    
+
     // Should throw validation error after retry attempts
     await expect(analyzePrompt(prompt, "test-too-many-subjects")).rejects.toThrow(
       /referenceSubjectImages.*at most 3/i

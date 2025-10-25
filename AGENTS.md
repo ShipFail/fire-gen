@@ -13,7 +13,8 @@
 
 - Use TypeScript as possible as you can, because TypeScript is preferred as primary language.
 - Use `npx tsx` to run TypeScript code.
-- package.json dependencies should be installed using `npm install` with `@latest` version
+- Use `pnpm` instead of `npm` to manage dependencies.
+- package.json dependencies should be installed using `pnpm add` with `@latest` version
 - never use keyword/pattern match to solve problems, always use AI semantic understanding
 - when trying to solve a problem, always follow 1st principles thinking, break down the problem into smaller parts, and solve each part step-by-step. always search online for similar problems and solutions.
 - Always use semantic understanding and AI-native techniques for prompt tagging and classification.

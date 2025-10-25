@@ -14,6 +14,13 @@ export const VEO_AI_HINTS = `
 ### VIDEO (async, requires polling, 30-120s generation time)
 **IMPORTANT: DEFAULT VIDEO MODEL IS veo-3.1-fast-generate-preview - use this unless explicitly stated otherwise**
 
+**CRITICAL: URL HANDLING IN PROMPTS**
+- When extracting image/video URLs to request parameters (imageGcsUri, videoGcsUri, etc.), you MUST REMOVE them from the final prompt
+- The prompt should describe the scene/action WITHOUT containing any URLs
+- URLs should ONLY appear in their respective URI fields, never in the prompt text
+- Example: "Animate https://example.com/img.jpg with wind" → prompt: "Animate with wind", imageGcsUri: "gs://..."
+- Example: "Show gs://b/p1.jpg and gs://b/p2.jpg dancing" → prompt: "Show dancing", referenceSubjectImages: ["gs://b/p1.jpg", "gs://b/p2.jpg"]
+
 ${VEO_3_1_FAST_GENERATE_PREVIEW_AI_HINT}
 ${VEO_3_1_GENERATE_PREVIEW_AI_HINT}
 
@@ -70,18 +77,24 @@ Veo 3.1 has THREE distinct creative capabilities:
      - "make this photo come alive: <GS_HTTPS_URI_REF_1/>" → "imageGcsUri": "<GS_HTTPS_URI_REF_1/>"
 
 **NEGATIVE PROMPTS (All Veo 3.1 modes)**
-   * **negativePrompt**: String describing what NOT to include in the video
+   * **negativePrompt**: String (NOT array) describing what NOT to include in the video
+   * **SCHEMA**: Single string field - if input has array like ["item1", "item2"], join into "item1, item2"
    * **DETECTION**: Look for these indicators (Extract ALL negative elements, not just some):
-     - Explicit negative markers: "Negative:", "avoid:", "without:", "exclude:", "don't include:"
+     - Explicit negative markers: "Negative:", "negative_prompts:", "avoid:", "without:", "exclude:", "don't include:"
+     - Array format: negative_prompts: ["item1", "item2"] or ["no item1", "no item2"]
      - Semantic negation: "no [element]", "remove [element]", "never show [element]"
      - Quality negations: "no blur", "no distortion", "no watermark"
    * **USAGE**: Include the field "negativePrompt": "extracted negative elements"
    * **IMPORTANT**:
      - Extract ALL negative content, not just the first few items
-     - Remove markers like "Negative:" or "avoid:" from the actual negative prompt value
+     - Remove markers like "Negative:", "avoid:", "negative_prompts:" from the actual value
+     - Strip "no" prefix per Veo best practices: "no blur" → "blur"
+     - Convert arrays to comma-separated string: ["people", "buildings"] → "people, buildings"
      - Keep comma-separated format when multiple items are listed
    * Examples:
      - "beautiful sunset. Negative: blur, watermark" → "negativePrompt": "blur, watermark"
+     - "negative_prompts: [\"no text\", \"no logos\"]" → "negativePrompt": "text, logos"
+     - "Avoid: people, cars. Don't include: buildings" → "negativePrompt": "people, cars, buildings"
      - "zen garden. Negative: people, modern architecture, urban background, stormy" → "negativePrompt": "people, modern architecture, urban background, stormy"
 
 **IMPORTANT**: DO NOT include these deprecated parameters:

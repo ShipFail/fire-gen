@@ -32,6 +32,7 @@ export const VEO_3_0_GENERATE_001_AI_HINT = `
 export class Veo30Generate001Adapter extends VeoAdapterBase {
   protected schema = Veo30Generate001RequestSchema;
   protected modelId = "veo-3.0-generate-001";
+  protected isVeo31 = false; // Veo 3.0 uses old API
 }
 
 // ============= EXPORTS =============

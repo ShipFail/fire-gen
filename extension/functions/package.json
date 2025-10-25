@@ -24,7 +24,7 @@
   },
   "main": "lib/index.js",
   "dependencies": {
-    "@google/genai": "^1.22.0",
+    "@google/genai": "^1.27.0",
     "firebase-admin": "^12.7.0",
     "firebase-functions": "^6.6.0",
     "zod": "^3.25.76",

@@ -24,7 +24,8 @@ export const VeoDurationSchema = z.union([z.literal(4), z.literal(6), z.literal(
 export type VeoDuration = z.infer<typeof VeoDurationSchema>;
 
 /**
- * Base Zod schema for all Veo models.
+ * Base Zod schema for Veo 2.0 and 3.0 models.
+ * Includes resolution parameter (deprecated in 3.1).
  * Specific models extend this and override the `model` field.
  */
 export const VeoRequestBaseSchema = z.object({
@@ -41,12 +42,33 @@ export const VeoRequestBaseSchema = z.object({
 export type VeoRequestBase = z.infer<typeof VeoRequestBaseSchema>;
 
 /**
+ * Base Zod schema for Veo 3.1 models.
+ * New features: video extension, frame-specific generation, multi-subject references.
+ * Deprecated: resolution parameter (removed from API).
+ */
+export const Veo31RequestBaseSchema = z.object({
+  type: z.literal("video"),
+  model: z.string(), // Overridden in specific models
+  prompt: PromptSchema,
+  duration: VeoDurationSchema.default(8),
+  aspectRatio: VeoAspectRatioSchema.default("16:9"),
+  audio: z.boolean().default(true),
+  // New 3.1 features
+  referenceSubjectImages: z.array(UrlOrGcsUriSchema).max(3).optional(),
+  videoGcsUri: UrlOrGcsUriSchema.optional(), // For video extension
+  lastFrameGcsUri: UrlOrGcsUriSchema.optional(), // For frame-specific generation
+});
+
+export type Veo31RequestBase = z.infer<typeof Veo31RequestBaseSchema>;
+
+/**
  * Base adapter class for all Veo models.
  * Provides shared implementation for start/poll/extractOutput.
  */
 export abstract class VeoAdapterBase implements ModelAdapter {
   protected abstract schema: z.ZodSchema;
   protected abstract modelId: string;
+  protected abstract isVeo31: boolean; // Flag to determine API version
 
   async start(request: any, jobId: string): Promise<StartResult> {
     // Validate with Zod schema
@@ -59,22 +81,47 @@ export abstract class VeoAdapterBase implements ModelAdapter {
       jobId,
       model: this.modelId,
       outputGcsUri,
+      isVeo31: this.isVeo31,
     });
+
+    // Build config based on Veo version
+    const config: any = {
+      numberOfVideos: 1,
+      durationSeconds: validated.duration,
+      aspectRatio: validated.aspectRatio,
+      generateAudio: validated.audio,
+      outputGcsUri,
+    };
+
+    // Veo 3.0 and earlier: use resolution and referenceImageGcsUri
+    if (!this.isVeo31) {
+      config.resolution = validated.resolution;
+      if (validated.referenceImageGcsUri) {
+        config.referenceImageGcsUri = validated.referenceImageGcsUri;
+      }
+    }
+    // Veo 3.1+: use referenceImages.subject, video, lastFrame (resolution deprecated)
+    else {
+      // Multi-subject reference images
+      if (validated.referenceSubjectImages && validated.referenceSubjectImages.length > 0) {
+        config.referenceImages = {
+          subject: validated.referenceSubjectImages,
+        };
+      }
+      // Video extension mode
+      if (validated.videoGcsUri) {
+        config.video = validated.videoGcsUri;
+      }
+      // Frame-specific generation
+      if (validated.lastFrameGcsUri) {
+        config.lastFrame = validated.lastFrameGcsUri;
+      }
+    }
 
     const op = await ai.models.generateVideos({
       model: this.modelId,
       source: {prompt: validated.prompt},
-      config: {
-        numberOfVideos: 1,
-        durationSeconds: validated.duration,
-        aspectRatio: validated.aspectRatio,
-        resolution: validated.resolution,
-        generateAudio: validated.audio,
-        outputGcsUri,
-        ...(validated.referenceImageGcsUri && {
-          referenceImageGcsUri: validated.referenceImageGcsUri,
-        }),
-      },
+      config,
     });
 
     if (!op?.name) {

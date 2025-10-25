@@ -153,22 +153,22 @@ Example outputs:
 **Example 1: Video Request**
 User Prompt: "Vertical video of a waterfall cascading down mossy rocks in a forest"
 
-Selected Model: veo-3.0-generate-001
+Selected Model: veo-3.1-fast-generate-preview
 
 Job Request:
-{"type":"video","model":"veo-3.0-generate-001","prompt":"Vertical video of a waterfall cascading down mossy rocks in a forest","duration":8,"aspectRatio":"9:16","resolution":"1080p","audio":true}
+{"type":"video","model":"veo-3.1-fast-generate-preview","prompt":"Vertical video of a waterfall cascading down mossy rocks in a forest","duration":8,"aspectRatio":"9:16","audio":true}
 
 Selection Reasoning:
-Chose veo-3.0-generate-001 (highest quality) over veo-3.0-fast-generate-001 because user didn't request speed, and veo-2.0-generate-001 is outdated.
+Chose veo-3.1-fast-generate-preview (latest generation, fast) as the default choice. User didn't specify quality preference, so using fast variant.
 
 Parameter Reasoning:
 - type: "video"
   * Reason: User explicitly requested video generation
   * From prompt: "Vertical video of a waterfall"
 
-- model: "veo-3.0-generate-001"
-  * Reason: Highest quality Veo model, no speed requirement indicated
-  * Default because: No quality preference mentioned, using best available
+- model: "veo-3.1-fast-generate-preview"
+  * Reason: Latest Veo 3.1 fast model, default for video requests
+  * Default because: No quality preference mentioned, using fast variant
 
 - prompt: "Vertical video of a waterfall cascading down mossy rocks in a forest"
   * Reason: ORIGINAL user prompt VERBATIM - preserved for final model to execute creative task
@@ -181,10 +181,6 @@ Parameter Reasoning:
 - aspectRatio: "9:16"
   * Reason: User specified "vertical" orientation. Vertical means TALLER than wide, which is 9:16 (NOT 16:9)
   * From prompt: "Vertical video" → height > width → 9:16
-
-- resolution: "1080p"
-  * Reason: Default high quality resolution
-  * Default because: User didn't specify resolution, using 1080p standard
 
 - audio: true
   * Reason: Natural waterfall sounds would enhance the video experience

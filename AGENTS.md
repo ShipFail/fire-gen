@@ -59,6 +59,19 @@
 - AI Hints: Primary reference must be actual model name (can mention nickname in parentheses for context only)
 - use `zod` for schema definition and validation
 
+## Zod Schema as Single Source of Truth
+
+**Each model adapter MUST have ONE Zod schema that serves ALL purposes:**
+
+1. **Schema matches official Vertex AI REST API** - Exact structure from API docs
+2. **Types inferred from schema** - `type T = z.infer<typeof Schema>` (never duplicate)
+3. **Validation uses schema** - `schema.parse(request)` in validateJobRequest()
+4. **AI hints reference schema** - Include JSON structure to guide LLM output
+5. **Tests expect REST API format** - Match schema structure, use `expect.any()` for AI-chosen values
+6. **Schema exported** - Public export from model adapter file
+
+## Model Naming Rules
+
 ## AI Hints & Documentation
 
 1. **Concise over Verbose** - Shortest possible prompts that remain logical and complete

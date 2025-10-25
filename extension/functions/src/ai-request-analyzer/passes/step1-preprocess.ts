@@ -64,7 +64,7 @@ Task: Generate TOP 3 model candidates for this request.
 
 URL Placeholders:
 - <GS_VIDEO_URI_REF_N mimeType='...'/>: Video file
-- <GS_IMAGE_URI_REF_N mimeType='...'/>: Image file  
+- <GS_IMAGE_URI_REF_N mimeType='...'/>: Image file
 - <GS_AUDIO_URI_REF_N mimeType='...'/>: Audio file
 
 URL Rules:
@@ -101,10 +101,10 @@ Top 3 Model Candidates:
 1. <model-id>
    Type: <type>
    Parameters: <json>
-   
+
    Parameter Reasoning:
    - <field>: <value> → [why] (from prompt: "..." OR default)
-   
+
    Confidence: <level>
 
 2. ...`;

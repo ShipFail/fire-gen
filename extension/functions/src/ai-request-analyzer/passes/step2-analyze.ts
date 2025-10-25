@@ -81,13 +81,17 @@ REQUIRED Video Fields (ALWAYS include):
 - type, model, prompt, duration, aspectRatio, audio
 - Defaults: duration=8, aspectRatio="16:9", audio=true
 
-URLs (IF you see <GS_*_URI_REF_N/> tags):
-Decision tree:
-1. Single <GS_IMAGE.../> + "animate"/"bring to life" → imageGcsUri
-2. Multiple <GS_IMAGE.../> + "show"/"feature" → referenceSubjectImages (max 3)
-3. <GS_VIDEO.../> → videoGcsUri
-4. <GS_VIDEO.../> + <GS_IMAGE.../> → videoGcsUri + lastFrameGcsUri
-Remove used tags from prompt.
+URL Extraction (when you see <GS_*_URI_REF_N/> tags):
+
+Examples:
+1. "Animate <GS_IMAGE_URI_REF_1/>"
+   → imageGcsUri: "<GS_IMAGE_URI_REF_1/>", prompt: "Animate"
+
+2. "Show <GS_IMAGE_URI_REF_1/> walking in park"
+   → referenceSubjectImages: ["<GS_IMAGE_URI_REF_1/>"], prompt: "Show walking in park"
+
+3. "Continue <GS_VIDEO_URI_REF_1/> ending with <GS_IMAGE_URI_REF_1/>"
+   → videoGcsUri: "<GS_VIDEO_URI_REF_1/>", lastFrameGcsUri: "<GS_IMAGE_URI_REF_1/>", prompt: "Continue ending with"
 
 Negative Prompts:
 IF you see: "avoid X", "without X", "no X", "exclude X" → Extract X to negativePrompt field

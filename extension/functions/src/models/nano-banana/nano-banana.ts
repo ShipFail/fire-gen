@@ -2,14 +2,61 @@
 import {z} from "zod";
 import * as logger from "firebase-functions/logger";
 
-import {ai} from "../_shared/ai-client.js";
+import {callVertexAPI} from "../_shared/vertex-ai-client.js";
+import {PROJECT_ID} from "../../firebase-admin.js";
+import {REGION} from "../../env.js";
 import {PromptSchema} from "../_shared/zod-helpers.js";
 import {getOutputFileUri, uploadToGcs} from "../../storage.js";
 import type {ModelAdapter, StartResult, ModelOutput} from "../_shared/base.js";
 
 /**
  * Nano Banana (Gemini 2.5 Flash Image) - Fast image generation
+ * Uses Gemini generateContent API with IMAGE modality
  */
+
+/**
+ * Nano Banana-specific types (uses generateContent API like Gemini text/TTS)
+ */
+interface NanoBananaResponse {
+  candidates: Array<{
+    content: {
+      parts: Array<{
+        inlineData?: {
+          mimeType: string;
+          data: string;
+        };
+        [key: string]: unknown;
+      }>;
+      role?: string;
+    };
+    finishReason?: string;
+  }>;
+  usageMetadata?: {
+    promptTokenCount: number;
+    candidatesTokenCount: number;
+    totalTokenCount: number;
+  };
+}
+
+/**
+ * Call Gemini generateContent API for image generation
+ */
+async function generateImage(
+  model: string,
+  payload: {
+    contents: string | Array<{role?: string; parts: Array<{text: string}>}>;
+    generationConfig: {
+      responseModalities: string[];
+      imageConfig?: {
+        aspectRatio?: string;
+      };
+    };
+    safetySettings?: Array<{category: string; threshold: string}>;
+  }
+): Promise<NanoBananaResponse> {
+  const endpoint = `v1/projects/${PROJECT_ID}/locations/${REGION}/publishers/google/models/${model}:generateContent`;
+  return callVertexAPI<NanoBananaResponse>(endpoint, payload);
+}
 
 export const NanoBananaAspectRatioSchema = z.enum([
   "1:1",
@@ -30,12 +77,35 @@ const SafetySettingSchema = z.object({
   threshold: z.string(),
 });
 
+/**
+ * REST API schemas matching Vertex AI Gemini API with IMAGE modality
+ */
+
+const NanoBananaContentSchema = z.object({
+  role: z.literal("user").optional(),
+  parts: z.array(z.object({
+    text: PromptSchema,
+  })),
+});
+
+const NanoBananaGenerationConfigSchema = z.object({
+  responseModalities: z.array(z.literal("IMAGE")),
+  imageConfig: z.object({
+    aspectRatio: NanoBananaAspectRatioSchema.optional(),
+  }).optional(),
+}).optional();
+
 // ============= SCHEMA =============
 export const NanoBananaRequestSchema = z.object({
-  type: z.literal("image"),
-  model: z.literal("nano-banana"),
-  prompt: PromptSchema,
-  aspectRatio: NanoBananaAspectRatioSchema.default("1:1").optional(),
+  model: z.literal("gemini-2.5-flash-image"),
+  contents: z.union([
+    PromptSchema.transform(text => [{role: "user" as const, parts: [{text}]}]),
+    z.array(NanoBananaContentSchema),
+  ]),
+  generationConfig: NanoBananaGenerationConfigSchema.transform(config => ({
+    responseModalities: ["IMAGE" as const],
+    imageConfig: config?.imageConfig,
+  })),
   safetySettings: z.array(SafetySettingSchema).optional(),
 });
 
@@ -63,7 +133,7 @@ export const NANO_BANANA_AI_HINT = `
 // ============= ADAPTER =============
 export class NanoBananaAdapter implements ModelAdapter {
   protected schema = NanoBananaRequestSchema;
-  protected modelId = "nano-banana";
+  protected modelId = "gemini-2.5-flash-image";
 
   async start(request: any, jobId: string): Promise<StartResult> {
     // Validate with Zod schema
@@ -72,28 +142,19 @@ export class NanoBananaAdapter implements ModelAdapter {
     logger.info("Starting Nano Banana generation", {
       jobId,
       model: this.modelId,
-      aspectRatio: validated.aspectRatio,
+      imageConfig: validated.generationConfig?.imageConfig,
     });
 
-    // Call Gemini 2.5 Flash Image
-    // Note: Type assertion needed - SDK types don't include imageConfig
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash-image",
-      contents: validated.prompt,
-      config: {
-        responseModalities: ["IMAGE"],
-        ...(validated.aspectRatio ? {
-          imageConfig: {
-            aspectRatio: validated.aspectRatio,
-          },
-        } : {}),
-      },
+    // Call Gemini 2.5 Flash Image via REST API
+    const response = await generateImage(this.modelId, {
+      contents: validated.contents,
+      generationConfig: validated.generationConfig,
       safetySettings: validated.safetySettings,
-    } as any);
+    });
 
-    // Extract image data from response
+    // Extract image data from first candidate
     const imagePart = response.candidates?.[0]?.content?.parts?.find(
-      (part: any) => part.inlineData?.mimeType?.startsWith("image/")
+      (part) => part.inlineData?.mimeType?.startsWith("image/")
     );
 
     if (!imagePart?.inlineData?.data) {
@@ -105,7 +166,7 @@ export class NanoBananaAdapter implements ModelAdapter {
     const mimeType = imagePart.inlineData.mimeType || "image/png";
 
     // Upload to GCS
-    const outputUri = getOutputFileUri(jobId, validated);
+    const outputUri = getOutputFileUri(jobId, {model: this.modelId, type: "image"});
     await uploadToGcs(imageData, outputUri, mimeType);
 
     logger.info("Nano Banana generation completed", {jobId, uri: outputUri});
@@ -116,7 +177,7 @@ export class NanoBananaAdapter implements ModelAdapter {
       metadata: {
         mimeType,
         size: imageData.length,
-        aspectRatio: validated.aspectRatio || "1:1",
+        aspectRatio: validated.generationConfig?.imageConfig?.aspectRatio || "1:1",
       },
     };
 

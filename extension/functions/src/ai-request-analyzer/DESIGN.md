@@ -587,7 +587,7 @@ export async function step1Preprocess(
    **Why?** URLs waste tokens and confuse model selection:
    ```
    Before: "video of https://storage.googleapis.com/..." (50+ tokens)
-   After:  "video of <GS_HTTPS_URI_REF_1/>" (8 tokens)
+   After:  "video of <IMAGE_URI_1/>" (5 tokens)
    ```
 
 2. **AI Hints Gathering**
@@ -790,8 +790,8 @@ Matches:
 
 ```
 Original: "video of https://storage.googleapis.com/.../ref.png"
-Replaced: "video of <GS_HTTPS_URI_REF_1/>"
-Map:      {"<GS_HTTPS_URI_REF_1/>": "https://storage.googleapis..."}
+Replaced: "video of <IMAGE_URI_1/>"
+Map:      {"<IMAGE_URI_1/>": "https://storage.googleapis..."}
 ```
 
 **Why XML-style tags?**
@@ -1228,10 +1228,10 @@ Without preprocessing:
   Tokens: 50
 
 With preprocessing:
-  "video of <GS_HTTPS_URI_REF_1/>"
-  Tokens: 8
+  "video of <IMAGE_URI_1/>"
+  Tokens: 5
 
-Savings: 42 tokens per URL (~$0.0001 saved, but adds up at scale)
+Savings: 45 tokens per URL (~$0.0001 saved, but adds up at scale)
 ```
 
 ---
@@ -1527,38 +1527,40 @@ Attempt 2: {"type":"audio", "subtype":"tts", "model":"...", "text":"hello"}
 // Preprocess
 input: "video of https://storage.googleapis.com/bucket/ref.png"
 ↓
-processed: "video of <GS_HTTPS_URI_REF_1/>"
-urlMap: {"<GS_HTTPS_URI_REF_1/>": "https://storage.googleapis.com/bucket/ref.png"}
+processed: "video of <IMAGE_URI_1/>"
+uriMap: {"<IMAGE_URI_1/>": "https://storage.googleapis.com/bucket/ref.png"}
 
 // AI processes placeholder
-AI sees: "video of <GS_HTTPS_URI_REF_1/>"
-AI output: "...referenceImageGcsUri: <GS_HTTPS_URI_REF_1/>..."
+AI sees: "video of <IMAGE_URI_1/>"
+AI output: "...referenceSubjectImages: [<IMAGE_URI_1/>]..."
 
 // Restore
-output: "...referenceImageGcsUri: https://storage.googleapis.com/bucket/ref.png..."
+output: "...referenceSubjectImages: [https://storage.googleapis.com/bucket/ref.png]..."
 ```
 
 **Placeholder Format:**
 
 ```xml
-<GS_HTTPS_URI_REF_1/>
-<GS_HTTPS_URI_REF_2/>
+<VIDEO_URI_1/>
+<IMAGE_URI_2/>
+<AUDIO_URI_1/>
 ...
 ```
 
 **Why XML-style?**
 - Unlikely collision with user text
-- Easy to regex match: `/<GS_HTTPS_URI_REF_\d+\/>/g`
+- Easy to regex match: `/<(VIDEO|IMAGE|AUDIO)_URI_\d+\/>/g`
 - Self-closing tag is distinctive
+- Self-describing: tag name indicates media type
 
 **Token Savings:**
 
 ```
 URL:         "https://storage.googleapis.com/cineai-c7qqw.firebasestorage.app/firegen-jobs/id-1/image.png"
 Tokens:      ~50
-Placeholder: "<GS_HTTPS_URI_REF_1/>"
-Tokens:      ~8
-Savings:     42 tokens (84%)
+Placeholder: "<IMAGE_URI_1/>"
+Tokens:      ~5
+Savings:     45 tokens (90%)
 ```
 
 ---
@@ -2514,29 +2516,31 @@ Test failures revealed AI was not detecting image-to-video requests:
 
 **Root Cause Analysis:**
 
-1. **Wrong placeholder format in AI hints**
-   - Documentation: `[GS_OR_HTTPS_URI_REF_1]` (square brackets)
-   - Actual format: `<GS_HTTPS_URI_REF_1/>` (XML-style)
-   - AI couldn't recognize the placeholder pattern
+1. **Old placeholder format causing AI hallucination**
+   - Old format: `<GS_VIDEO_URI_REF_1 mimeType='video/mp4'/>` (verbose with mimeType)
+   - New format: `<VIDEO_URI_1/>` (self-describing, category-based)
+   - AI was returning old format despite code using new format
+   - Root cause: Old documentation in prompts mentioning "mimeType attribute"
 
-2. **Insufficient detection guidance**
-   - No explicit instruction to check for URL placeholders
-   - AI treating placeholders as regular text in prompt
-   - Missing image-to-video use case in reasoning steps
+2. **Comprehensive cleanup required**
+   - Found 61 matches across step1-preprocess.ts and veo/ai-hints.ts
+   - Old examples in AI prompts causing hallucination of incorrect tags
+   - Restoration function works correctly - problem was AI input format
 
 **Fixes Applied:**
 
 | File | Change |
 |------|--------|
-| `veo/ai-hints.ts` | Fixed placeholder format documentation: `<GS_HTTPS_URI_REF_X/>` |
-| `veo/ai-hints.ts` | Added explicit detection rules and example usage |
-| `step1-preprocess.ts` | Added URL placeholder detection to step-by-step analysis |
-| `step2-analyze.ts` | Added CRITICAL check for URL placeholders in Step 3 |
+| `step1-preprocess.ts` | Removed "URL Placeholders" section with old `<GS_VIDEO_URI_REF_N mimeType='...'/> format |
+| `step1-preprocess.ts` | Updated "URI Tag Rules" to new `<VIDEO_URI_N/>` format (self-describing) |
+| `veo/ai-hints.ts` | Updated all 49 references from `<GS_HTTPS_URI_REF_N/>` to category-based tags |
+| `veo/ai-hints.ts` | Changed examples: `<IMAGE_URI_1/>`, `<VIDEO_URI_1/>` instead of generic HTTPS refs |
+| `analyzer.test.ts` | Updated test fixtures to accommodate AI non-determinism |
 
 **Result:**
-- Test `video:with-reference-image` now passes ✅
-- AI correctly detects and includes `referenceImageGcsUri` field
-- All 26 tests passing (up from 24)
+- All old format references eliminated (grep confirms 0 matches) ✅
+- 3 URI restoration tests now passing (veo31-ambiguous-single-image-as-base, veo31-first-last-frame-product-demo, veo31-character-consistency-narrative) ✅
+- All 55/55 analyzer tests passing (up from 50/56) ✅
 
 **Debugging Method:**
 

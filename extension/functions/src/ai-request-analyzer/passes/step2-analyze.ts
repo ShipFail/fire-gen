@@ -77,17 +77,22 @@ FIX these errors in your response.
 
 Task: Select best candidate and output final JobRequest JSON.
 
-URL Placeholders:
-- <GS_VIDEO_URI_REF_N mimeType='...'/>: Video → use for videoGcsUri, lastFrameGcsUri  
-- <GS_IMAGE_URI_REF_N mimeType='...'/>: Image → use for imageGcsUri or referenceSubjectImages
+URL Decision Tree (IF you see URL tags in prompt):
+1. Count image tags: 0, 1, or 2+?
+2. Check verbs: "animate", "bring to life", "show X walking", "extend", "continue"?
+3. Assign field:
+   - 1 image + animate/bring → imageGcsUri
+   - 1+ images + show/feature → referenceSubjectImages (array, max 3)
+   - 1 video → videoGcsUri
+   - 1 video + 1 image → videoGcsUri + lastFrameGcsUri
+4. Remove used tags from prompt
 
-URL Rules:
-1. Copy FULL tag to field (videoGcsUri / imageGcsUri / referenceSubjectImages / lastFrameGcsUri)
-2. Remove tag from prompt IF used, keep IF unused
-3. Context determines field:
-   - "animate this image" → imageGcsUri (image-to-video)
-   - "show this person walking" → referenceSubjectImages (character consistency)
-   - "extend from <video> ending with <image>" → videoGcsUri + lastFrameGcsUri (scene extension)
+Examples:
+Input: "Animate <GS_IMAGE_URI_REF_1 mimeType='image/jpeg'/> with wind"
+Output: {imageGcsUri: "<GS_IMAGE_URI_REF_1 mimeType='image/jpeg'/>", prompt: "Animate with wind"}
+
+Input: "Show <GS_IMAGE_URI_REF_1 mimeType='image/png'/> and <GS_IMAGE_URI_REF_2 mimeType='image/png'/> in a scene"
+Output: {referenceSubjectImages: ["<GS_IMAGE_URI_REF_1 mimeType='image/png'/>", "<GS_IMAGE_URI_REF_2 mimeType='image/png'/>"], prompt: "Show in a scene"}
 
 Prompt Preservation:
 - Video/Image/Text/Music: Copy user prompt VERBATIM
@@ -97,11 +102,10 @@ Defaults (when not specified):
 - Video: duration=8, aspectRatio="16:9", audio=true
 - Image: aspectRatio="1:1"
 
-Negative Prompts:
-Extract from: "avoid", "without", "no", "don't want", "exclude", "negative prompt:"
-Examples:
-- "avoid cartoon" → negativePrompt: "cartoon"
-- "no people" → negativePrompt: "people"
+Negative Prompt Extraction:
+Keywords: "avoid", "without", "no", "don't want", "exclude", "negative prompt"
+Extract what follows the keyword.
+Examples: "avoid blur" → "blur" | "no people, no cars" → "people, cars"
 
 Format:
 

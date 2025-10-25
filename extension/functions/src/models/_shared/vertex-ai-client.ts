@@ -161,3 +161,79 @@ export async function predict(
 
   return result;
 }
+
+/**
+ * Response from Gemini generateContent API
+ */
+export interface GeminiGenerateContentResponse {
+  candidates: Array<{
+    content: {
+      parts: Array<{
+        text?: string;
+        [key: string]: unknown;
+      }>;
+      role?: string;
+    };
+    finishReason?: string;
+    safetyRatings?: Array<Record<string, unknown>>;
+    citationMetadata?: Record<string, unknown>;
+    avgLogprobs?: number;
+  }>;
+  usageMetadata?: {
+    promptTokenCount: number;
+    candidatesTokenCount: number;
+    totalTokenCount: number;
+  };
+  modelVersion?: string;
+}
+
+/**
+ * Call Gemini generateContent API (synchronous)
+ * Used for text generation with Gemini models.
+ */
+export async function generateContent(
+  model: string,
+  payload: {
+    contents: string | Array<{role?: string; parts: Array<{text: string}>}>;
+    systemInstruction?: {role?: string; parts: Array<{text: string}>};
+    generationConfig?: Record<string, unknown>;
+    safetySettings?: Array<Record<string, unknown>>;
+  }
+): Promise<GeminiGenerateContentResponse> {
+  const token = await auth.getAccessToken();
+  const endpoint = `https://${REGION}-aiplatform.googleapis.com/v1/projects/${PROJECT_ID}/locations/${REGION}/publishers/google/models/${model}:generateContent`;
+
+  logger.debug("Vertex AI generateContent request", {
+    model,
+    endpoint,
+    payload,
+  });
+
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    logger.error("Vertex AI API error", {
+      status: response.status,
+      statusText: response.statusText,
+      body: errorBody,
+    });
+    throw new Error(`Vertex AI API error: ${response.status} ${response.statusText} - ${errorBody}`);
+  }
+
+  const result = await response.json() as GeminiGenerateContentResponse;
+
+  logger.debug("Vertex AI generateContent response", {
+    candidatesCount: result.candidates?.length,
+    usageMetadata: result.usageMetadata,
+  });
+
+  return result;
+}

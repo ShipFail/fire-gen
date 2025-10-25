@@ -2,21 +2,47 @@
 import {z} from "zod";
 import * as logger from "firebase-functions/logger";
 
-import {ai} from "../_shared/ai-client.js";
-import {UrlOrGcsUriSchema} from "../_shared/zod-helpers.js";
+import {predictLongRunning} from "../_shared/vertex-ai-client.js";
 import {getJobStorageUri} from "../../storage.js";
 import {ensureTrailingSlash} from "../../util.js";
 import type {ModelAdapter, StartResult, ModelOutput} from "../_shared/base.js";
 import type {OperationResult} from "../../poller.js";
-import {VEO_COMMON_FIELDS_SCHEMA} from "./shared-schemas.js";
 import {pollVeoOperation, extractVeoOutput} from "./shared-polling.js";
 
-// ============= SCHEMA (Single Source of Truth) =============
-export const Veo20Generate001RequestSchema = VEO_COMMON_FIELDS_SCHEMA.extend({
-  model: z.literal("veo-2.0-generate-001"),
-  // Veo 2.0 specific fields
+// ============= OFFICIAL VERTEX AI REST API SCHEMA =============
+/**
+ * Matches official Vertex AI API for veo-2.0-generate-001:
+ * Previous generation Veo with simpler parameter set
+ */
+
+// Media input schemas
+const MediaSchema = z.object({
+  gcsUri: z.string().optional(),
+  bytesBase64Encoded: z.string().optional(),
+  mimeType: z.string().optional(),
+});
+
+// Instance schema (per-request input)
+const Veo20InstanceSchema = z.object({
+  prompt: z.string(),
+  image: MediaSchema.optional(), // For referenceImage
+});
+
+// Parameters schema (generation config)
+const Veo20ParametersSchema = z.object({
+  aspectRatio: z.enum(["16:9", "9:16", "1:1"]).default("16:9"),
+  durationSeconds: z.union([z.literal(4), z.literal(6), z.literal(8)]).default(8),
+  generateAudio: z.boolean().default(true),
   resolution: z.enum(["1080p", "720p"]).default("1080p"),
-  referenceImageGcsUri: UrlOrGcsUriSchema.optional(),
+  sampleCount: z.number().int().default(1),
+  storageUri: z.string().optional(), // Added by adapter
+});
+
+// Complete REST API request schema
+export const Veo20Generate001RequestSchema = z.object({
+  model: z.literal("veo-2.0-generate-001"),
+  instances: z.array(Veo20InstanceSchema),
+  parameters: Veo20ParametersSchema.optional(),
 });
 
 // ============= TYPE (Inferred from Schema) =============
@@ -47,34 +73,27 @@ export class Veo20Generate001Adapter implements ModelAdapter {
     // Validate with Zod schema
     const validated = Veo20Generate001RequestSchema.parse(request);
 
-    // Veo writes directly to GCS via outputGcsUri
-    const outputGcsUri = ensureTrailingSlash(getJobStorageUri(jobId));
+    // Set output storage URI
+    const storageUri = ensureTrailingSlash(getJobStorageUri(jobId));
 
-    logger.info("Starting Veo 2.0 generation", {
-      jobId,
-      model: this.modelId,
-      outputGcsUri,
-    });
-
-    // Build config for Veo 2.0 API
-    const config: Record<string, unknown> = {
-      numberOfVideos: 1,
-      durationSeconds: validated.duration,
-      aspectRatio: validated.aspectRatio,
-      resolution: validated.resolution,
-      generateAudio: validated.audio,
-      outputGcsUri,
+    // Update parameters with output location
+    const parameters = {
+      ...validated.parameters,
+      storageUri,
     };
 
-    // Veo 2.0 specific: referenceImageGcsUri
-    if (validated.referenceImageGcsUri) {
-      config.referenceImageGcsUri = validated.referenceImageGcsUri;
-    }
-
-    const op = await ai.models.generateVideos({
+    logger.info("Starting Veo 2.0 generation via REST API", {
+      jobId,
       model: this.modelId,
-      source: {prompt: validated.prompt},
-      config,
+      storageUri,
+      instances: validated.instances,
+      parameters,
+    });
+
+    // Call Vertex AI REST API
+    const op = await predictLongRunning(this.modelId, {
+      instances: validated.instances,
+      parameters,
     });
 
     if (!op?.name) {

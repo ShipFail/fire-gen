@@ -2,21 +2,49 @@
 import {z} from "zod";
 import * as logger from "firebase-functions/logger";
 
-import {ai} from "../_shared/ai-client.js";
-import {UrlOrGcsUriSchema} from "../_shared/zod-helpers.js";
+import {predictLongRunning} from "../_shared/vertex-ai-client.js";
 import {getJobStorageUri} from "../../storage.js";
 import {ensureTrailingSlash} from "../../util.js";
 import type {ModelAdapter, StartResult, ModelOutput} from "../_shared/base.js";
 import type {OperationResult} from "../../poller.js";
-import {VEO_COMMON_FIELDS_SCHEMA} from "./shared-schemas.js";
 import {pollVeoOperation, extractVeoOutput} from "./shared-polling.js";
 
-// ============= SCHEMA (Single Source of Truth) =============
-export const Veo30Generate001RequestSchema = VEO_COMMON_FIELDS_SCHEMA.extend({
+// ============= OFFICIAL VERTEX AI REST API SCHEMA =============
+/**
+ * Matches official Vertex AI API for veo-3.0-generate-001:
+ * https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/veo
+ *
+ * Veo 3.0 uses same REST API structure as 3.1 but with different parameters
+ */
+
+// Media input schemas (shared with Veo 3.1)
+const MediaSchema = z.object({
+  gcsUri: z.string().optional(),
+  bytesBase64Encoded: z.string().optional(),
+  mimeType: z.string().optional(),
+});
+
+// Instance schema (per-request input)
+const Veo30InstanceSchema = z.object({
+  prompt: z.string(),
+  image: MediaSchema.optional(), // For referenceImage
+});
+
+// Parameters schema (generation config)
+const Veo30ParametersSchema = z.object({
+  aspectRatio: z.enum(["16:9", "9:16", "1:1"]).default("16:9"),
+  durationSeconds: z.union([z.literal(4), z.literal(6), z.literal(8)]).default(8),
+  generateAudio: z.boolean().default(true),
+  resolution: z.enum(["1080p", "720p"]).default("1080p"), // Veo 3.0 specific
+  sampleCount: z.number().int().default(1),
+  storageUri: z.string().optional(), // Added by adapter
+});
+
+// Complete REST API request schema
+export const Veo30Generate001RequestSchema = z.object({
   model: z.literal("veo-3.0-generate-001"),
-  // Veo 3.0 specific fields
-  resolution: z.enum(["1080p", "720p"]).default("1080p"),
-  referenceImageGcsUri: UrlOrGcsUriSchema.optional(),
+  instances: z.array(Veo30InstanceSchema),
+  parameters: Veo30ParametersSchema.optional(),
 });
 
 // ============= TYPE (Inferred from Schema) =============
@@ -48,34 +76,27 @@ export class Veo30Generate001Adapter implements ModelAdapter {
     // Validate with Zod schema
     const validated = Veo30Generate001RequestSchema.parse(request);
 
-    // Veo writes directly to GCS via outputGcsUri
-    const outputGcsUri = ensureTrailingSlash(getJobStorageUri(jobId));
+    // Set output storage URI
+    const storageUri = ensureTrailingSlash(getJobStorageUri(jobId));
 
-    logger.info("Starting Veo 3.0 generation", {
-      jobId,
-      model: this.modelId,
-      outputGcsUri,
-    });
-
-    // Build config for Veo 3.0 API
-    const config: Record<string, unknown> = {
-      numberOfVideos: 1,
-      durationSeconds: validated.duration,
-      aspectRatio: validated.aspectRatio,
-      resolution: validated.resolution,
-      generateAudio: validated.audio,
-      outputGcsUri,
+    // Update parameters with output location
+    const parameters = {
+      ...validated.parameters,
+      storageUri,
     };
 
-    // Veo 3.0 specific: referenceImageGcsUri
-    if (validated.referenceImageGcsUri) {
-      config.referenceImageGcsUri = validated.referenceImageGcsUri;
-    }
-
-    const op = await ai.models.generateVideos({
+    logger.info("Starting Veo 3.0 generation via REST API", {
+      jobId,
       model: this.modelId,
-      source: {prompt: validated.prompt},
-      config,
+      storageUri,
+      instances: validated.instances,
+      parameters,
+    });
+
+    // Call Vertex AI REST API
+    const op = await predictLongRunning(this.modelId, {
+      instances: validated.instances,
+      parameters,
     });
 
     if (!op?.name) {

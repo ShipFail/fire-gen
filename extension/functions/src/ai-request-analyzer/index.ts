@@ -2,7 +2,7 @@
 import * as logger from "firebase-functions/logger";
 
 import {MODEL_REGISTRY} from "../models/index.js";
-import {preprocessAllUris, restoreUrisInRequest, restoreUrisInText} from "./url-utils.js";
+import {preprocessAllUris, restoreSemanticTagsToUris, restoreUrisInText} from "./url-replacement.js";
 import {step1Preprocess} from "./passes/step1-preprocess.js";
 import {step2Analyze} from "./passes/step2-analyze.js";
 
@@ -117,7 +117,7 @@ export async function analyzePrompt(
         request = extractJobRequestFromText(step2Context);
 
         // Restore URIs in request and prompt
-        const {cleanedRequest, cleanedPrompt} = restoreUrisInRequest(
+        const {cleanedRequest, cleanedPrompt} = restoreSemanticTagsToUris(
           request,
           request.prompt || "",
           replacements

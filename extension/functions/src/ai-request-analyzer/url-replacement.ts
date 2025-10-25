@@ -1,9 +1,16 @@
 /**
- * Storage URI Replacement Utilities
+ * URI Replacement for AI Analysis
  *
- * Converts various Google Storage URL formats to canonical gs:// URIs,
- * replaces URIs with semantic XML tags for AI processing,
- * and restores/cleans URIs after AI analysis.
+ * This module handles the complete lifecycle of URI preprocessing for AI analysis:
+ * 1. Convert various storage URL formats to canonical gs:// URIs
+ * 2. Replace URIs with semantic XML tags (e.g., <VIDEO_URI_1/>, <IMAGE_URI_2/>)
+ * 3. Restore URIs after AI processing (in request fields and plain text)
+ *
+ * Why replace URIs with tags?
+ * - Prevents long filenames from wasting AI tokens
+ * - Makes resource types explicit to AI (video vs image vs audio)
+ * - Avoids URI confusion in hint detection and model selection
+ * - Prevents misclassification (e.g., video URI in imageGcsUri field)
  */
 
 import mime from "mime";
@@ -19,6 +26,10 @@ export interface UriReplacement {
   tag: string; // Tag name (e.g., "VIDEO_URI_1")
   placeholder: string; // Full XML tag (e.g., "<VIDEO_URI_1/>")
 }
+
+// ============================================================================
+// URI Conversion & Detection
+// ============================================================================
 
 /**
  * Converts various Google Storage URL formats to canonical gs:// URI
@@ -67,7 +78,7 @@ export function extractUris(text: string): string[] {
 /**
  * Detect MIME type from URI or file extension
  *
- * Uses browser-media-mime-type library which returns video/mp4 for .mp4 files.
+ * Uses mime library which returns video/mp4 for .mp4 files, etc.
  */
 export function detectMimeType(url: string): string {
   // Extract path from URL (handle query params, encoding, etc.)
@@ -112,26 +123,30 @@ export function getMimeCategory(mimeType: string): "video" | "image" | "audio" |
   return "other";
 }
 
+// ============================================================================
+// Single Context Processing
+// ============================================================================
+
 /**
- * Replace URIs in prompt with semantic XML tags
+ * Replace URIs in a single text with semantic XML tags
  *
  * This makes it clear to the AI what type of resource each URI is,
- * without polluting the prompt with long filenames.
+ * without polluting the text with long filenames.
  *
- * @param prompt - User prompt with URIs
- * @returns Processed prompt and replacement metadata
+ * @param text - Text containing URIs
+ * @returns Processed text and replacement metadata
  */
-export function replaceUrisWithSemanticTags(prompt: string): {
+export function replaceUrisWithSemanticTags(text: string): {
   processedPrompt: string;
   replacements: UriReplacement[];
 } {
-  const urls = extractUris(prompt);
+  const urls = extractUris(text);
   const replacements: UriReplacement[] = [];
 
   // Group by category for sequential numbering
   const counters = {video: 0, image: 0, audio: 0, other: 0};
 
-  let processedPrompt = prompt;
+  let processedPrompt = text;
 
   for (const url of urls) {
     try {
@@ -165,7 +180,7 @@ export function replaceUrisWithSemanticTags(prompt: string): {
 }
 
 /**
- * Restore and clean URIs after AI processing
+ * Restore URIs in AI-generated request and prompt
  *
  * Process:
  * 1. Replace placeholder tags in request fields with actual gs:// URIs
@@ -239,6 +254,68 @@ export function restoreSemanticTagsToUris(
 
   return {cleanedRequest, cleanedPrompt};
 }
+
+/**
+ * Restore URIs in plain text by replacing XML tags with original URIs
+ *
+ * Used for restoring URIs in non-request text (e.g., reasoning, error messages).
+ *
+ * @param text - Text containing URI placeholders
+ * @param replacements - Replacement metadata
+ * @returns Text with URIs restored
+ */
+export function restoreUrisInText(
+  text: string,
+  replacements: UriReplacement[]
+): string {
+  let restored = text;
+
+  for (const replacement of replacements) {
+    // Replace all occurrences of the placeholder with original URI
+    // Escape special regex characters in placeholder
+    const escapedPlaceholder = replacement.placeholder.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    restored = restored.replace(
+      new RegExp(escapedPlaceholder, "g"),
+      replacement.original
+    );
+  }
+
+  return restored;
+}
+
+// ============================================================================
+// Multi-Context Processing (for AI pipeline)
+// ============================================================================
+
+/**
+ * Preprocess multiple contexts: replace URIs with semantic XML tags
+ *
+ * This is used in the AI analysis pipeline where we process prompt + contexts
+ * from previous steps. All URIs across all contexts are collected and numbered
+ * sequentially within each category.
+ *
+ * @param contexts - Array of context strings (prompt + contexts from previous steps)
+ * @returns Processed contexts with URIs replaced by semantic tags, and replacements metadata
+ */
+export function preprocessAllUris(contexts: string[]): {
+  processedContexts: string[];
+  replacements: UriReplacement[];
+} {
+  // Collect all replacements from all contexts
+  const allReplacements: UriReplacement[] = [];
+
+  const processedContexts = contexts.map((context) => {
+    const {processedPrompt, replacements} = replaceUrisWithSemanticTags(context);
+    allReplacements.push(...replacements);
+    return processedPrompt;
+  });
+
+  return {processedContexts, replacements: allReplacements};
+}
+
+// ============================================================================
+// Helper Functions
+// ============================================================================
 
 /**
  * Find replacement by placeholder tag

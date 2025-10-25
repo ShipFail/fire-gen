@@ -6,8 +6,10 @@ import {
   getMimeCategory,
   replaceUrisWithSemanticTags,
   restoreSemanticTagsToUris,
+  restoreUrisInText,
+  preprocessAllUris,
   type UriReplacement
-} from './storage-url';
+} from './url-replacement';
 
 describe('toGcsUri', () => {
   test('returns GCS URI as-is', () => {

@@ -3,7 +3,7 @@ import * as logger from "firebase-functions/logger";
 
 import {ai} from "../../models/_shared/ai-client.js";
 import {buildSystemInstruction} from "../../models/index.js";
-import {preprocessAllUris, restoreUrisInText} from "../url-utils.js";
+import {preprocessAllUris, restoreUrisInText} from "../url-replacement.js";
 
 /**
  * Step 1: AI-Powered Candidate Generation

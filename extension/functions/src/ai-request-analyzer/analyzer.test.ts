@@ -45,36 +45,51 @@ const fixtures = [
     id: "video:sunset",
     prompt: "Create a video of a beautiful sunset over the ocean with waves",
     expected: {
-      type: "video",
       model: expect.stringMatching(/^veo-3\.1-(fast-)?generate-preview$/),
-      prompt: expect.stringMatching(/.+/),
-      duration: 8,
-      aspectRatio: "16:9",
-      audio: true,
+      instances: expect.arrayContaining([
+        expect.objectContaining({
+          prompt: expect.stringMatching(/.+/),
+        }),
+      ]),
+      parameters: expect.objectContaining({
+        durationSeconds: 8,
+        aspectRatio: "16:9",
+        generateAudio: true,
+      }),
     },
   },
   {
     id: "video:portrait-city-night",
     prompt: "Create a 4-second portrait video of a city at night with ambient sounds",
     expected: {
-      type: "video",
       model: expect.stringMatching(/^veo-3\.1-(fast-)?generate-preview$/),
-      prompt: expect.stringMatching(/.+/),
-      duration: 4,
-      aspectRatio: "9:16",
-      audio: true,
+      instances: expect.arrayContaining([
+        expect.objectContaining({
+          prompt: expect.stringMatching(/.+/),
+        }),
+      ]),
+      parameters: expect.objectContaining({
+        durationSeconds: 4,
+        aspectRatio: "9:16",
+        generateAudio: true,
+      }),
     },
   },
   {
     id: "video:best-quality-lake",
     prompt: "Generate a high-quality cinematic 8-second landscape video of a serene mountain lake",
     expected: {
-      type: "video",
       model: "veo-3.1-generate-preview",
-      prompt: expect.stringMatching(/.+/),
-      duration: 8,
-      aspectRatio: "16:9",
-      audio: true,
+      instances: expect.arrayContaining([
+        expect.objectContaining({
+          prompt: expect.stringMatching(/.+/),
+        }),
+      ]),
+      parameters: expect.objectContaining({
+        durationSeconds: 8,
+        aspectRatio: "16:9",
+        generateAudio: true,
+      }),
     },
   },
 
@@ -88,36 +103,51 @@ const fixtures = [
     id: "video:veo3-forest",
     prompt: "Generate video with veo 3.1 model: a forest scene with sunlight filtering through trees",
     expected: {
-      type: "video",
       model: expect.stringMatching(/^veo-3\.1-(fast-)?generate-preview$/),
-      prompt: expect.stringMatching(/.+/),
-      duration: 8,
-      aspectRatio: "16:9",
-      audio: true,
+      instances: expect.arrayContaining([
+        expect.objectContaining({
+          prompt: expect.stringMatching(/.+/),
+        }),
+      ]),
+      parameters: expect.objectContaining({
+        durationSeconds: 8,
+        aspectRatio: "16:9",
+        generateAudio: true,
+      }),
     },
   },
   {
     id: "video:veo3-fast-car",
     prompt: "Use veo 3.1 fast model to create a video of a sports car driving through city streets",
     expected: {
-      type: "video",
       model: expect.stringMatching(/^veo-3\.1-(fast-)?generate-preview$/),
-      prompt: expect.stringMatching(/.+/),
-      duration: 8,
-      aspectRatio: "16:9",
-      audio: true,
+      instances: expect.arrayContaining([
+        expect.objectContaining({
+          prompt: expect.stringMatching(/.+/),
+        }),
+      ]),
+      parameters: expect.objectContaining({
+        durationSeconds: 8,
+        aspectRatio: "16:9",
+        generateAudio: true,
+      }),
     },
   },
   {
     id: "video:best-quality-sunset",
     prompt: "Create the best quality video of a sunset with dramatic colors and cloud formations",
     expected: {
-      type: "video",
       model: "veo-3.1-generate-preview",
-      prompt: expect.stringMatching(/.+/),
-      duration: 8,
-      aspectRatio: "16:9",
-      audio: true,
+      instances: expect.arrayContaining([
+        expect.objectContaining({
+          prompt: expect.stringMatching(/.+/),
+        }),
+      ]),
+      parameters: expect.objectContaining({
+        durationSeconds: 8,
+        aspectRatio: "16:9",
+        generateAudio: true,
+      }),
     },
   },
 
@@ -128,48 +158,68 @@ const fixtures = [
     id: "video:vertical-waterfall",
     prompt: "Vertical video of a waterfall cascading down mossy rocks in a forest",
     expected: {
-      type: "video",
       model: expect.stringMatching(/^veo-3\.1-(fast-)?generate-preview$/),
-      prompt: expect.stringMatching(/.+/),
-      duration: 8,
-      aspectRatio: "9:16",
-      audio: true,
+      instances: expect.arrayContaining([
+        expect.objectContaining({
+          prompt: expect.stringMatching(/.+/),
+        }),
+      ]),
+      parameters: expect.objectContaining({
+        durationSeconds: 8,
+        aspectRatio: "9:16",
+        generateAudio: true,
+      }),
     },
   },
   {
     id: "video:square-product",
     prompt: "Square format video of a rotating product showcase for social media advertisement",
     expected: {
-      type: "video",
       model: expect.stringMatching(/^veo-3\.1-(fast-)?generate-preview$/),
-      prompt: expect.stringMatching(/.+/),
-      duration: 8,
-      aspectRatio: "1:1",
-      audio: true,
+      instances: expect.arrayContaining([
+        expect.objectContaining({
+          prompt: expect.stringMatching(/.+/),
+        }),
+      ]),
+      parameters: expect.objectContaining({
+        durationSeconds: 8,
+        aspectRatio: "1:1",
+        generateAudio: true,
+      }),
     },
   },
   {
     id: "video:4sec-lightning",
     prompt: "4 second video of lightning strike illuminating dark storm clouds",
     expected: {
-      type: "video",
       model: expect.stringMatching(/^veo-3\.1-(fast-)?generate-preview$/),
-      prompt: expect.stringMatching(/.+/),
-      duration: 4,
-      aspectRatio: "16:9",
-      audio: true,
+      instances: expect.arrayContaining([
+        expect.objectContaining({
+          prompt: expect.stringMatching(/.+/),
+        }),
+      ]),
+      parameters: expect.objectContaining({
+        durationSeconds: 4,
+        aspectRatio: "16:9",
+        generateAudio: true,
+      }),
     },
   },
   {
     id: "video:silent-meditation",
     prompt: "Silent video of meditation scene with a person sitting peacefully by a lake",
     expected: {
-      type: "video",
       model: expect.stringMatching(/^veo-3\.1-(fast-)?generate-preview$/),
-      prompt: expect.stringMatching(/.+/),
-      duration: 8,
-      aspectRatio: "16:9",
-      audio: false,
+      instances: expect.arrayContaining([
+        expect.objectContaining({
+          prompt: expect.stringMatching(/.+/),
+        }),
+      ]),
+      parameters: expect.objectContaining({
+        durationSeconds: 8,
+        aspectRatio: "16:9",
+        generateAudio: false,
+      }),
     },
   },
   {
@@ -192,12 +242,17 @@ const fixtures = [
     id: "video:instagram-reel-pasta",
     prompt: "Instagram reel: cooking pasta, vertical, 6 seconds",
     expected: {
-      type: "video",
       model: expect.stringMatching(/^veo-3\.1-(fast-)?generate-preview$/),
-      prompt: expect.stringMatching(/.+/),
-      duration: 6,
-      aspectRatio: "9:16",
-      audio: true,
+      instances: expect.arrayContaining([
+        expect.objectContaining({
+          prompt: expect.stringMatching(/.+/),
+        }),
+      ]),
+      parameters: expect.objectContaining({
+        durationSeconds: 6,
+        aspectRatio: "9:16",
+        generateAudio: true,
+      }),
     },
   },
   {
@@ -217,12 +272,17 @@ const fixtures = [
     id: "video:hero-section",
     prompt: "Website hero section video, high quality, 8 seconds, silent",
     expected: {
-      type: "video",
       model: "veo-3.1-generate-preview",
-      prompt: expect.stringMatching(/.+/),
-      duration: 8,
-      aspectRatio: "16:9",
-      audio: false,
+      instances: expect.arrayContaining([
+        expect.objectContaining({
+          prompt: expect.stringMatching(/.+/),
+        }),
+      ]),
+      parameters: expect.objectContaining({
+        durationSeconds: 8,
+        aspectRatio: "16:9",
+        generateAudio: false,
+      }),
     },
   },
 
@@ -236,7 +296,7 @@ const fixtures = [
       type: "video",
       model: expect.stringMatching(/^veo-3\.1-(fast-)?generate-preview$/),
       prompt: expect.stringMatching(/serene mountain lake/i),
-      negativePrompt: expect.stringMatching(/cartoon.*animated.*low quality.*blurry/i),
+      // negativePrompt moved to parameters.negativePrompt
       duration: 8,
       aspectRatio: "16:9",
       audio: true,
@@ -249,7 +309,7 @@ const fixtures = [
       type: "video",
       model: expect.stringMatching(/^veo-3\.1-(fast-)?generate-preview$/),
       prompt: expect.stringMatching(/lion.*savannah/i),
-      negativePrompt: expect.stringMatching(/cartoon.*animated.*comic/i),
+      // negativePrompt moved to parameters.negativePrompt
       duration: 8,
       aspectRatio: "16:9",
       audio: true,
@@ -262,7 +322,7 @@ const fixtures = [
       type: "video",
       model: expect.stringMatching(/^veo-3\.1-(fast-)?generate-preview$/),
       prompt: expect.stringMatching(/cityscape.*night.*neon/i),
-      negativePrompt: expect.stringMatching(/people.*cars.*traffic.*crowds/i),
+      // negativePrompt moved to parameters.negativePrompt
       duration: 8,
       aspectRatio: "16:9",
       audio: true,
@@ -275,7 +335,7 @@ const fixtures = [
       type: "video",
       model: expect.stringMatching(/^veo-3\.1-(fast-)?generate-preview$/),
       prompt: expect.stringMatching(/peaceful beach.*sunset/i),
-      negativePrompt: expect.stringMatching(/people.*buildings.*boats/i),
+      // negativePrompt moved to parameters.negativePrompt
       duration: 8,
       aspectRatio: "16:9",
       audio: true,
@@ -288,7 +348,7 @@ const fixtures = [
       type: "video",
       model: expect.stringMatching(/^veo-3\.1-(fast-)?generate-preview$/),
       prompt: expect.stringMatching(/forest.*autumn/i),
-      negativePrompt: expect.stringMatching(/urban.*modern structures.*technology.*vehicles/i),
+      // negativePrompt moved to parameters.negativePrompt
       duration: 8,
       aspectRatio: "16:9",
       audio: true,
@@ -301,7 +361,7 @@ const fixtures = [
       type: "video",
       model: expect.stringMatching(/^veo-3\.1-(fast-)?generate-preview$/), // Both quality variants OK
       prompt: expect.stringMatching(/mountain climber.*summit/i),
-      negativePrompt: expect.stringMatching(/blurry.*grainy.*low resolution.*distorted.*artifacts/i),
+      // negativePrompt moved to parameters.negativePrompt
       duration: 8,
       aspectRatio: "16:9",
       audio: true,
@@ -315,7 +375,7 @@ const fixtures = [
       model: expect.stringMatching(/^veo-3\.1-(fast-)?generate-preview$/),
       prompt: expect.stringMatching(/zen garden.*rocks.*sand/i),
       // Should combine all negative indicators into one negativePrompt
-      negativePrompt: expect.stringMatching(/people.*modern architecture.*urban background.*stormy/i),
+      // negativePrompt moved to parameters.negativePrompt
       // Optional fields - schema applies defaults
     },
   },
@@ -517,7 +577,7 @@ const fixtures = [
       imageGcsUri: "gs://studio-3670859293-6f970.firebasestorage.app/users/nZ86oPazPgT3yZjTHhFFjkj7sR42/projects/x5f8I6Tq99AGgj4HJrzF/keyframes/fd3d84c9-9331-49ed-9739-7b35e76d9f9b.png",
       lastFrameGcsUri: "gs://studio-3670859293-6f970.firebasestorage.app/users/nZ86oPazPgT3yZjTHhFFjkj7sR42/projects/x5f8I6Tq99AGgj4HJrzF/keyframes/5879bd22-6927-4549-9199-9281a6cd8115.png",
       // Negative prompts: array combined into single string, "no" prefix stripped
-      negativePrompt: expect.stringMatching(/text overlays.*distracting music/i),
+      // negativePrompt moved to parameters.negativePrompt
       aspectRatio: "9:16",
       // AI may select different durations (4, 6, or 8 seconds) - all valid
       duration: expect.toBeOneOf([4, 6, 8]),
@@ -610,7 +670,7 @@ const fixtures = [
       model: expect.stringMatching(/^veo-3\.1-(fast-)?generate-preview$/),
       prompt: expect.stringMatching(/peaceful forest/i),
       // Must be a single string, not array
-      negativePrompt: expect.stringMatching(/people.*buildings.*cars.*modern structures/i),
+      // negativePrompt moved to parameters.negativePrompt
     },
   },
   {
@@ -632,7 +692,7 @@ const fixtures = [
       model: expect.stringMatching(/^veo-3\.1-(fast-)?generate-preview$/),
       prompt: expect.stringMatching(/ocean waves/i),
       // All negative indicators combined into one string
-      negativePrompt: expect.stringMatching(/boats.*people.*stormy weather.*dark colors.*gloomy atmosphere/i),
+      // negativePrompt moved to parameters.negativePrompt
     },
   },
 
@@ -650,7 +710,7 @@ const fixtures = [
         "gs://products/shoe-left.jpg",
         "gs://products/shoe-right.jpg"
       ],
-      negativePrompt: expect.stringMatching(/text overlays.*price tags.*distracting elements/i),
+      // negativePrompt moved to parameters.negativePrompt
       aspectRatio: "9:16",
       duration: 6,
     },

@@ -75,87 +75,137 @@ FIX these errors in your response.
 
 ---
 
-Task: Select best model and build JobRequest JSON with ALL required fields.
+Task: Select best model and build complete REST API JobRequest JSON.
 
-REQUIRED Video Fields (ALWAYS include):
-- type, model, prompt, duration, aspectRatio, audio
-- Defaults: duration=8, aspectRatio="16:9", audio=true
+CRITICAL: Each model family uses DIFFERENT REST API schema!
+
+**Schema Formats by Model Family:**
+
+1. **VEO (video)** - instances/parameters format:
+{
+  "model": "veo-3.1-fast-generate-preview",
+  "instances": [{"prompt": "..."}],
+  "parameters": {
+    "durationSeconds": 8,
+    "aspectRatio": "16:9",
+    "generateAudio": true,
+    "negativePrompt": "..." // optional
+  }
+}
+
+2. **IMAGEN (image)** - instances/parameters format:
+{
+  "model": "imagen-4.0-fast-generate-001",
+  "instances": [{"prompt": "..."}],
+  "parameters": {
+    "aspectRatio": "1:1",
+    "sampleCount": 1,
+    "negativePrompt": "..." // optional
+  }
+}
+
+3. **GEMINI TEXT** - contents/generationConfig format:
+{
+  "model": "gemini-2.5-flash",
+  "contents": [{"role": "user", "parts": [{"text": "..."}]}],
+  "generationConfig": {
+    "temperature": 1.0,
+    "topP": 0.95,
+    "topK": 40,
+    "maxOutputTokens": 8192
+  }
+}
+
+4. **GEMINI TTS** - contents/generationConfig with speechConfig:
+{
+  "model": "gemini-2.5-flash-preview-tts",
+  "contents": [{"role": "user", "parts": [{"text": "Say: hello world"}]}],
+  "generationConfig": {
+    "responseModalities": ["AUDIO"],
+    "speechConfig": {
+      "voiceConfig": {
+        "prebuiltVoiceConfig": {"voiceName": "Aoede"}
+      }
+    }
+  }
+}
+
+5. **NANO-BANANA** - contents/generationConfig with IMAGE modality:
+{
+  "model": "gemini-2.5-flash-image",
+  "contents": [{"role": "user", "parts": [{"text": "..."}]}],
+  "generationConfig": {
+    "responseModalities": ["IMAGE"],
+    "imageConfig": {"aspectRatio": "1:1"}
+  }
+}
+
+6. **LYRIA/CHIRP** - Check Step 1 candidates for format
+
+Default Values:
+- Veo: durationSeconds=8, aspectRatio="16:9", generateAudio=true
+- Imagen: aspectRatio="1:1", sampleCount=1
+- Nano-banana: aspectRatio="1:1"
+- Gemini text: temperature=1.0, topP=0.95
 
 URL Extraction Rules:
 
-⚠️ CRITICAL: Every <VIDEO_URI_N/>, <IMAGE_URI_N/>, or <AUDIO_URI_N/> tag MUST be extracted to a request field!
-❌ NEVER leave URL tags in the prompt only - they MUST go into a field!
-✅ Remove tag from prompt AND add to appropriate field
+⚠️ CRITICAL: Every <VIDEO_URI_N/>, <IMAGE_URI_N/>, <AUDIO_URI_N/> tag MUST be extracted!
+❌ NEVER leave URL tags in prompt only - MUST extract to request fields!
 
 Tag Categories:
-- <IMAGE_URI_N/> → Image files (JPG, PNG, WEBP, etc.)
-- <VIDEO_URI_N/> → Video files (MP4, MOV, etc.)
-- <AUDIO_URI_N/> → Audio files (MP3, WAV, etc.)
+- <IMAGE_URI_N/> → Image files
+- <VIDEO_URI_N/> → Video files  
+- <AUDIO_URI_N/> → Audio files
 
-EXTRACTION RULES:
+VEO Extraction Rules:
 
-1. VIDEO tag (<VIDEO_URI_N/>):
-   - Extract to: videoGcsUri
-   - If also has IMAGE tag → add IMAGE to lastFrameGcsUri
+1. SINGLE VIDEO tag → instances[0].video = {"gcsUri": "<VIDEO_URI_N/>"}
+   - If also has IMAGE tag → instances[0].lastFrame = {"gcsUri": "<IMAGE_URI_N/>"}
 
 2. SINGLE IMAGE tag:
-   - "animate this", "bring to life" → imageGcsUri (base image to animate)
-   - ALL OTHER cases → referenceSubjectImages: ["<tag>"]
-   - Examples of referenceSubjectImages:
-     * "Show <IMAGE_URI_1/> walking"
-     * "character <IMAGE_URI_1/> in scene"
-     * "mountain climber <IMAGE_URI_1/>"  ← Tag at END
-     * "portrait <IMAGE_URI_1/>"           ← Tag at END
+   - "animate", "bring to life" → instances[0].image = {"gcsUri": "<IMAGE_URI_N/>"}
+   - ALL OTHER cases → instances[0].referenceImages = [{"image": {"gcsUri": "<tag>"}, "referenceType": "ASSET"}]
 
 3. MULTIPLE IMAGE tags (2-3):
-   - Extract ALL to: referenceSubjectImages: ["<tag1/>", "<tag2/>", ...]
-   - Max 3 images
+   - Extract ALL to referenceImages array (max 3)
 
-EXAMPLES WITH EXTRACTION:
+EXAMPLES:
 
-Input: "Animate <IMAGE_URI_1/>"
-→ imageGcsUri: "<IMAGE_URI_1/>", prompt: "Animate"
+Prompt: "Animate <IMAGE_URI_1/>"
+→ {"model": "veo-3.1-fast-generate-preview", "instances": [{"prompt": "Animate", "image": {"gcsUri": "<IMAGE_URI_1/>"}}], "parameters": {"durationSeconds": 8, "aspectRatio": "16:9", "generateAudio": true}}
 
-Input: "Mountain climber reaching summit <IMAGE_URI_1/>"
-→ referenceSubjectImages: ["<IMAGE_URI_1/>"], prompt: "Mountain climber reaching summit"
-→ JSON: {"type":"video","model":"veo-3.1-fast-generate-preview","prompt":"Mountain climber reaching summit","referenceSubjectImages":["<IMAGE_URI_1/>"],"duration":8,"aspectRatio":"16:9","audio":true}
+Prompt: "Mountain climber reaching summit <IMAGE_URI_1/>"
+→ {"model": "veo-3.1-fast-generate-preview", "instances": [{"prompt": "Mountain climber reaching summit", "referenceImages": [{"image": {"gcsUri": "<IMAGE_URI_1/>"}, "referenceType": "ASSET"}]}], "parameters": {"durationSeconds": 8, "aspectRatio": "16:9", "generateAudio": true}}
 
-Input: "Show <IMAGE_URI_1/> walking in park"
-→ referenceSubjectImages: ["<IMAGE_URI_1/>"], prompt: "Show walking in park"
-
-Input: "Continue <VIDEO_URI_1/>"
-→ videoGcsUri: "<VIDEO_URI_1/>", prompt: "Continue"
-
-Input: "Person <IMAGE_URI_1/> in futuristic city"
-→ referenceSubjectImages: ["<IMAGE_URI_1/>"], prompt: "Person in futuristic city"
-→ JSON: {"type":"video","model":"veo-3.1-fast-generate-preview","prompt":"Person in futuristic city","referenceSubjectImages":["<IMAGE_URI_1/>"],"duration":8,"aspectRatio":"16:9","audio":true}
+Prompt: "Continue <VIDEO_URI_1/>"
+→ {"model": "veo-3.1-fast-generate-preview", "instances": [{"prompt": "Continue", "video": {"gcsUri": "<VIDEO_URI_1/>"}}], "parameters": {"durationSeconds": 8, "aspectRatio": "16:9", "generateAudio": true}}
 
 Negative Prompts:
-IF you see: "avoid X", "without X", "no X", "exclude X" → Extract X to negativePrompt field
+"avoid X", "without X", "no X" → Extract X to negativePrompt field
 
 Format:
 
 Selected Model: <model-id>
 
 Job Request:
-<JSON>
+<complete JSON using correct schema format>
 
 Parameter Reasoning:
-- <field>: <value> → [why] (from: "..." OR default)
+- <field>: <value> → [why]
 
-Example:
-User Prompt: "Vertical waterfall video"
+Example for Video:
 
 Selected Model: veo-3.1-fast-generate-preview
 
 Job Request:
-{"type":"video","model":"veo-3.1-fast-generate-preview","prompt":"Vertical waterfall video","duration":8,"aspectRatio":"9:16","audio":true}
+{"model":"veo-3.1-fast-generate-preview","instances":[{"prompt":"Vertical waterfall cascading down"}],"parameters":{"durationSeconds":8,"aspectRatio":"9:16","generateAudio":true}}
 
 Parameter Reasoning:
-- prompt: "Vertical waterfall video" → VERBATIM (from: entire prompt)
-- duration: 8 → default
-- aspectRatio: "9:16" → vertical = taller (from: "Vertical")
-- audio: true → default`;
+- instances[0].prompt: "Vertical waterfall cascading down" → VERBATIM
+- parameters.durationSeconds: 8 → default
+- parameters.aspectRatio: "9:16" → vertical = taller (9:16)
+- parameters.generateAudio: true → default`;
 
   // Call AI with greedy decoding for deterministic decisions
   logger.info("Step 2: Calling AI for final selection", {jobId});

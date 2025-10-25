@@ -62,40 +62,78 @@ ${allHints}
 
 Task: Generate TOP 3 model candidates for this request.
 
+CRITICAL: Each model family uses a DIFFERENT REST API schema format!
+
+**Schema Formats by Model Family:**
+
+1. **VEO (video)** - Uses instances/parameters:
+{
+  "model": "veo-3.1-fast-generate-preview",
+  "instances": [{"prompt": "..."}],
+  "parameters": {"durationSeconds": 8, "aspectRatio": "16:9", "generateAudio": true}
+}
+
+2. **IMAGEN (image)** - Uses instances/parameters:
+{
+  "model": "imagen-4.0-fast-generate-001",
+  "instances": [{"prompt": "..."}],
+  "parameters": {"aspectRatio": "1:1", "sampleCount": 1}
+}
+
+3. **GEMINI TEXT** - Uses contents/generationConfig:
+{
+  "model": "gemini-2.5-flash",
+  "contents": [{"role": "user", "parts": [{"text": "..."}]}],
+  "generationConfig": {"temperature": 1.0, "topP": 0.95}
+}
+
+4. **GEMINI TTS** - Uses contents/generationConfig with speechConfig:
+{
+  "model": "gemini-2.5-flash-preview-tts",
+  "contents": [{"role": "user", "parts": [{"text": "Say: hello"}]}],
+  "generationConfig": {
+    "responseModalities": ["AUDIO"],
+    "speechConfig": {"voiceConfig": {"prebuiltVoiceConfig": {"voiceName": "Aoede"}}}
+  }
+}
+
+5. **NANO-BANANA** - Uses contents/generationConfig with IMAGE modality:
+{
+  "model": "gemini-2.5-flash-image",
+  "contents": [{"role": "user", "parts": [{"text": "..."}]}],
+  "generationConfig": {
+    "responseModalities": ["IMAGE"],
+    "imageConfig": {"aspectRatio": "1:1"}
+  }
+}
+
+6. **LYRIA/CHIRP** - Check AI hints for exact format
+
 URI Tag Rules:
-1. Tags are self-describing: <VIDEO_URI_N/>, <IMAGE_URI_N/>, <AUDIO_URI_N/>
-2. Copy FULL tag to appropriate field (videoGcsUri, imageGcsUri, referenceSubjectImages, lastFrameGcsUri)
-3. Remove tag from prompt IF used in a field, keep IF unused
-
-Prompt Preservation:
-- Video/Image/Text/Music: Copy user prompt VERBATIM (do NOT rewrite)
-- TTS only: Extract quoted text or imperative object
-
-Default Values (when not specified):
-- Video: duration=8, aspectRatio="16:9", audio=true
-- Image: aspectRatio="1:1"
+- Tags: <VIDEO_URI_N/>, <IMAGE_URI_N/>, <AUDIO_URI_N/>
+- For Veo/Imagen: Extract to {"gcsUri": "<tag>"}
+- For Gemini models: Extract to contents if applicable
+- Remove tag from prompt after extraction
 
 Negative Prompts:
-Extract from phrases: "avoid", "without", "no", "don't want", "exclude", "negative prompt:"
+Extract from: "avoid", "without", "no", "don't want", "exclude"
 Examples:
-- "avoid cartoon style" → negativePrompt: "cartoon style"
+- "avoid cartoon" → negativePrompt: "cartoon"
 - "without people" → negativePrompt: "people"
-- "no text overlays" → negativePrompt: "text overlays"
 
 For EACH candidate (1-3):
 1. Model ID
-2. Type (video/image/audio/text)
-3. Parameters JSON (use model schema from hints)
-4. Parameter Reasoning (explain WHY each field has its value)
-5. Confidence (high/medium/low)
+2. Request JSON (use CORRECT schema format for that model family!)
+3. Parameter Reasoning (explain WHY each field has its value)
+4. Confidence (high/medium/low)
 
 Format:
 
 Top 3 Model Candidates:
 
 1. <model-id>
-   Type: <type>
-   Parameters: <json>
+   Request JSON:
+   <json matching that model's schema format>
 
    Parameter Reasoning:
    - <field>: <value> → [why] (from prompt: "..." OR default)

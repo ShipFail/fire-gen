@@ -2,9 +2,53 @@
 import {z} from "zod";
 import * as logger from "firebase-functions/logger";
 
-import {generateContent} from "../_shared/vertex-ai-client.js";
+import {callVertexAPI} from "../_shared/vertex-ai-client.js";
+import {PROJECT_ID} from "../../firebase-admin.js";
+import {REGION} from "../../env.js";
 import {PromptSchema} from "../_shared/zod-helpers.js";
 import type {ModelAdapter, StartResult, ModelOutput} from "../_shared/base.js";
+
+/**
+ * Gemini-specific types
+ */
+
+export interface GeminiGenerateContentResponse {
+  candidates: Array<{
+    content: {
+      parts: Array<{
+        text?: string;
+        [key: string]: unknown;
+      }>;
+      role?: string;
+    };
+    finishReason?: string;
+    safetyRatings?: Array<Record<string, unknown>>;
+    citationMetadata?: Record<string, unknown>;
+    avgLogprobs?: number;
+  }>;
+  usageMetadata?: {
+    promptTokenCount: number;
+    candidatesTokenCount: number;
+    totalTokenCount: number;
+  };
+  modelVersion?: string;
+}
+
+/**
+ * Call Gemini generateContent API (synchronous)
+ */
+async function generateContent(
+  model: string,
+  payload: {
+    contents: string | Array<{role?: string; parts: Array<{text: string}>}>;
+    systemInstruction?: {role?: string; parts: Array<{text: string}>};
+    generationConfig?: Record<string, unknown>;
+    safetySettings?: Array<Record<string, unknown>>;
+  }
+): Promise<GeminiGenerateContentResponse> {
+  const endpoint = `v1/projects/${PROJECT_ID}/locations/${REGION}/publishers/google/models/${model}:generateContent`;
+  return callVertexAPI<GeminiGenerateContentResponse>(endpoint, payload);
+}
 
 /**
  * Shared Zod schemas for all Gemini Text models

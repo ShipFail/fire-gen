@@ -267,6 +267,53 @@ This ensures users can only:
 - Read/write their own jobs
 - Prevent unauthorized access
 
+### Troubleshooting
+
+#### Cloud Tasks Permission Error (Legacy Installations)
+
+**Note:** This issue should be automatically resolved in FireGen v0.1.0+ with proper v2 function configuration. If you're using an older version or experiencing this error, follow the steps below.
+
+If you see this error in the Cloud Functions logs:
+
+```
+The principal (user or service account) lacks IAM permission "cloudtasks.tasks.create" 
+for the resource "projects/PROJECT_ID/locations/REGION/queues/onFiregenJobPoll"
+```
+
+**Root Cause:** The extension service account lacks the Cloud Tasks Enqueuer role. This should be automatically granted during installation, but may fail in some cases.
+
+**Solution:** Grant the Cloud Tasks Enqueuer role to the extension service account:
+
+1. Find your extension service account:
+   - Go to [Cloud Functions Console](https://console.cloud.google.com/functions/list)
+   - Click on the `ext-firegen-onJobCreated` function
+   - Note the service account (usually `ext-firegen@PROJECT_ID.iam.gserviceaccount.com`)
+
+2. Grant Cloud Tasks permissions via gcloud CLI:
+
+```bash
+# Replace with your actual values
+PROJECT_ID="your-project-id"
+SERVICE_ACCOUNT="ext-firegen@${PROJECT_ID}.iam.gserviceaccount.com"
+
+# Grant Cloud Tasks Enqueuer role
+gcloud projects add-iam-policy-binding ${PROJECT_ID} \
+  --member="serviceAccount:${SERVICE_ACCOUNT}" \
+  --role="roles/cloudtasks.enqueuer"
+```
+
+3. Alternatively, grant via Cloud Console:
+   - Go to [IAM & Admin](https://console.cloud.google.com/iam-admin/iam)
+   - Find the service account `ext-firegen@PROJECT_ID.iam.gserviceaccount.com`
+   - Click "Edit" (pencil icon)
+   - Click "Add Another Role"
+   - Select "Cloud Tasks Enqueuer"
+   - Click "Save"
+
+4. Wait 1-2 minutes for IAM changes to propagate, then try your job again.
+
+**Prevention:** If reinstalling the extension, ensure you're using FireGen v0.1.0 or later, which uses Cloud Functions v2 with proper IAM role binding.
+
 ### Monitoring
 
 As a best practice, you can [monitor the activity](https://firebase.google.com/docs/extensions/manage-installed-extensions#monitor) of your installed extension, including checks on its health, usage, and logs.

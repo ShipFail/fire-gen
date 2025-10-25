@@ -483,6 +483,24 @@ onValue(ref(db, `firegen-jobs/${jobId}`), (snapshot) => {
 
 ## Troubleshooting
 
+### Cloud Tasks Permission Error (Legacy Installations Only)
+
+**Error:** `lacks IAM permission "cloudtasks.tasks.create"`
+
+**Note:** Fixed in v0.1.0+ with proper Cloud Functions v2 configuration.
+
+**Manual Fix (if needed):**
+```bash
+PROJECT_ID="your-project-id"
+SERVICE_ACCOUNT="ext-firegen@${PROJECT_ID}.iam.gserviceaccount.com"
+
+gcloud projects add-iam-policy-binding ${PROJECT_ID} \
+  --member="serviceAccount:${SERVICE_ACCOUNT}" \
+  --role="roles/cloudtasks.enqueuer"
+```
+
+See [POSTINSTALL.md](./extension/POSTINSTALL.md#troubleshooting) for detailed steps.
+
 ### Job stuck in "running" status
 - Check Cloud Functions logs: `firebase functions:log`
 - Verify Vertex AI quota in Google Cloud Console

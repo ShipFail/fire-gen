@@ -16,8 +16,10 @@ export interface UrlReplacement {
   gcsUri: string; // Converted gs:// URI
   mimeType: string; // Detected MIME type (e.g., "video/mp4")
   category: "video" | "image" | "audio" | "other"; // Broad category
-  tag: string; // Tag name (e.g., "GS_VIDEO_URI_REF_1")
-  placeholder: string; // Full XML tag (e.g., "<GS_VIDEO_URI_REF_1 mimeType='video/mp4'/>")
+  protocol: "GS" | "HTTPS"; // URL protocol type
+  format: string; // MIME subtype in uppercase (e.g., "MP4", "JPEG")
+  tag: string; // Tag name (e.g., "GS_VIDEO_MP4_1")
+  placeholder: string; // Full XML tag (e.g., "<GS_VIDEO_MP4_1/>")
 }
 
 /**
@@ -113,6 +115,25 @@ export function getMimeCategory(mimeType: string): "video" | "image" | "audio" |
 }
 
 /**
+ * Extract MIME type format component (subtype in uppercase)
+ * Examples: "video/mp4" -> "MP4", "image/jpeg" -> "JPEG"
+ */
+function getMimeFormat(mimeType: string): string {
+  const parts = mimeType.split("/");
+  return parts.length === 2 ? parts[1].toUpperCase() : "UNKNOWN";
+}
+
+/**
+ * Determine protocol type from URL
+ */
+function getUrlProtocol(url: string): "GS" | "HTTPS" {
+  if (url.startsWith("gs://")) return "GS";
+  if (url.startsWith("https://storage.googleapis.com/")) return "GS";
+  if (url.startsWith("https://firebasestorage.googleapis.com/")) return "GS";
+  return "HTTPS";
+}
+
+/**
  * Replace URLs in prompt with semantic XML tags
  *
  * This makes it clear to the AI what type of resource each URL is,
@@ -138,16 +159,20 @@ export function replaceUrlsWithTags(prompt: string): {
       const gcsUri = toGcsUri(url);
       const mimeType = detectMimeType(url);
       const category = getMimeCategory(mimeType);
+      const protocol = getUrlProtocol(url);
+      const format = getMimeFormat(mimeType);
 
       const index = ++counters[category];
-      const tag = `GS_${category.toUpperCase()}_URI_REF_${index}`;
-      const placeholder = `<${tag} mimeType='${mimeType}'/>`;
+      const tag = `${protocol}_${category.toUpperCase()}_${format}_${index}`;
+      const placeholder = `<${tag}/>`;
 
       replacements.push({
         original: url,
         gcsUri,
         mimeType,
         category,
+        protocol,
+        format,
         tag,
         placeholder,
       });

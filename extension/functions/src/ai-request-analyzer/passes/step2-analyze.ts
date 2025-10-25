@@ -81,17 +81,34 @@ REQUIRED Video Fields (ALWAYS include):
 - type, model, prompt, duration, aspectRatio, audio
 - Defaults: duration=8, aspectRatio="16:9", audio=true
 
-URL Extraction (when you see <GS_*_URI_REF_N/> tags):
+URL Extraction (self-describing tags):
+
+**CRITICAL: Every URL tag MUST be extracted to a field. Never discard URLs.**
+
+Tag Format: <{PROTOCOL}_{CATEGORY}_{FORMAT}_{INDEX}/>
+- Examples: <GS_VIDEO_MP4_1/>, <HTTPS_IMAGE_JPEG_1/>, <GS_AUDIO_MPEG_1/>
+
+Decision Tree:
+1. Video URL (<GS_VIDEO_*> or <HTTPS_VIDEO_*>):
+   - With image URL → videoGcsUri + lastFrameGcsUri (video extension)
+   - Alone → videoGcsUri (video extension)
+
+2. Single Image URL (<GS_IMAGE_*_1> or <HTTPS_IMAGE_*_1>):
+   - Words "animate", "bring to life" → imageGcsUri (base image animation)
+   - Words "show", "character", "person", "walking" → referenceSubjectImages
+   - **URL at END or standalone (no animation words)** → referenceSubjectImages (DEFAULT)
+   - In middle of sentence → referenceSubjectImages
+
+3. Multiple Image URLs (2-3 images):
+   - If first + "with" + second → imageGcsUri (first) + referenceSubjectImages (rest)
+   - Otherwise → ALL go to referenceSubjectImages (max 3)
 
 Examples:
-1. "Animate <GS_IMAGE_URI_REF_1/>"
-   → imageGcsUri: "<GS_IMAGE_URI_REF_1/>", prompt: "Animate"
-
-2. "Show <GS_IMAGE_URI_REF_1/> walking in park"
-   → referenceSubjectImages: ["<GS_IMAGE_URI_REF_1/>"], prompt: "Show walking in park"
-
-3. "Continue <GS_VIDEO_URI_REF_1/> ending with <GS_IMAGE_URI_REF_1/>"
-   → videoGcsUri: "<GS_VIDEO_URI_REF_1/>", lastFrameGcsUri: "<GS_IMAGE_URI_REF_1/>", prompt: "Continue ending with"
+- "Animate <GS_IMAGE_JPEG_1/>" → imageGcsUri: "<GS_IMAGE_JPEG_1/>", prompt: "Animate"
+- "Mountain climber <GS_IMAGE_JPEG_1/>" → referenceSubjectImages: ["<GS_IMAGE_JPEG_1/>"], prompt: "Mountain climber"
+- "Show <HTTPS_IMAGE_PNG_1/> walking" → referenceSubjectImages: ["<HTTPS_IMAGE_PNG_1/>"], prompt: "Show walking"
+- "Person <GS_IMAGE_JPEG_1/> in city" → referenceSubjectImages: ["<GS_IMAGE_JPEG_1/>"], prompt: "Person in city"
+- "Continue <GS_VIDEO_MP4_1/>" → videoGcsUri: "<GS_VIDEO_MP4_1/>", prompt: "Continue"
 
 Negative Prompts:
 IF you see: "avoid X", "without X", "no X", "exclude X" → Extract X to negativePrompt field

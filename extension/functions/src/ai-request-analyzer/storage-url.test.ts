@@ -120,15 +120,17 @@ describe('replaceUrlsWithTags', () => {
   test('replaces single video URL with tag', () => {
     const result = replaceUrlsWithTags('Continue from https://storage.googleapis.com/bucket/video.mp4');
 
-    expect(result.processedPrompt).toBe("Continue from <GS_VIDEO_URI_REF_1 mimeType='video/mp4'/>");
+    expect(result.processedPrompt).toBe("Continue from <GS_VIDEO_MP4_1/>");
     expect(result.replacements).toHaveLength(1);
     expect(result.replacements[0]).toMatchObject({
       original: 'https://storage.googleapis.com/bucket/video.mp4',
       gcsUri: 'gs://bucket/video.mp4',
       mimeType: 'video/mp4',
       category: 'video',
-      tag: 'GS_VIDEO_URI_REF_1',
-      placeholder: "<GS_VIDEO_URI_REF_1 mimeType='video/mp4'/>"
+      protocol: 'GS',
+      format: 'MP4',
+      tag: 'GS_VIDEO_MP4_1',
+      placeholder: "<GS_VIDEO_MP4_1/>"
     });
   });
 
@@ -138,14 +140,14 @@ describe('replaceUrlsWithTags', () => {
     );
 
     expect(result.processedPrompt).toBe(
-      "Show <GS_IMAGE_URI_REF_1 mimeType='image/jpeg'/> and <GS_IMAGE_URI_REF_2 mimeType='image/png'/> finding <GS_VIDEO_URI_REF_1 mimeType='video/mp4'/>"
+      "Show <GS_IMAGE_JPEG_1/> and <GS_IMAGE_PNG_2/> finding <GS_VIDEO_MP4_1/>"
     );
     expect(result.replacements).toHaveLength(3);
 
     // Check sequential numbering within each category
-    expect(result.replacements[0].tag).toBe('GS_IMAGE_URI_REF_1');
-    expect(result.replacements[1].tag).toBe('GS_IMAGE_URI_REF_2');
-    expect(result.replacements[2].tag).toBe('GS_VIDEO_URI_REF_1');
+    expect(result.replacements[0].tag).toBe('GS_IMAGE_JPEG_1');
+    expect(result.replacements[1].tag).toBe('GS_IMAGE_PNG_2');
+    expect(result.replacements[2].tag).toBe('GS_VIDEO_MP4_1');
   });
 
   test('handles Firebase Storage URLs', () => {
@@ -153,7 +155,7 @@ describe('replaceUrlsWithTags', () => {
       'Animate https://firebasestorage.googleapis.com/v0/b/proj/o/users%2Ftest%2Fphoto.jpg?token=123'
     );
 
-    expect(result.processedPrompt).toContain("<GS_IMAGE_URI_REF_1 mimeType='image/jpeg'/>");
+    expect(result.processedPrompt).toContain("<GS_IMAGE_JPEG_1/>");
     expect(result.replacements[0].gcsUri).toBe('gs://proj/users/test/photo.jpg');
   });
 
@@ -171,18 +173,20 @@ describe('restoreAndCleanUrls', () => {
       {
         original: 'https://storage.googleapis.com/bucket/video.mp4',
         gcsUri: 'gs://bucket/video.mp4',
-        mimeType: 'application/mp4', // Standard MIME type
+        mimeType: 'video/mp4',
         category: 'video',
-        tag: 'GS_VIDEO_URI_REF_1',
-        placeholder: "<GS_VIDEO_URI_REF_1 mimeType='application/mp4'/>"
+        protocol: 'GS',
+        format: 'MP4',
+        tag: 'GS_VIDEO_MP4_1',
+        placeholder: "<GS_VIDEO_MP4_1/>"
       }
     ];
 
     const aiRequest = {
       type: 'video',
       model: 'veo-3.1-generate-preview',
-      prompt: "Continue from <GS_VIDEO_URI_REF_1 mimeType='application/mp4'/>",
-      videoGcsUri: "<GS_VIDEO_URI_REF_1 mimeType='application/mp4'/>"
+      prompt: "Continue from <GS_VIDEO_MP4_1/>",
+      videoGcsUri: "<GS_VIDEO_MP4_1/>"
     };
 
     const result = restoreAndCleanUrls(aiRequest, aiRequest.prompt, replacements);
@@ -198,24 +202,28 @@ describe('restoreAndCleanUrls', () => {
         gcsUri: 'gs://bucket/hero.jpg',
         mimeType: 'image/jpeg',
         category: 'image',
-        tag: 'GS_IMAGE_URI_REF_1',
-        placeholder: "<GS_IMAGE_URI_REF_1 mimeType='image/jpeg'/>"
+        protocol: 'GS',
+        format: 'JPEG',
+        tag: 'GS_IMAGE_JPEG_1',
+        placeholder: "<GS_IMAGE_JPEG_1/>"
       },
       {
         original: 'gs://bucket/sword.png',
         gcsUri: 'gs://bucket/sword.png',
         mimeType: 'image/png',
         category: 'image',
-        tag: 'GS_IMAGE_URI_REF_2',
-        placeholder: "<GS_IMAGE_URI_REF_2 mimeType='image/png'/>"
+        protocol: 'GS',
+        format: 'PNG',
+        tag: 'GS_IMAGE_PNG_2',
+        placeholder: "<GS_IMAGE_PNG_2/>"
       }
     ];
 
     const aiRequest = {
       type: 'video',
       model: 'veo-3.1-generate-preview',
-      prompt: "Show <GS_IMAGE_URI_REF_1 mimeType='image/jpeg'/> finding <GS_IMAGE_URI_REF_2 mimeType='image/png'/>",
-      referenceSubjectImages: ["<GS_IMAGE_URI_REF_1 mimeType='image/jpeg'/>"]
+      prompt: "Show <GS_IMAGE_JPEG_1/> finding <GS_IMAGE_PNG_2/>",
+      referenceSubjectImages: ["<GS_IMAGE_JPEG_1/>"]
     };
 
     const result = restoreAndCleanUrls(aiRequest, aiRequest.prompt, replacements);
@@ -232,24 +240,28 @@ describe('restoreAndCleanUrls', () => {
         gcsUri: 'gs://bucket/person1.jpg',
         mimeType: 'image/jpeg',
         category: 'image',
-        tag: 'GS_IMAGE_URI_REF_1',
-        placeholder: "<GS_IMAGE_URI_REF_1 mimeType='image/jpeg'/>"
+        protocol: 'GS',
+        format: 'JPEG',
+        tag: 'GS_IMAGE_JPEG_1',
+        placeholder: "<GS_IMAGE_JPEG_1/>"
       },
       {
         original: 'gs://bucket/person2.jpg',
         gcsUri: 'gs://bucket/person2.jpg',
         mimeType: 'image/jpeg',
         category: 'image',
-        tag: 'GS_IMAGE_URI_REF_2',
-        placeholder: "<GS_IMAGE_URI_REF_2 mimeType='image/jpeg'/>"
+        protocol: 'GS',
+        format: 'JPEG',
+        tag: 'GS_IMAGE_JPEG_2',
+        placeholder: "<GS_IMAGE_JPEG_2/>"
       }
     ];
 
     const aiRequest = {
       type: 'video',
       referenceSubjectImages: [
-        "<GS_IMAGE_URI_REF_1 mimeType='image/jpeg'/>",
-        "<GS_IMAGE_URI_REF_2 mimeType='image/jpeg'/>"
+        "<GS_IMAGE_JPEG_1/>",
+        "<GS_IMAGE_JPEG_2/>"
       ],
       prompt: "Show walking together"
     };
@@ -270,15 +282,17 @@ describe('restoreAndCleanUrls', () => {
         gcsUri: 'gs://bucket/video.mp4',
         mimeType: 'video/mp4',
         category: 'video',
-        tag: 'GS_VIDEO_URI_REF_1',
-        placeholder: "<GS_VIDEO_URI_REF_1 mimeType='video/mp4'/>"
+        protocol: 'GS',
+        format: 'MP4',
+        tag: 'GS_VIDEO_MP4_1',
+        placeholder: "<GS_VIDEO_MP4_1/>"
       }
     ];
 
     const aiRequest = {
       type: 'video',
-      videoGcsUri: "<GS_VIDEO_URI_REF_1 mimeType='video/mp4'/>",
-      prompt: "Continue   from   <GS_VIDEO_URI_REF_1 mimeType='video/mp4'/>   with   action"
+      videoGcsUri: "<GS_VIDEO_MP4_1/>",
+      prompt: "Continue   from   <GS_VIDEO_MP4_1/>   with   action"
     };
 
     const result = restoreAndCleanUrls(aiRequest, aiRequest.prompt, replacements);

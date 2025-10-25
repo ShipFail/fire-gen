@@ -5,7 +5,7 @@ import {replaceUrlsWithTags, restoreAndCleanUrls, type UrlReplacement} from "./s
 /**
  * Preprocess ALL contexts: replace URLs with semantic XML tags.
  *
- * Uses MIME-type-aware tags (e.g., <GS_VIDEO_URI_REF_1 mimeType='video/mp4'/>)
+ * Uses self-describing tags (e.g., <GS_VIDEO_MP4_1/>, <HTTPS_IMAGE_JPEG_1/>)
  * so the AI can distinguish between video, image, and audio URLs.
  *
  * This prevents URLs from:

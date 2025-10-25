@@ -21,6 +21,9 @@ node_modules/
 /build
 extension/functions/lib/
 
+# auto-generated
+extension/functions/src/generated/
+
 # misc
 *.swp
 .DS_Store

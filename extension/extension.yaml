@@ -16,7 +16,7 @@ name: firegen
 version: 0.1.0
 specVersion: v1beta
 
-displayName: FireGen – Generate Media from Prompts
+displayName: FireGen – turns RTDB into your universal Generative AI API
 description: >
   Listens for job requests in Realtime Database and generates videos, images, audio, or text using
   Vertex AI models (Veo, Imagen, Gemini, Chirp, Lyria). Supports AI-assisted mode (natural language)

@@ -3,8 +3,8 @@
 /**
  * Version utility for FireGen extension.
  *
- * Single Source of Truth: extension/extension.yaml
- * Version is injected at build time (see scripts/inject-version.ts)
+ * Single Source of Truth: extension/functions/package.json
+ * Version is read from package.json at build time (see scripts/generate-version.ts)
  * and embedded as a constant for zero runtime overhead.
  */
 
@@ -12,7 +12,7 @@ import {FIREGEN_VERSION} from "./generated/version.js";
 
 /**
  * Get the FireGen extension version.
- * Version is read from extension.yaml at build time and embedded as a constant.
+ * Version is read from package.json at build time and embedded as a constant.
  *
  * @returns Version string (e.g., "0.1.0")
  */

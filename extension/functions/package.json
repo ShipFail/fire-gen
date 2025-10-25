@@ -1,8 +1,9 @@
 {
   "name": "functions",
+  "version": "0.1.0",
   "scripts": {
     "lint": "eslint --ext .js,.ts .",
-    "prebuild": "tsx scripts/inject-version.ts",
+    "prebuild": "tsx scripts/generate-version.ts",
     "build": "tsc",
     "build:watch": "tsc --watch",
     "serve": "npm run build && firebase emulators:start --only functions",

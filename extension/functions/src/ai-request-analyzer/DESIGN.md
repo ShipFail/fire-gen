@@ -2051,7 +2051,7 @@ describe("AI Request Analyzer", () => {
 3. **`60000` timeout**
    - 60 seconds per test
    - Accommodates 2-step AI pipeline + retries
-   - Default Vitest timeout: 5s (too short)
+   - Default Vitest timeout: 6s (too short)
 
 **Vitest Configuration:**
 

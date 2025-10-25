@@ -22,7 +22,7 @@ You can test out this extension right away!
     "type": "video",
     "model": "veo-3.0-fast-generate-001",
     "prompt": "a cat playing with a ball in a sunny garden",
-    "durationSeconds": 5,
+    "durationSeconds": 8,
     "aspectRatio": "16:9",
     "resolution": "720p",
     "generateAudio": true

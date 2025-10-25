@@ -20,7 +20,7 @@ export const IMAGEN_4_0_ULTRA_GENERATE_001_CONFIG = {
 export const IMAGEN_4_0_ULTRA_GENERATE_001_AI_HINT = `
 - **imagen-4.0-ultra-generate-001**: Ultra quality (Imagen 4 Ultra)
   - Use when: User explicitly requests "ultra quality", "maximum detail"
-  - Generation time: 5-12 seconds
+  - Generation time: 6-8 seconds
 `;
 
 export class Imagen40UltraGenerate001Adapter extends ImagenAdapterBase {

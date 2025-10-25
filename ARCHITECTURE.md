@@ -814,7 +814,7 @@ When you type `request.` after narrowing, IDE shows only valid fields.
      type: "video",
      model: "veo-3.0-fast-generate-001",
      prompt: "A serene sunset over majestic mountains",
-     duration: 5,
+     duration: 8,
      aspectRatio: "16:9",
      resolution: "1080p",
      audio: true

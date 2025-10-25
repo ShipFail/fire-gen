@@ -47,7 +47,7 @@ apis:
     reason: Wire Cloud Functions v2 triggers (RTDB onCreate, Task Queue).
   - apiName: cloudtasks.googleapis.com
     reason: Poll async operations for video generation (Veo long-running operations).
-  
+
 roles:
   - role: firebasedatabase.admin
     reason:
@@ -75,8 +75,6 @@ resources:
       serviceConfig:
         availableMemory: 512M
         timeoutSeconds: 540
-        minInstances: 0
-        maxInstances: 100
       eventTrigger:
         eventType: google.firebase.database.ref.v1.created
         eventFilters:
@@ -87,23 +85,13 @@ resources:
             value: ${DATABASE_INSTANCE}
 
   - name: onJobPoll
-    type: firebaseextensions.v1beta.v2function
+    type: firebaseextensions.v1beta.function
     description: >
       Task Queue trigger for polling async video generation operations.
       Checks Vertex AI operation status, handles retries, and updates job status in Realtime Database.
     properties:
-      buildConfig:
-        runtime: nodejs22
-      serviceConfig:
-        availableMemory: 512M
-        timeoutSeconds: 60
-      taskQueueTrigger:
-        rateLimits:
-          maxConcurrentDispatches: 1000
-          maxDispatchesPerSecond: 500
-        retryConfig:
-          maxAttempts: 3
-          maxRetryDuration: 300s
+      runtime: nodejs22
+      taskQueueTrigger: {}
 
 # No configurable parameters - extension uses hard-coded values:
 # - Database instance: ${DATABASE_INSTANCE} (default Firebase RTDB instance)

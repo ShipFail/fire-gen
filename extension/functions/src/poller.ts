@@ -24,7 +24,7 @@ export interface OperationResult {
  */
 export async function enqueuePollTask(jobId: string, delayMs = POLL_INTERVAL_MS) {
   const jobPath = `firegen-jobs/${jobId}`;
-  const queue = getFunctions().taskQueue("onFiregenJobPoll");
+  const queue = getFunctions().taskQueue("onJobPoll");
 
   await queue.enqueue(
     {jobPath},

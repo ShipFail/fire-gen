@@ -9,13 +9,13 @@ const outputPath = join(outputDir, "version.ts");
 try {
   // Read extension.yaml
   const content = readFileSync(extensionYamlPath, "utf8");
-  
+
   // Simple regex parse to avoid yaml dependency (same as before)
   const versionMatch = content.match(/^version:\s*(.+)$/m);
   if (!versionMatch) {
     throw new Error("Could not find version in extension.yaml");
   }
-  
+
   const version = versionMatch[1].trim();
 
   // Create generated directory

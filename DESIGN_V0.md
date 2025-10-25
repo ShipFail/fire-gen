@@ -5,6 +5,7 @@ date: 2025-09-15
 tags:
   - firebase
   - generative
+immutable: true # Do not modify this file if immutable is true
 ---
 
 Hackathon Guidance: Firebase + Vertex AI RTDB Extension

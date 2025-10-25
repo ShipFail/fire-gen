@@ -11,7 +11,6 @@ import {IMAGEN_MODELS, IMAGEN_AI_HINTS} from "./imagen/index.js";
 import {NANO_BANANA_MODELS, NANO_BANANA_AI_HINT} from "./nano-banana/index.js";
 import {GEMINI_TTS_MODELS, GEMINI_TTS_AI_HINTS} from "./gemini-tts/index.js";
 import {GEMINI_TEXT_MODELS, GEMINI_TEXT_AI_HINTS} from "./gemini-text/index.js";
-import {CHIRP_MODELS, CHIRP_AI_HINTS} from "./chirp/index.js";
 import {LYRIA_MODELS, LYRIA_AI_HINTS} from "./lyria/index.js";
 
 // Re-export everything from model families
@@ -20,7 +19,6 @@ export * from "./imagen/index.js";
 export * from "./nano-banana/index.js";
 export * from "./gemini-tts/index.js";
 export * from "./gemini-text/index.js";
-export * from "./chirp/index.js";
 export * from "./lyria/index.js";
 
 // Re-export shared base types
@@ -37,7 +35,6 @@ export const MODEL_REGISTRY = {
   ...NANO_BANANA_MODELS,
   ...GEMINI_TTS_MODELS,
   ...GEMINI_TEXT_MODELS,
-  ...CHIRP_MODELS,
   ...LYRIA_MODELS,
 } as const;
 
@@ -106,8 +103,6 @@ ${NANO_BANANA_AI_HINT}
 
 ${IMAGEN_AI_HINTS}
 
-${CHIRP_AI_HINTS}
-
 ${GEMINI_TEXT_AI_HINTS}
 
 ## Analysis Rules
@@ -127,15 +122,13 @@ ${GEMINI_TEXT_AI_HINTS}
      * Must be MUSICAL COMPOSITION (instruments playing), not spoken words
    - Video: "video", "clip", "footage", "movie", "animation", "motion"
    - Image: "image", "picture", "photo", "illustration", "drawing", "render"
-   - STT: "transcribe", "speech to text", "convert audio"
    - Text: "write", "generate text", "explain", "describe", "summarize", "analyze"
 
 2. **ALWAYS choose fastest model by default (CRITICAL):**
-   - Video: **veo-3.0-fast-generate-001** is the smart default (fast, high quality, cost-effective)
-   - Image: nano-banana (ONLY upgrade if "high quality", "photorealistic", "detailed" mentioned)
+   - Video: **veo-3.1-fast-generate-preview** is the smart default (fast, high quality)
+   - Image: nano-banana (gemini-2.5-flash-image) - fast image generation
    - TTS: gemini-2.5-flash-preview-tts
    - Music: lyria-002 (only option)
-   - STT: chirp (only option)
    - Text: gemini-2.5-flash (ONLY use Pro if "complex", "detailed", "high quality" mentioned)
 
 3. **Extract parameters intelligently:**

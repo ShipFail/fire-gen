@@ -1,7 +1,20 @@
 // functions/src/ai-request-analyzer/passes/step2-analyze.ts
 import * as logger from "firebase-functions/logger";
 
-import {ai} from "../../models/_shared/ai-client.js";
+import {callVertexAPI} from "../../models/_shared/vertex-ai-client.js";
+import {PROJECT_ID} from "../../firebase-admin.js";
+import {REGION} from "../../env.js";
+
+// Gemini response type
+interface GeminiResponse {
+  candidates: Array<{
+    content: {
+      parts: Array<{
+        text: string;
+      }>;
+    };
+  }>;
+}
 
 /**
  * Step 2: AI-Powered Final Model Selection
@@ -155,7 +168,7 @@ URL Extraction Rules:
 
 Tag Categories:
 - <IMAGE_URI_N/> → Image files
-- <VIDEO_URI_N/> → Video files  
+- <VIDEO_URI_N/> → Video files
 - <AUDIO_URI_N/> → Audio files
 
 VEO Extraction Rules:
@@ -209,19 +222,20 @@ Parameter Reasoning:
 
   // Call AI with greedy decoding for deterministic decisions
   logger.info("Step 2: Calling AI for final selection", {jobId});
-  const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash-lite",
-    contents: aiPrompt,
-    config: {
+  
+  const endpoint = `v1/projects/${PROJECT_ID}/locations/${REGION}/publishers/google/models/gemini-2.5-flash-lite:generateContent`;
+  const response = await callVertexAPI<GeminiResponse>(endpoint, {
+    contents: [{role: "user", parts: [{text: aiPrompt}]}],
+    generationConfig: {
       temperature: 0,        // Greedy decoding - no randomness
       topK: 1,               // Only consider #1 most probable token
       topP: 1.0,             // No nucleus sampling
       candidateCount: 1,     // Single response
       maxOutputTokens: 8192, // Fixed token limit
     },
-  } as any);
+  });
 
-  const responseText = response.text;
+  const responseText = response.candidates?.[0]?.content?.parts?.[0]?.text;
   if (!responseText) {
     throw new Error("Empty response from Step 2 final selection");
   }

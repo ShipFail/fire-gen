@@ -1,9 +1,22 @@
 // functions/src/ai-request-analyzer/passes/step1-preprocess.ts
 import * as logger from "firebase-functions/logger";
 
-import {ai} from "../../models/_shared/ai-client.js";
+import {callVertexAPI} from "../../models/_shared/vertex-ai-client.js";
+import {PROJECT_ID} from "../../firebase-admin.js";
+import {REGION} from "../../env.js";
 import {buildSystemInstruction} from "../../models/index.js";
 import {preprocessAllUris, restoreUrisInText} from "../url-replacement.js";
+
+// Gemini response type
+interface GeminiResponse {
+  candidates: Array<{
+    content: {
+      parts: Array<{
+        text: string;
+      }>;
+    };
+  }>;
+}
 
 /**
  * Step 1: AI-Powered Candidate Generation
@@ -144,19 +157,20 @@ Top 3 Model Candidates:
 
   // 4. Call AI with greedy decoding for deterministic candidates
   logger.info("Step 1: Calling AI for candidate generation", {jobId});
-  const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash-lite",
-    contents: aiPrompt,
-    config: {
+  
+  const endpoint = `v1/projects/${PROJECT_ID}/locations/${REGION}/publishers/google/models/gemini-2.5-flash-lite:generateContent`;
+  const response = await callVertexAPI<GeminiResponse>(endpoint, {
+    contents: [{role: "user", parts: [{text: aiPrompt}]}],
+    generationConfig: {
       temperature: 0,        // Greedy decoding - no randomness
       topK: 1,               // Only consider #1 most probable token
       topP: 1.0,             // No nucleus sampling
       candidateCount: 1,     // Single response
       maxOutputTokens: 8192, // Fixed token limit
     },
-  } as any);
+  });
 
-  const responseText = response.text;
+  const responseText = response.candidates?.[0]?.content?.parts?.[0]?.text;
   if (!responseText) {
     throw new Error("Empty response from Step 1 candidate generation");
   }

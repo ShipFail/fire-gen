@@ -2,7 +2,7 @@
 import * as logger from "firebase-functions/logger";
 
 import {MODEL_REGISTRY} from "../models/index.js";
-import {preprocessAllUrls, restoreUrlsInRequest, restoreUrlsInText} from "./url-utils.js";
+import {preprocessAllUris, restoreUrisInRequest, restoreUrisInText} from "./url-utils.js";
 import {step1Preprocess} from "./passes/step1-preprocess.js";
 import {step2Analyze} from "./passes/step2-analyze.js";
 
@@ -79,12 +79,12 @@ export async function analyzePrompt(
     throw new Error("Prompt too long (max 10000 characters)");
   }
 
-  //  Preprocess URLs at top level
-  const {processedContexts, replacements} = preprocessAllUrls([userPrompt]);
+  //  Preprocess URIs at top level
+  const {processedContexts, replacements} = preprocessAllUris([userPrompt]);
   const processedPrompt = processedContexts[0];
 
   if (replacements.length > 0) {
-    logger.info("URLs preprocessed for analysis", {
+    logger.info("URIs preprocessed for analysis", {
       jobId,
       urlCount: replacements.length,
       categories: replacements.map(r => r.category).join(", ")
@@ -116,8 +116,8 @@ export async function analyzePrompt(
         // Extract Job Request from Step 2 output
         request = extractJobRequestFromText(step2Context);
 
-        // Restore URLs in request and prompt
-        const {cleanedRequest, cleanedPrompt} = restoreUrlsInRequest(
+        // Restore URIs in request and prompt
+        const {cleanedRequest, cleanedPrompt} = restoreUrisInRequest(
           request,
           request.prompt || "",
           replacements
@@ -161,8 +161,8 @@ export async function analyzePrompt(
       }
     }
 
-    // Restore URLs in reasoning texts
-    const restoredReasons = reasons.map(reason => restoreUrlsInText(reason, replacements));
+    // Restore URIs in reasoning texts
+    const restoredReasons = reasons.map(reason => restoreUrisInText(reason, replacements));
 
     logger.info("Analysis pipeline complete", {
       jobId,

@@ -1,31 +1,31 @@
 // functions/src/ai-request-analyzer/url-utils.ts
 
-import {replaceUrlsWithTags, restoreAndCleanUrls, type UrlReplacement} from "./storage-url.js";
+import {replaceUrisWithSemanticTags, restoreSemanticTagsToUris, type UriReplacement} from "./storage-url.js";
 
 /**
- * Preprocess ALL contexts: replace URLs with semantic XML tags.
+ * Preprocess ALL contexts: replace URIs with semantic XML tags.
  *
  * Uses simple category-based tags (e.g., <VIDEO_URI_1/>, <IMAGE_URI_2/>)
- * so the AI can distinguish between video, image, and audio URLs.
+ * so the AI can distinguish between video, image, and audio URIs.
  *
- * This prevents URLs from:
+ * This prevents URIs from:
  * - Wasting tokens in AI calls (long filenames)
  * - Confusing hint detection
  * - Affecting model selection
- * - Being misclassified (video URL in imageGcsUri field)
+ * - Being misclassified (video URI in imageGcsUri field)
  *
  * @param contexts - Array of context strings (prompt + contexts from previous steps)
- * @returns Processed contexts with URLs replaced by semantic tags, and replacements metadata
+ * @returns Processed contexts with URIs replaced by semantic tags, and replacements metadata
  */
-export function preprocessAllUrls(contexts: string[]): {
+export function preprocessAllUris(contexts: string[]): {
   processedContexts: string[];
-  replacements: UrlReplacement[];
+  replacements: UriReplacement[];
 } {
   // Collect all replacements from all contexts
-  const allReplacements: UrlReplacement[] = [];
+  const allReplacements: UriReplacement[] = [];
 
   const processedContexts = contexts.map((context) => {
-    const {processedPrompt, replacements} = replaceUrlsWithTags(context);
+    const {processedPrompt, replacements} = replaceUrisWithSemanticTags(context);
     allReplacements.push(...replacements);
     return processedPrompt;
   });
@@ -34,46 +34,46 @@ export function preprocessAllUrls(contexts: string[]): {
 }
 
 /**
- * Restore URLs in AI-generated request and prompt.
+ * Restore URIs in AI-generated request and prompt.
  *
  * Process:
  * 1. Replace XML tags in request fields with actual gs:// URIs
  * 2. Remove used tags from prompt
- * 3. Restore unused tags back to original URLs in prompt
+ * 3. Restore unused tags back to original URIs in prompt
  *
  * @param aiRequest - Request object from AI (may contain XML tags)
  * @param aiPrompt - Prompt from AI (may contain XML tags)
- * @param replacements - Replacement metadata from preprocessAllUrls
+ * @param replacements - Replacement metadata from preprocessAllUris
  * @returns Cleaned request and prompt with real gs:// URIs
  */
-export function restoreUrlsInRequest(
+export function restoreUrisInRequest(
   aiRequest: any,
   aiPrompt: string,
-  replacements: UrlReplacement[]
+  replacements: UriReplacement[]
 ): {
   cleanedRequest: any;
   cleanedPrompt: string;
 } {
-  return restoreAndCleanUrls(aiRequest, aiPrompt, replacements);
+  return restoreSemanticTagsToUris(aiRequest, aiPrompt, replacements);
 }
 
 /**
- * Restore URLs in plain text by replacing XML tags with original URLs.
+ * Restore URIs in plain text by replacing XML tags with original URIs.
  *
- * Used for restoring URLs in non-request text (e.g., reasoning, error messages).
+ * Used for restoring URIs in non-request text (e.g., reasoning, error messages).
  *
- * @param text - Text containing URL placeholders
- * @param replacements - Replacement metadata from preprocessAllUrls
- * @returns Text with URLs restored
+ * @param text - Text containing URI placeholders
+ * @param replacements - Replacement metadata from preprocessAllUris
+ * @returns Text with URIs restored
  */
-export function restoreUrlsInText(
+export function restoreUrisInText(
   text: string,
-  replacements: UrlReplacement[]
+  replacements: UriReplacement[]
 ): string {
   let restored = text;
 
   for (const replacement of replacements) {
-    // Replace all occurrences of the placeholder with original URL
+    // Replace all occurrences of the placeholder with original URI
     restored = restored.replace(
       new RegExp(replacement.placeholder.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"),
       replacement.original

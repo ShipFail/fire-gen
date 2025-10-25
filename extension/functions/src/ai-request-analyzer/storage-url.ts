@@ -1,18 +1,18 @@
 /**
- * Storage URL Utilities
+ * Storage URI Replacement Utilities
  *
  * Converts various Google Storage URL formats to canonical gs:// URIs,
- * replaces URLs with semantic XML tags for AI processing,
- * and restores/cleans URLs after AI analysis.
+ * replaces URIs with semantic XML tags for AI processing,
+ * and restores/cleans URIs after AI analysis.
  */
 
 import mime from "mime";
 
 /**
- * URL replacement metadata
+ * URI replacement metadata
  */
-export interface UrlReplacement {
-  original: string; // Original URL from user prompt
+export interface UriReplacement {
+  original: string; // Original URL/URI from user prompt
   gcsUri: string; // Converted gs:// URI
   mimeType: string; // Detected MIME type (e.g., "video/mp4")
   category: "video" | "image" | "audio" | "other"; // Broad category
@@ -56,16 +56,16 @@ export function toGcsUri(url: string): string {
 }
 
 /**
- * Extracts all URLs from a text string
+ * Extracts all URIs from a text string
  */
-export function extractUrls(text: string): string[] {
+export function extractUris(text: string): string[] {
   // Match http(s):// URLs and gs:// URIs
   const urlRegex = /(?:https?:\/\/[^\s]+|gs:\/\/[^\s]+)/gi;
   return text.match(urlRegex) || [];
 }
 
 /**
- * Detect MIME type from URL or file extension
+ * Detect MIME type from URI or file extension
  *
  * Uses browser-media-mime-type library which returns video/mp4 for .mp4 files.
  */
@@ -113,20 +113,20 @@ export function getMimeCategory(mimeType: string): "video" | "image" | "audio" |
 }
 
 /**
- * Replace URLs in prompt with semantic XML tags
+ * Replace URIs in prompt with semantic XML tags
  *
- * This makes it clear to the AI what type of resource each URL is,
+ * This makes it clear to the AI what type of resource each URI is,
  * without polluting the prompt with long filenames.
  *
- * @param prompt - User prompt with URLs
+ * @param prompt - User prompt with URIs
  * @returns Processed prompt and replacement metadata
  */
-export function replaceUrlsWithTags(prompt: string): {
+export function replaceUrisWithSemanticTags(prompt: string): {
   processedPrompt: string;
-  replacements: UrlReplacement[];
+  replacements: UriReplacement[];
 } {
-  const urls = extractUrls(prompt);
-  const replacements: UrlReplacement[] = [];
+  const urls = extractUris(prompt);
+  const replacements: UriReplacement[] = [];
 
   // Group by category for sequential numbering
   const counters = {video: 0, image: 0, audio: 0, other: 0};
@@ -152,10 +152,10 @@ export function replaceUrlsWithTags(prompt: string): {
         placeholder,
       });
 
-      // Replace URL with placeholder
+      // Replace URI with placeholder
       processedPrompt = processedPrompt.replace(url, placeholder);
     } catch (error) {
-      // If URL conversion fails, leave it as-is
+      // If URI conversion fails, leave it as-is
       // This allows the AI to potentially handle it or report an error
       continue;
     }
@@ -165,30 +165,30 @@ export function replaceUrlsWithTags(prompt: string): {
 }
 
 /**
- * Restore and clean URLs after AI processing
+ * Restore and clean URIs after AI processing
  *
  * Process:
  * 1. Replace placeholder tags in request fields with actual gs:// URIs
  * 2. Remove placeholder tags from prompt if they're used in request fields
- * 3. Restore original URLs for placeholders NOT used in request fields
+ * 3. Restore original URIs for placeholders NOT used in request fields
  * 4. Clean up extra whitespace
  *
  * @param aiRequest - Request object from AI (may contain placeholder tags)
  * @param aiPrompt - Prompt from AI (may contain placeholder tags)
- * @param replacements - Replacement metadata from replaceUrlsWithTags
+ * @param replacements - Replacement metadata from replaceUrisWithSemanticTags
  * @returns Cleaned request and prompt with real gs:// URIs
  */
-export function restoreAndCleanUrls(
+export function restoreSemanticTagsToUris(
   aiRequest: any,
   aiPrompt: string,
-  replacements: UrlReplacement[]
+  replacements: UriReplacement[]
 ): {
   cleanedRequest: any;
   cleanedPrompt: string;
 } {
   const cleanedRequest = {...aiRequest};
 
-  // Fields that may contain URL placeholders
+  // Fields that may contain URI placeholders
   const fieldsToCheck = [
     "imageGcsUri",
     "videoGcsUri",
@@ -223,10 +223,10 @@ export function restoreAndCleanUrls(
 
   for (const replacement of replacements) {
     if (usedTags.has(replacement.tag)) {
-      // This URL is in request parameters - remove from prompt
+      // This URI is in request parameters - remove from prompt
       cleanedPrompt = cleanedPrompt.replace(replacement.placeholder, "");
     } else {
-      // This URL is NOT in request parameters - restore original URL
+      // This URI is NOT in request parameters - restore original URI
       cleanedPrompt = cleanedPrompt.replace(replacement.placeholder, replacement.original);
     }
   }
@@ -245,8 +245,8 @@ export function restoreAndCleanUrls(
  */
 function findReplacementByPlaceholder(
   value: string,
-  replacements: UrlReplacement[]
-): UrlReplacement | undefined {
+  replacements: UriReplacement[]
+): UriReplacement | undefined {
   return replacements.find((r) =>
     value.includes(r.placeholder) || value.includes(`<${r.tag}`)
   );

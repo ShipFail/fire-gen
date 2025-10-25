@@ -1,12 +1,12 @@
 import { describe, test, expect } from 'vitest';
 import {
   toGcsUri,
-  extractUrls,
+  extractUris,
   detectMimeType,
   getMimeCategory,
-  replaceUrlsWithTags,
-  restoreAndCleanUrls,
-  type UrlReplacement
+  replaceUrisWithSemanticTags,
+  restoreSemanticTagsToUris,
+  type UriReplacement
 } from './storage-url';
 
 describe('toGcsUri', () => {
@@ -45,22 +45,22 @@ describe('toGcsUri', () => {
   });
 });
 
-describe('extractUrls', () => {
-  test('extracts single URL', () => {
-    expect(extractUrls('Check this image: https://storage.googleapis.com/bucket/image.jpg'))
+describe('extractUris', () => {
+  test('extracts single URI', () => {
+    expect(extractUris('Check this image: https://storage.googleapis.com/bucket/image.jpg'))
       .toEqual(['https://storage.googleapis.com/bucket/image.jpg']);
   });
 
-  test('extracts multiple URLs', () => {
+  test('extracts multiple URIs', () => {
     const text = 'First: https://storage.googleapis.com/b1/img1.jpg Second: gs://b2/img2.jpg';
-    expect(extractUrls(text)).toEqual([
+    expect(extractUris(text)).toEqual([
       'https://storage.googleapis.com/b1/img1.jpg',
       'gs://b2/img2.jpg'
     ]);
   });
 
-  test('returns empty array when no URLs', () => {
-    expect(extractUrls('Just plain text')).toEqual([]);
+  test('returns empty array when no URIs', () => {
+    expect(extractUris('Just plain text')).toEqual([]);
   });
 });
 
@@ -116,9 +116,9 @@ describe('getMimeCategory', () => {
   });
 });
 
-describe('replaceUrlsWithTags', () => {
-  test('replaces single video URL with tag', () => {
-    const result = replaceUrlsWithTags('Continue from https://storage.googleapis.com/bucket/video.mp4');
+describe('replaceUrisWithSemanticTags', () => {
+  test('replaces single video URI with tag', () => {
+    const result = replaceUrisWithSemanticTags('Continue from https://storage.googleapis.com/bucket/video.mp4');
 
     expect(result.processedPrompt).toBe("Continue from <VIDEO_URI_1/>");
     expect(result.replacements).toHaveLength(1);
@@ -132,8 +132,8 @@ describe('replaceUrlsWithTags', () => {
     });
   });
 
-  test('replaces multiple URLs with different types', () => {
-    const result = replaceUrlsWithTags(
+  test('replaces multiple URIs with different types', () => {
+    const result = replaceUrisWithSemanticTags(
       'Show gs://bucket/hero.jpg and gs://bucket/sword.png finding gs://bucket/scene.mp4'
     );
 
@@ -148,8 +148,8 @@ describe('replaceUrlsWithTags', () => {
     expect(result.replacements[2].tag).toBe('VIDEO_URI_1');
   });
 
-  test('handles Firebase Storage URLs', () => {
-    const result = replaceUrlsWithTags(
+  test('handles Firebase Storage URIs', () => {
+    const result = replaceUrisWithSemanticTags(
       'Animate https://firebasestorage.googleapis.com/v0/b/proj/o/users%2Ftest%2Fphoto.jpg?token=123'
     );
 
@@ -157,17 +157,17 @@ describe('replaceUrlsWithTags', () => {
     expect(result.replacements[0].gcsUri).toBe('gs://proj/users/test/photo.jpg');
   });
 
-  test('returns empty replacements when no URLs', () => {
-    const result = replaceUrlsWithTags('Just a plain text prompt');
+  test('returns empty replacements when no URIs', () => {
+    const result = replaceUrisWithSemanticTags('Just a plain text prompt');
 
     expect(result.processedPrompt).toBe('Just a plain text prompt');
     expect(result.replacements).toHaveLength(0);
   });
 });
 
-describe('restoreAndCleanUrls', () => {
-  test('restores URLs in request fields and removes from prompt', () => {
-    const replacements: UrlReplacement[] = [
+describe('restoreSemanticTagsToUris', () => {
+  test('restores URIs in request fields and removes from prompt', () => {
+    const replacements: UriReplacement[] = [
       {
         original: 'https://storage.googleapis.com/bucket/video.mp4',
         gcsUri: 'gs://bucket/video.mp4',
@@ -185,14 +185,14 @@ describe('restoreAndCleanUrls', () => {
       videoGcsUri: "<VIDEO_URI_1/>"
     };
 
-    const result = restoreAndCleanUrls(aiRequest, aiRequest.prompt, replacements);
+    const result = restoreSemanticTagsToUris(aiRequest, aiRequest.prompt, replacements);
 
     expect(result.cleanedRequest.videoGcsUri).toBe('gs://bucket/video.mp4');
     expect(result.cleanedPrompt).toBe('Continue from');
   });
 
-  test('keeps unused URLs in prompt', () => {
-    const replacements: UrlReplacement[] = [
+  test('keeps unused URIs in prompt', () => {
+    const replacements: UriReplacement[] = [
       {
         original: 'gs://bucket/hero.jpg',
         gcsUri: 'gs://bucket/hero.jpg',
@@ -218,7 +218,7 @@ describe('restoreAndCleanUrls', () => {
       referenceSubjectImages: ["<IMAGE_URI_1/>"]
     };
 
-    const result = restoreAndCleanUrls(aiRequest, aiRequest.prompt, replacements);
+    const result = restoreSemanticTagsToUris(aiRequest, aiRequest.prompt, replacements);
 
     expect(result.cleanedRequest.referenceSubjectImages).toEqual(['gs://bucket/hero.jpg']);
     // Hero removed (used), sword restored (not used)
@@ -226,7 +226,7 @@ describe('restoreAndCleanUrls', () => {
   });
 
   test('handles array of reference images', () => {
-    const replacements: UrlReplacement[] = [
+    const replacements: UriReplacement[] = [
       {
         original: 'gs://bucket/person1.jpg',
         gcsUri: 'gs://bucket/person1.jpg',
@@ -254,7 +254,7 @@ describe('restoreAndCleanUrls', () => {
       prompt: "Show walking together"
     };
 
-    const result = restoreAndCleanUrls(aiRequest, aiRequest.prompt, replacements);
+    const result = restoreSemanticTagsToUris(aiRequest, aiRequest.prompt, replacements);
 
     expect(result.cleanedRequest.referenceSubjectImages).toEqual([
       'gs://bucket/person1.jpg',
@@ -264,7 +264,7 @@ describe('restoreAndCleanUrls', () => {
   });
 
   test('cleans up extra whitespace', () => {
-    const replacements: UrlReplacement[] = [
+    const replacements: UriReplacement[] = [
       {
         original: 'gs://bucket/video.mp4',
         gcsUri: 'gs://bucket/video.mp4',
@@ -281,7 +281,7 @@ describe('restoreAndCleanUrls', () => {
       prompt: "Continue   from   <VIDEO_URI_1/>   with   action"
     };
 
-    const result = restoreAndCleanUrls(aiRequest, aiRequest.prompt, replacements);
+    const result = restoreSemanticTagsToUris(aiRequest, aiRequest.prompt, replacements);
 
     expect(result.cleanedPrompt).toBe('Continue from with action');
   });

@@ -3,17 +3,17 @@ import * as logger from "firebase-functions/logger";
 
 import {ai} from "../../models/_shared/ai-client.js";
 import {buildSystemInstruction} from "../../models/index.js";
-import {preprocessAllUrls, restoreUrlsInText} from "../url-utils.js";
+import {preprocessAllUris, restoreUrisInText} from "../url-utils.js";
 
 /**
  * Step 1: AI-Powered Candidate Generation
  *
  * Responsibilities:
- * 1. Preprocess URLs (replace with placeholders)
+ * 1. Preprocess URIs (replace with placeholders)
  * 2. Gather ALL AI hints from ALL models
  * 3. Call AI to generate top 3 model candidates with predicted parameters
  * 4. Return plain text with candidates, reasoning, and confidence
- * 5. Restore URLs in output
+ * 5. Restore URIs in output
  *
  * This step is EXPLORATORY - generates multiple possibilities.
  * Step 2 will make the FINAL decision.
@@ -41,12 +41,12 @@ export async function step1Preprocess(
 ): Promise<string> {
   logger.info("Step 1: Generating candidates", {jobId});
 
-  // 1. Preprocess URLs in prompt
-  const {processedContexts, replacements} = preprocessAllUrls(contexts);
+  // 1. Preprocess URIs in prompt
+  const {processedContexts, replacements} = preprocessAllUris(contexts);
   const prompt = processedContexts[0];
 
   if (replacements.length > 0) {
-    logger.info("Step 1: URLs preprocessed", {jobId, urlCount: replacements.length});
+    logger.info("Step 1: URIs preprocessed", {jobId, urlCount: replacements.length});
   }
 
   // 2. Gather ALL AI hints from ALL models
@@ -133,8 +133,8 @@ Top 3 Model Candidates:
     responseLength: responseText.length,
   });
 
-  // 5. Restore URLs in result
-  const restored = restoreUrlsInText(responseText, replacements);
+  // 5. Restore URIs in result
+  const restored = restoreUrisInText(responseText, replacements);
 
   logger.info("Step 1 complete", {
     jobId,

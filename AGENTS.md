@@ -20,6 +20,7 @@
 - use `zod` for schema definition and validation
 - Never use hard-coded keyword/substring rule engines for prompt tagging or classification.
 - create temp files in `/tmp` directory. i.e. log files, debug code files.
+- Avoid git operations (clone, commit, push, pull, etc.) unless user approved.
 
 ## Supported Models
 

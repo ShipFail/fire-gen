@@ -43,7 +43,7 @@ export type VeoRequestBase = z.infer<typeof VeoRequestBaseSchema>;
 
 /**
  * Base Zod schema for Veo 3.1 models.
- * New features: video extension, frame-specific generation, multi-subject references.
+ * New features: video extension, frame-specific generation, multi-subject references, negative prompts.
  * Deprecated: resolution parameter (removed from API).
  */
 export const Veo31RequestBaseSchema = z.object({
@@ -54,9 +54,11 @@ export const Veo31RequestBaseSchema = z.object({
   aspectRatio: VeoAspectRatioSchema.default("16:9"),
   audio: z.boolean().default(true),
   // New 3.1 features
+  imageGcsUri: UrlOrGcsUriSchema.optional(), // For image-to-video
   referenceSubjectImages: z.array(UrlOrGcsUriSchema).max(3).optional(),
   videoGcsUri: UrlOrGcsUriSchema.optional(), // For video extension
-  lastFrameGcsUri: UrlOrGcsUriSchema.optional(), // For frame-specific generation
+  lastFrameGcsUri: UrlOrGcsUriSchema.or(z.null()).optional(), // For frame-specific generation (null = backend extracts)
+  negativePrompt: z.string().optional(), // What NOT to include in the video
 });
 
 export type Veo31RequestBase = z.infer<typeof Veo31RequestBaseSchema>;
@@ -100,8 +102,12 @@ export abstract class VeoAdapterBase implements ModelAdapter {
         config.referenceImageGcsUri = validated.referenceImageGcsUri;
       }
     }
-    // Veo 3.1+: use referenceImages.subject, video, lastFrame (resolution deprecated)
+    // Veo 3.1+: use image, referenceImages.subject, video, lastFrame, negativePrompt (resolution deprecated)
     else {
+      // Image-to-video base frame
+      if (validated.imageGcsUri) {
+        config.image = validated.imageGcsUri;
+      }
       // Multi-subject reference images
       if (validated.referenceSubjectImages && validated.referenceSubjectImages.length > 0) {
         config.referenceImages = {
@@ -112,9 +118,13 @@ export abstract class VeoAdapterBase implements ModelAdapter {
       if (validated.videoGcsUri) {
         config.video = validated.videoGcsUri;
       }
-      // Frame-specific generation
-      if (validated.lastFrameGcsUri) {
+      // Frame-specific generation (null means backend should extract)
+      if (validated.lastFrameGcsUri !== undefined && validated.lastFrameGcsUri !== null) {
         config.lastFrame = validated.lastFrameGcsUri;
+      }
+      // Negative prompt
+      if (validated.negativePrompt) {
+        config.negativePrompt = validated.negativePrompt;
       }
     }
 

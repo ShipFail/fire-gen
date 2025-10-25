@@ -21,6 +21,7 @@ export const IMAGEN_4_0_FAST_GENERATE_001_AI_HINT = `
 - **imagen-4.0-fast-generate-001**: Fast high-quality image (Imagen 4 Fast)
   - Use when: User requests "imagen" or "good quality" but mentions speed
   - Generation time: 2-5 seconds
+  - REST API schema: {model, instances: [{prompt}], parameters: {aspectRatio?, sampleCount?, ...}}
 `;
 
 export class Imagen40FastGenerate001Adapter extends ImagenAdapterBase {

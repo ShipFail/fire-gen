@@ -21,6 +21,7 @@ export const IMAGEN_4_0_GENERATE_001_AI_HINT = `
 - **imagen-4.0-generate-001**: Highest quality image (Imagen 4)
   - Use when: User explicitly requests "high quality", "photorealistic", "detailed"
   - Generation time: 3-8 seconds
+  - REST API schema: {model, instances: [{prompt}], parameters: {aspectRatio?, sampleCount?, ...}}
 `;
 
 export class Imagen40Generate001Adapter extends ImagenAdapterBase {

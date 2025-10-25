@@ -105,3 +105,59 @@ export async function getOperation(operationName: string): Promise<VertexAIOpera
 
   return response.json() as Promise<VertexAIOperation>;
 }
+
+/**
+ * Response from synchronous prediction APIs
+ */
+export interface VertexAIPredictResponse {
+  predictions: Array<Record<string, unknown>>;
+  metadata?: Record<string, unknown>;
+}
+
+/**
+ * Call Vertex AI prediction API (synchronous)
+ * Used for models like Imagen that return results immediately.
+ */
+export async function predict(
+  model: string,
+  payload: {
+    instances: Array<Record<string, unknown>>;
+    parameters?: Record<string, unknown>;
+  }
+): Promise<VertexAIPredictResponse> {
+  const token = await auth.getAccessToken();
+  const endpoint = `https://${REGION}-aiplatform.googleapis.com/v1/projects/${PROJECT_ID}/locations/${REGION}/publishers/google/models/${model}:predict`;
+
+  logger.debug("Vertex AI predict request", {
+    model,
+    endpoint,
+    payload,
+  });
+
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    logger.error("Vertex AI API error", {
+      status: response.status,
+      statusText: response.statusText,
+      body: errorBody,
+    });
+    throw new Error(`Vertex AI API error: ${response.status} ${response.statusText} - ${errorBody}`);
+  }
+
+  const result = await response.json() as VertexAIPredictResponse;
+
+  logger.debug("Vertex AI predict response", {
+    predictionsCount: result.predictions?.length,
+  });
+
+  return result;
+}

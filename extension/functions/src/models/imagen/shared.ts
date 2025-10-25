@@ -2,9 +2,9 @@
 import {z} from "zod";
 import * as logger from "firebase-functions/logger";
 
-import {ai} from "../_shared/ai-client.js";
+import {predict} from "../_shared/vertex-ai-client.js";
 import {PromptSchema} from "../_shared/zod-helpers.js";
-import {getOutputFileUri, uploadToGcs} from "../../storage.js";
+import {uploadToGcs} from "../../storage.js";
 import type {ModelAdapter, StartResult, ModelOutput} from "../_shared/base.js";
 
 /**
@@ -38,20 +38,39 @@ export const SafetySettingSchema = z.object({
 });
 
 /**
+ * REST API schemas matching official Vertex AI Imagen API
+ * https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/imagen-api
+ */
+
+const ImagenInstanceSchema = z.object({
+  prompt: PromptSchema,
+});
+
+const ImagenParametersSchema = z.object({
+  sampleCount: z.number().int().min(1).max(4).optional(),
+  aspectRatio: ImagenAspectRatioSchema.optional(),
+  enhancePrompt: z.boolean().optional(),
+  personGeneration: z.enum(["allow_adult", "dont_allow", "allow_all"]).optional(),
+  language: z.string().optional(),
+  safetySetting: z.string().optional(), // e.g., "block_medium_and_above"
+  seed: z.number().optional(),
+  sampleImageSize: z.enum(["1K", "2K"]).optional(),
+  addWatermark: z.boolean().optional(),
+  negativePrompt: z.string().optional(),
+  outputOptions: z.object({
+    mimeType: z.enum(["image/png", "image/jpeg"]).optional(),
+    compressionQuality: z.number().int().min(0).max(100).optional(),
+  }).optional(),
+});
+
+/**
  * Base Zod schema for all Imagen models.
  * Specific models extend this and override the `model` field.
  */
 export const ImagenRequestBaseSchema = z.object({
-  type: z.literal("image"),
   model: ImagenModelIdSchema,
-  prompt: PromptSchema,
-  aspectRatio: ImagenAspectRatioSchema.default("1:1").optional(),
-  safetySettings: z.array(SafetySettingSchema).optional(),
-  // Imagen-specific optional parameters
-  enhancePrompt: z.boolean().optional(),
-  sampleCount: z.number().int().min(1).max(4).optional(),
-  personGeneration: z.enum(["allow_adult", "dont_allow"]).optional(),
-  language: z.string().optional(),
+  instances: z.array(ImagenInstanceSchema),
+  parameters: ImagenParametersSchema.optional(),
 });
 
 export type ImagenRequestBase = z.infer<typeof ImagenRequestBaseSchema>;
@@ -71,54 +90,28 @@ export abstract class ImagenAdapterBase implements ModelAdapter {
     logger.info("Starting Imagen generation", {
       jobId,
       model: this.modelId,
-      aspectRatio: validated.aspectRatio,
+      parameters: validated.parameters,
     });
 
-    // Build request parameters
-    const params: Record<string, unknown> = {
-      prompt: validated.prompt,
-    };
+    // Call Imagen via REST API
+    const response = await predict(this.modelId, {
+      instances: validated.instances,
+      parameters: validated.parameters,
+    });
 
-    if (validated.aspectRatio) {
-      params.aspectRatio = validated.aspectRatio;
-    }
-
-    if (validated.enhancePrompt !== undefined) {
-      params.enhancePrompt = validated.enhancePrompt;
-    }
-    if (validated.sampleCount !== undefined) {
-      params.sampleCount = validated.sampleCount;
-    }
-    if (validated.personGeneration) {
-      params.personGeneration = validated.personGeneration;
-    }
-    if (validated.language) {
-      params.language = validated.language;
-    }
-
-    // Call Imagen via Vertex AI
-    // Note: Type assertion needed - SDK doesn't expose Imagen methods in TypeScript types
-    const response = (await (ai.models as any).generateImages({
-      model: this.modelId,
-      ...params,
-      safetySettings: validated.safetySettings,
-    })) as any;
-
-    // Extract first image from response
-    const imagePart = response.candidates?.[0]?.content?.parts?.find(
-      (part: any) => part.inlineData?.mimeType?.startsWith("image/")
-    );
-
-    if (!imagePart?.inlineData?.data) {
-      throw new Error("No image data in Imagen response");
+    // Extract first prediction (base64 encoded image)
+    const prediction = response.predictions[0];
+    if (!prediction?.bytesBase64Encoded) {
+      throw new Error("No bytesBase64Encoded in Imagen response");
     }
 
     // Convert base64 to buffer
-    const imageData = Buffer.from(imagePart.inlineData.data, "base64");
-    const mimeType = imagePart.inlineData.mimeType || "image/png";
+    const imageData = Buffer.from(prediction.bytesBase64Encoded as string, "base64");
+    const mimeType = (prediction.mimeType as string) || "image/png";
 
-    // Upload to GCS
-    const outputUri = getOutputFileUri(jobId, validated);
+    // Upload to GCS (compute outputUri from job metadata)
+    // Note: Imagen is synchronous so we need to generate output URI
+    const outputUri = `gs://${process.env.FIREBASE_STORAGE_BUCKET}/outputs/${jobId}/image.png`;
     await uploadToGcs(imageData, outputUri, mimeType);
 
     logger.info("Imagen generation completed", {jobId, uri: outputUri});
@@ -127,12 +120,12 @@ export abstract class ImagenAdapterBase implements ModelAdapter {
     const metadata: Record<string, unknown> = {
       mimeType,
       size: imageData.length,
-      aspectRatio: validated.aspectRatio || "1:1",
+      aspectRatio: validated.parameters?.aspectRatio || "1:1",
     };
 
     // Include enhanced prompt if available
-    if (response.enhancedPrompt) {
-      metadata.enhancedPrompt = response.enhancedPrompt;
+    if (prediction.prompt) {
+      metadata.enhancedPrompt = prediction.prompt;
     }
 
     // Synchronous operation - return output immediately

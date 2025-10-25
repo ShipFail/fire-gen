@@ -21,6 +21,7 @@ export const IMAGEN_4_0_ULTRA_GENERATE_001_AI_HINT = `
 - **imagen-4.0-ultra-generate-001**: Ultra quality (Imagen 4 Ultra)
   - Use when: User explicitly requests "ultra quality", "maximum detail"
   - Generation time: 6-8 seconds
+  - REST API schema: {model, instances: [{prompt}], parameters: {aspectRatio?, sampleCount?, ...}}
 `;
 
 export class Imagen40UltraGenerate001Adapter extends ImagenAdapterBase {

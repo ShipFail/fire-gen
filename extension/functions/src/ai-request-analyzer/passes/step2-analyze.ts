@@ -89,7 +89,7 @@ URL Extraction Rules:
 
 Tag Categories:
 - <GS_IMAGE_*_N/> or <HTTPS_IMAGE_*_N/> → Image files
-- <GS_VIDEO_*_N/> or <HTTPS_VIDEO_*_N/> → Video files  
+- <GS_VIDEO_*_N/> or <HTTPS_VIDEO_*_N/> → Video files
 - <GS_AUDIO_*_N/> or <HTTPS_AUDIO_*_N/> → Audio files
 
 EXTRACTION RULES:
@@ -97,12 +97,12 @@ EXTRACTION RULES:
 1. VIDEO tag (<*_VIDEO_*/>):
    - Extract to: videoGcsUri
    - If also has IMAGE tag → add IMAGE to lastFrameGcsUri
-   
+
 2. SINGLE IMAGE tag:
    - "animate this", "bring to life" → imageGcsUri (base image to animate)
    - ALL OTHER cases → referenceSubjectImages: ["<tag>"]
    - Examples of referenceSubjectImages:
-     * "Show <IMAGE_TAG/> walking" 
+     * "Show <IMAGE_TAG/> walking"
      * "character <IMAGE_TAG/> in scene"
      * "mountain climber <IMAGE_TAG/>"  ← Tag at END
      * "portrait <IMAGE_TAG/>"           ← Tag at END

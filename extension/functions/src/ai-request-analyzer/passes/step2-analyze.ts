@@ -75,37 +75,22 @@ FIX these errors in your response.
 
 ---
 
-Task: Select best candidate and output final JobRequest JSON.
+Task: Select best model and build JobRequest JSON with ALL required fields.
 
-URL Decision Tree (IF you see URL tags in prompt):
-1. Count image tags: 0, 1, or 2+?
-2. Check verbs: "animate", "bring to life", "show X walking", "extend", "continue"?
-3. Assign field:
-   - 1 image + animate/bring → imageGcsUri
-   - 1+ images + show/feature → referenceSubjectImages (array, max 3)
-   - 1 video → videoGcsUri
-   - 1 video + 1 image → videoGcsUri + lastFrameGcsUri
-4. Remove used tags from prompt
+REQUIRED Video Fields (ALWAYS include):
+- type, model, prompt, duration, aspectRatio, audio
+- Defaults: duration=8, aspectRatio="16:9", audio=true
 
-Examples:
-Input: "Animate <GS_IMAGE_URI_REF_1 mimeType='image/jpeg'/> with wind"
-Output: {imageGcsUri: "<GS_IMAGE_URI_REF_1 mimeType='image/jpeg'/>", prompt: "Animate with wind"}
+URLs (IF you see <GS_*_URI_REF_N/> tags):
+Decision tree:
+1. Single <GS_IMAGE.../> + "animate"/"bring to life" → imageGcsUri
+2. Multiple <GS_IMAGE.../> + "show"/"feature" → referenceSubjectImages (max 3)
+3. <GS_VIDEO.../> → videoGcsUri
+4. <GS_VIDEO.../> + <GS_IMAGE.../> → videoGcsUri + lastFrameGcsUri
+Remove used tags from prompt.
 
-Input: "Show <GS_IMAGE_URI_REF_1 mimeType='image/png'/> and <GS_IMAGE_URI_REF_2 mimeType='image/png'/> in a scene"
-Output: {referenceSubjectImages: ["<GS_IMAGE_URI_REF_1 mimeType='image/png'/>", "<GS_IMAGE_URI_REF_2 mimeType='image/png'/>"], prompt: "Show in a scene"}
-
-Prompt Preservation:
-- Video/Image/Text/Music: Copy user prompt VERBATIM
-- TTS only: Extract quoted text or imperative object
-
-Defaults (when not specified):
-- Video: duration=8, aspectRatio="16:9", audio=true
-- Image: aspectRatio="1:1"
-
-Negative Prompt Extraction:
-Keywords: "avoid", "without", "no", "don't want", "exclude", "negative prompt"
-Extract what follows the keyword.
-Examples: "avoid blur" → "blur" | "no people, no cars" → "people, cars"
+Negative Prompts:
+IF you see: "avoid X", "without X", "no X", "exclude X" → Extract X to negativePrompt field
 
 Format:
 

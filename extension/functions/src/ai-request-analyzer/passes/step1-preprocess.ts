@@ -139,17 +139,16 @@ Examples:
 **Example 1: Video Request**
 User Prompt: "Create a 4-second portrait video of a city at night with ambient sounds"
 
-1. veo-3.0-fast-generate-001
+1. veo-3.1-fast-generate-preview
    Type: video
-   Parameters: {"type":"video","model":"veo-3.0-fast-generate-001","prompt":"Create a 4-second portrait video of a city at night with ambient sounds","duration":4,"aspectRatio":"9:16","resolution":"1080p","audio":true}
+   Parameters: {"type":"video","model":"veo-3.1-fast-generate-preview","prompt":"Create a 4-second portrait video of a city at night with ambient sounds","duration":4,"aspectRatio":"9:16","audio":true}
 
    Parameter Reasoning:
    - type: "video" → User requested video generation (from prompt: "Create a...video")
-   - model: "veo-3.0-fast-generate-001" → Default fast model, no quality preference stated
+   - model: "veo-3.1-fast-generate-preview" → Default fast model, no quality preference stated
    - prompt: "Create a 4-second portrait video of a city at night with ambient sounds" → ORIGINAL prompt VERBATIM - preserved for final model to execute (from prompt: entire user prompt)
    - duration: 4 → User specified duration (from prompt: "4-second")
    - aspectRatio: "9:16" → User said "portrait" = TALLER (from prompt: "portrait video")
-   - resolution: "1080p" → Default HD quality (default because: not specified)
    - audio: true → User wants sound (from prompt: "with ambient sounds")
 
    Model Selection: Fast variant for standard quality video request

@@ -23,5 +23,20 @@
 
 ## Supported Models
 
-- We always support the latest version of models (like the latest of Veo, Sora, Gemini, GPT, Sonnet)
-- We remove old version of models in the same family after we supported new ones, like for the VEO 3.0 & 3.1 versions, when 3.1 is the latest, we do not need to keep 3.0 in our system, unless there are features that the new version is not supported yet.
+- **Latest versions only**: FireGen always uses the newest model versions (Veo, Gemini, etc.)
+- **When new versions release**: Old versions are removed from AI analyzer but kept for backward compatibility
+- **Example**: When Veo 3.1 releases, Veo 3.0 is hidden from AI but still works for direct API calls
+
+## Model Version Migration Rules
+
+### Two-Tier Architecture
+1. **AI Analyzer Tier**: Only exposes the latest model versions
+2. **Implicit Request Tier**: Supports all model versions (new and old)
+
+### Rules When Adding New Model Versions
+
+1. **AI Analyzer**: Remove all old versions from AI hints - only latest versions visible
+2. **Codebase**: Keep old model adapters and schemas - don't delete them
+3. **Tests**: Update to expect new versions - remove tests for old versions
+4. **Documentation**: Mark old versions as "implicit requests only"
+5. **Dependencies**: Always use `@latest` SDK version

@@ -23,9 +23,11 @@ FireGen is a Firebase extension that integrates Google Vertex AI's media generat
   - You MUST download/copy media to your own storage before expiration
   - FireGen only provides temporary generation - long-term storage is your responsibility
 - **Supported Video Models** (async):
-  - `veo-3.0-generate-001` (latest, highest quality)
-  - `veo-3.0-fast-generate-001` (faster generation)
-  - `veo-2.0-generate-001` (previous generation)
+  - `veo-3.1-generate-preview` (latest, highest quality) - **DEFAULT for AI requests**
+  - `veo-3.1-fast-generate-preview` (faster generation) - **DEFAULT for standard video requests**
+  - `veo-3.0-generate-001` (previous generation) - **Implicit requests only, not used by AI analyzer**
+  - `veo-3.0-fast-generate-001` (previous generation) - **Implicit requests only, not used by AI analyzer**
+  - `veo-2.0-generate-001` (legacy) - **Implicit requests only, not used by AI analyzer**
 - **Supported Image Models** (sync):
   - `nano-banana` (Gemini 2.5 Flash Image - instant generation)
   - `imagen-4.0-generate-001` (Imagen 4 - highest quality, 2K resolution)
@@ -57,13 +59,31 @@ FireGen is a Firebase extension that integrates Google Vertex AI's media generat
 
   request: {
     type: "video",
-    model: "veo-3.0-generate-001" | "veo-3.0-fast-generate-001" | "veo-2.0-generate-001",
+    
+    // Veo 3.1 models (recommended - used by AI analyzer)
+    model: "veo-3.1-generate-preview" | "veo-3.1-fast-generate-preview",
     prompt: string,               // Video generation prompt
-    duration: number,             // Video duration in seconds (typically 8)
-    aspectRatio: "16:9" | "9:16", // Video aspect ratio
-    resolution: "720p" | "1080p", // Video resolution
+    duration: 4 | 6 | 8,          // Video duration in seconds
+    aspectRatio: "16:9" | "9:16" | "1:1" | "21:9" | "3:4" | "4:3",
     audio: boolean,               // Generate audio track
-    referenceImageGcsUri?: string // Optional: GCS URI for image-to-video (gs://bucket/path/image.jpg)
+    
+    // NEW in Veo 3.1: Multi-subject reference images
+    referenceSubjectImages?: string[], // Up to 3 GCS URIs for subject references
+    
+    // NEW in Veo 3.1: Video extension mode
+    videoGcsUri?: string,         // GCS URI of video to extend
+    
+    // NEW in Veo 3.1: Frame-specific generation
+    lastFrameGcsUri?: string,     // GCS URI of frame to start from
+    
+    // --- OR for Veo 3.0/2.0 models (implicit requests only) ---
+    model: "veo-3.0-generate-001" | "veo-3.0-fast-generate-001" | "veo-2.0-generate-001",
+    prompt: string,
+    duration: 4 | 6 | 8,
+    aspectRatio: "16:9" | "9:16" | "1:1" | "21:9" | "3:4" | "4:3",
+    resolution: "720p" | "1080p", // DEPRECATED in 3.1, only for 3.0/2.0
+    audio: boolean,
+    referenceImageGcsUri?: string // DEPRECATED in 3.1, replaced by referenceSubjectImages
   },
 
   response?: {
@@ -85,6 +105,17 @@ FireGen is a Firebase extension that integrates Google Vertex AI's media generat
   }
 }
 ```
+
+**Veo 3.1 vs 3.0 Comparison:**
+
+| Feature | Veo 3.1 | Veo 3.0/2.0 |
+|---------|---------|-------------|
+| Model IDs | `veo-3.1-generate-preview`, `veo-3.1-fast-generate-preview` | `veo-3.0-*`, `veo-2.0-*` |
+| AI Analyzer | ✅ Used by default | ❌ Not used (implicit requests only) |
+| Multi-subject | ✅ `referenceSubjectImages` (up to 3) | ❌ Single `referenceImageGcsUri` |
+| Video extension | ✅ `videoGcsUri` | ❌ Not supported |
+| Frame-specific | ✅ `lastFrameGcsUri` | ❌ Not supported |
+| Resolution param | ❌ Deprecated | ✅ Required |
 
 ### Image Job Example
 
@@ -360,17 +391,16 @@ const jobId = await createAIJob(
 // Scientific quality video
 await set(jobRef, "Create a high-resolution educational video about quantum physics");
 → Chooses:
-   - Model: "veo-3.0-generate-001" (highest quality)
+   - Model: "veo-3.1-generate-preview" (highest quality, latest generation)
    - Duration: 8 seconds
-   - Resolution: 1080p
    - Aspect Ratio: 16:9
    - Enhanced educational prompt
 
 // Emotional storytelling
 await set(jobRef, "A heartwarming short film about human resilience");
 → Chooses:
-   - Model: "veo-3.0-fast-generate-001" (balanced quality/speed)
-   - Duration: 5 seconds
+   - Model: "veo-3.1-fast-generate-preview" (balanced quality/speed, latest generation)
+   - Duration: 8 seconds
    - Mood-aware prompt enhancement
 ```
 
@@ -486,19 +516,46 @@ async function createVideoJob(userId: string, prompt: string) {
     status: 'requested',
     request: {
       type: 'video',
-      model: 'veo-3.0-generate-001',
+      model: 'veo-3.1-fast-generate-preview', // Use Veo 3.1 fast (default)
       prompt: prompt,
       duration: 8,
       aspectRatio: '16:9',
-      resolution: '1080p',
       audio: true
+      // Note: resolution parameter removed in Veo 3.1
     }
   });
 
   return newJobRef.key; // Job ID
 }
 
-// Image-to-video example (with reference image)
+// Multi-subject example (Veo 3.1 feature)
+async function createMultiSubjectVideoJob(
+  userId: string, 
+  prompt: string, 
+  subjectImages: string[]
+) {
+  const db = getDatabase();
+  const jobsRef = ref(db, 'firegen-jobs');
+  const newJobRef = push(jobsRef);
+
+  await set(newJobRef, {
+    uid: userId,
+    status: 'requested',
+    request: {
+      type: 'video',
+      model: 'veo-3.1-fast-generate-preview',
+      prompt: prompt,
+      duration: 8,
+      aspectRatio: '16:9',
+      audio: true,
+      referenceSubjectImages: subjectImages // Up to 3 GCS URIs
+    }
+  });
+
+  return newJobRef.key;
+}
+
+// Legacy image-to-video example (Veo 3.0 - implicit request)
 async function createImageToVideoJob(userId: string, prompt: string, imageGcsUri: string) {
   const db = getDatabase();
   const jobsRef = ref(db, 'firegen-jobs');

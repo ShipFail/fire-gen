@@ -4,6 +4,30 @@ import * as logger from "firebase-functions/logger";
 import {callVertexAPI} from "../../models/_shared/vertex-ai-client.js";
 import {PROJECT_ID} from "../../firebase-admin.js";
 import {REGION} from "../../env.js";
+import {DEFAULT_VALUES} from "../analyzer-shared-rules.js";
+
+// Import AI hints from all model families
+import {VEO_AI_HINTS} from "../../models/veo/ai-hints.js";
+import {IMAGEN_AI_HINTS} from "../../models/imagen/ai-hints.js";
+import {GEMINI_TEXT_AI_HINTS} from "../../models/gemini-text/ai-hints.js";
+import {GEMINI_TTS_AI_HINTS} from "../../models/gemini-tts/ai-hints.js";
+import {GEMINI_FLASH_IMAGE_AI_HINTS} from "../../models/gemini-flash-image/ai-hints.js";
+import {LYRIA_AI_HINTS} from "../../models/lyria/ai-hints.js";
+
+// Assemble all model AI hints for the analyzer
+const ALL_MODEL_HINTS = `
+${VEO_AI_HINTS}
+
+${IMAGEN_AI_HINTS}
+
+${GEMINI_TEXT_AI_HINTS}
+
+${GEMINI_TTS_AI_HINTS}
+
+${GEMINI_FLASH_IMAGE_AI_HINTS}
+
+${LYRIA_AI_HINTS}
+`;
 
 // Gemini response type
 interface GeminiResponse {
@@ -92,74 +116,9 @@ Task: Select best model and build complete REST API JobRequest JSON.
 
 CRITICAL: Each model family uses DIFFERENT REST API schema!
 
-**Schema Formats by Model Family:**
+${ALL_MODEL_HINTS}
 
-1. **VEO (video)** - instances/parameters format:
-{
-  "model": "veo-3.1-fast-generate-preview",
-  "instances": [{"prompt": "..."}],
-  "parameters": {
-    "durationSeconds": 8,
-    "aspectRatio": "16:9",
-    "generateAudio": true,
-    "negativePrompt": "..." // optional
-  }
-}
-
-2. **IMAGEN (image)** - instances/parameters format:
-{
-  "model": "imagen-4.0-fast-generate-001",
-  "instances": [{"prompt": "..."}],
-  "parameters": {
-    "aspectRatio": "1:1",
-    "sampleCount": 1,
-    "negativePrompt": "..." // optional
-  }
-}
-
-3. **GEMINI TEXT** - contents/generationConfig format:
-{
-  "model": "gemini-2.5-flash",
-  "contents": [{"role": "user", "parts": [{"text": "..."}]}],
-  "generationConfig": {
-    "temperature": 1.0,
-    "topP": 0.95,
-    "topK": 40,
-    "maxOutputTokens": 8192
-  }
-}
-
-4. **GEMINI TTS** - contents/generationConfig with speechConfig:
-{
-  "model": "gemini-2.5-flash-preview-tts",
-  "contents": [{"role": "user", "parts": [{"text": "Say: hello world"}]}],
-  "generationConfig": {
-    "responseModalities": ["AUDIO"],
-    "speechConfig": {
-      "voiceConfig": {
-        "prebuiltVoiceConfig": {"voiceName": "Aoede"}
-      }
-    }
-  }
-}
-
-5. **GEMINI-2.5-FLASH-IMAGE (Nano-Banana)** - contents/generationConfig with IMAGE modality:
-{
-  "model": "gemini-2.5-flash-image",
-  "contents": [{\"role\": \"user\", \"parts\": [{\"text\": \"...\"}]}],
-  "generationConfig": {
-    "responseModalities": ["IMAGE"],
-    "imageConfig": {"aspectRatio": "1:1"}
-  }
-}
-
-6. **LYRIA/CHIRP** - Check Step 1 candidates for format
-
-Default Values:
-- Veo: durationSeconds=8, aspectRatio="16:9", generateAudio=true
-- Imagen: aspectRatio="1:1", sampleCount=1
-- Gemini-2.5-flash-image: aspectRatio="1:1"
-- Gemini text: temperature=1.0, topP=0.95
+${DEFAULT_VALUES}
 
 URL Extraction Rules:
 

@@ -4,7 +4,7 @@ import {VEO_3_1_GENERATE_PREVIEW_AI_HINT} from "./veo-3.1-generate-preview.js";
 import {VEO_3_1_FAST_GENERATE_PREVIEW_AI_HINT} from "./veo-3.1-fast-generate-preview.js";
 
 /**
- * Assembled AI hints for Veo models available to AI request analyzer.
+ * AI hints for Veo models - SINGLE EXPORT following AGENTS.md rule #7.
  *
  * IMPORTANT: Only Veo 3.1 models are included here.
  * Veo 3.0 and 2.0 models are supported for implicit requests only and are NOT

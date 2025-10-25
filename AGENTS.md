@@ -4,7 +4,6 @@
 
 - **README.md** - For humans developing the FireGen Extension (setup, quick start, deployment)
 - **ARCHITECTURE.md** - For AI agents developing the FireGen Extension (system design, patterns, technical deep-dive)
-- **WORKAROUNDS.md** - For AI agents to track SDK integration issues and technical debt of the FireGen Extension
 - **LLMS.md** - For AI agents consuming/integrating FireGen Extension into their applications (API reference, job schemas)
 - **AGENTS.md** (this file) - Working directory rules for AI agents (Claude Code, Gemini CLI, etc.)
 - **TEST.md** - Test data examples
@@ -65,30 +64,6 @@
 5. **Constants**: Use model-based names (e.g., `GEMINI_25_FLASH_IMAGE_CONFIG`, NOT `NANO_BANANA_CONFIG`)
 6. **AI Hints**: Primary reference must be actual model name (can mention nickname in parentheses for context only)
 
-**Why**: 
-- Prevents confusion between registry keys and actual model names
-- Schema validation expects actual REST API model names
-- AI analyzer outputs actual model names, not aliases
-- Makes codebase searchable and maintainable
-
-**Example**:
-```typescript
-// ✅ CORRECT
-export const GEMINI_FLASH_IMAGE_MODELS = {
-  "gemini-2.5-flash-image": {  // Actual REST API model name
-    adapter: Gemini25FlashImageAdapter,
-    config: GEMINI_25_FLASH_IMAGE_CONFIG,
-  },
-};
-
-// ❌ WRONG
-export const NANO_BANANA_MODELS = {
-  "nano-banana": {  // Alias/nickname - causes validation failures
-    adapter: NanoBananaAdapter,
-    config: NANO_BANANA_CONFIG,
-  },
-};
-```
 
 ## AI Hints & Documentation
 
@@ -98,6 +73,7 @@ export const NANO_BANANA_MODELS = {
 4. **Action-Oriented** - Write direct actions ("Extract gs:// URIs" not "You should extract...")
 5. **Comprehensive in Primary** - Full documentation in main model variant, minimal hints in secondary variants
 6. **Critical Rules First** - Most important detection rules at the top
+7. **One AI Hints Prompt** - In the file `models/{modelId}/ai-hints.ts` only export one string constant named `{MODEL}_AI_HINTS` to be used by AI agents.
 
 ## Testing & Validation
 

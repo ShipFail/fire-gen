@@ -2,12 +2,11 @@
 
 > **For AI Agents:** This document provides complete API schemas and examples for integrating FireGen into applications. Use this as your primary reference when consuming FireGen from other projects/codebases.
 
-> FireGen is a Firebase Cloud Functions extension that provides serverless AI media generation using Google's Vertex AI models. It supports video generation (Veo), image generation (Imagen, Nano Banana), audio generation (Gemini TTS, Chirp TTS, Lyria), and text generation (Gemini 2.0/2.5). It manages job queuing, polling, and storage orchestration for AI-powered media creation applications.
+> FireGen is a Firebase Cloud Functions extension that provides serverless AI media generation using Google's Vertex AI models (via REST API). It supports video generation (Veo), image generation (Imagen, Gemini Flash Image), audio generation (Gemini TTS, Lyria music), and text generation (Gemini 2.5). It manages job queuing, polling, and storage orchestration for AI-powered media creation applications.
 
 **For Human Developers:**
 - Setup guide: [README.md](./README.md)
 - System architecture: [ARCHITECTURE.md](./ARCHITECTURE.md)
-- SDK workarounds: [WORKAROUNDS.md](./WORKAROUNDS.md)
 
 ## Overview
 

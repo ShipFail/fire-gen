@@ -5,7 +5,30 @@ import {callVertexAPI} from "../../models/_shared/vertex-ai-client.js";
 import {PROJECT_ID} from "../../firebase-admin.js";
 import {REGION} from "../../env.js";
 import {buildSystemInstruction} from "../../models/index.js";
-import {preprocessAllUris, restoreUrisInText} from "../url-replacement.js";
+import {URI_TAG_RULES, NEGATIVE_PROMPT_RULES} from "../analyzer-shared-rules.js";
+
+// Import AI hints from all model families
+import {VEO_AI_HINTS} from "../../models/veo/ai-hints.js";
+import {IMAGEN_AI_HINTS} from "../../models/imagen/ai-hints.js";
+import {GEMINI_TEXT_AI_HINTS} from "../../models/gemini-text/ai-hints.js";
+import {GEMINI_TTS_AI_HINTS} from "../../models/gemini-tts/ai-hints.js";
+import {GEMINI_FLASH_IMAGE_AI_HINTS} from "../../models/gemini-flash-image/ai-hints.js";
+import {LYRIA_AI_HINTS} from "../../models/lyria/ai-hints.js";
+
+// Assemble all model AI hints for the analyzer
+const ALL_MODEL_HINTS = `
+${VEO_AI_HINTS}
+
+${IMAGEN_AI_HINTS}
+
+${GEMINI_TEXT_AI_HINTS}
+
+${GEMINI_TTS_AI_HINTS}
+
+${GEMINI_FLASH_IMAGE_AI_HINTS}
+
+${LYRIA_AI_HINTS}
+`;
 
 // Gemini response type
 interface GeminiResponse {
@@ -54,18 +77,13 @@ export async function step1Preprocess(
 ): Promise<string> {
   logger.info("Step 1: Generating candidates", {jobId});
 
-  // 1. Preprocess URIs in prompt
-  const {processedContexts, replacements} = preprocessAllUris(contexts);
-  const prompt = processedContexts[0];
+  // Get user prompt (already preprocessed by orchestrator)
+  const prompt = contexts[0];
 
-  if (replacements.length > 0) {
-    logger.info("Step 1: URIs preprocessed", {jobId, urlCount: replacements.length});
-  }
-
-  // 2. Gather ALL AI hints from ALL models
+  // Gather ALL AI hints from ALL models
   const allHints = buildSystemInstruction();
 
-  // 3. Build AI prompt for candidate generation
+  // Build AI prompt for candidate generation
   const aiPrompt = `User Prompt: ${prompt}
 
 Available Models:
@@ -77,62 +95,11 @@ Task: Generate TOP 3 model candidates for this request.
 
 CRITICAL: Each model family uses a DIFFERENT REST API schema format!
 
-**Schema Formats by Model Family:**
+${ALL_MODEL_HINTS}
 
-1. **VEO (video)** - Uses instances/parameters:
-{
-  "model": "veo-3.1-fast-generate-preview",
-  "instances": [{"prompt": "..."}],
-  "parameters": {"durationSeconds": 8, "aspectRatio": "16:9", "generateAudio": true}
-}
+${URI_TAG_RULES}
 
-2. **IMAGEN (image)** - Uses instances/parameters:
-{
-  "model": "imagen-4.0-fast-generate-001",
-  "instances": [{"prompt": "..."}],
-  "parameters": {"aspectRatio": "1:1", "sampleCount": 1}
-}
-
-3. **GEMINI TEXT** - Uses contents/generationConfig:
-{
-  "model": "gemini-2.5-flash",
-  "contents": [{"role": "user", "parts": [{"text": "..."}]}],
-  "generationConfig": {"temperature": 1.0, "topP": 0.95}
-}
-
-4. **GEMINI TTS** - Uses contents/generationConfig with speechConfig:
-{
-  "model": "gemini-2.5-flash-preview-tts",
-  "contents": [{"role": "user", "parts": [{"text": "Say: hello"}]}],
-  "generationConfig": {
-    "responseModalities": ["AUDIO"],
-    "speechConfig": {"voiceConfig": {"prebuiltVoiceConfig": {"voiceName": "Aoede"}}}
-  }
-}
-
-5. **GEMINI-2.5-FLASH-IMAGE (Nano-Banana)** - Uses contents/generationConfig with IMAGE modality:
-{
-  "model": "gemini-2.5-flash-image",
-  "contents": [{\"role\": \"user\", \"parts\": [{\"text\": \"...\"}]}],
-  "generationConfig": {
-    "responseModalities": ["IMAGE"],
-    "imageConfig": {"aspectRatio": "1:1"}
-  }
-}
-
-6. **LYRIA/CHIRP** - Check AI hints for exact format
-
-URI Tag Rules:
-- Tags: <VIDEO_URI_N/>, <IMAGE_URI_N/>, <AUDIO_URI_N/>
-- For Veo/Imagen: Extract to {"gcsUri": "<tag>"}
-- For Gemini models: Extract to contents if applicable
-- Remove tag from prompt after extraction
-
-Negative Prompts:
-Extract from: "avoid", "without", "no", "don't want", "exclude"
-Examples:
-- "avoid cartoon" → negativePrompt: "cartoon"
-- "without people" → negativePrompt: "people"
+${NEGATIVE_PROMPT_RULES}
 
 For EACH candidate (1-3):
 1. Model ID
@@ -180,13 +147,10 @@ Top 3 Model Candidates:
     responseLength: responseText.length,
   });
 
-  // 5. Restore URIs in result
-  const restored = restoreUrisInText(responseText, replacements);
-
   logger.info("Step 1 complete", {
     jobId,
-    contextLength: restored.length,
+    contextLength: responseText.length,
   });
 
-  return restored;
+  return responseText;
 }

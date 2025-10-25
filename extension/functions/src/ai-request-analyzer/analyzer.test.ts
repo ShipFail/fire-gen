@@ -735,7 +735,7 @@ const fixtures = [
     prompt: "Generate an image of a fluffy orange cat sitting on a windowsill",
     expected: {
       model: expect.stringMatching(/^(gemini-2\.5-flash-image|imagen-4\.0-generate-001)$/),
-      // Nano-banana uses contents/generationConfig, Imagen uses instances/parameters
+      // Gemini Flash Image uses contents/generationConfig, Imagen uses instances/parameters
       // Just check that one of these structures exists
     },
   },

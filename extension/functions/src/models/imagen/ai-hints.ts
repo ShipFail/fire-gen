@@ -5,8 +5,7 @@ import {IMAGEN_4_0_FAST_GENERATE_001_AI_HINT} from "./imagen-4.0-fast-generate-0
 import {IMAGEN_4_0_ULTRA_GENERATE_001_AI_HINT} from "./imagen-4.0-ultra-generate-001.js";
 
 /**
- * Assembled AI hints for all Imagen models.
- * Used by AI request analyzer to choose the right model.
+ * AI hints for Imagen models - SINGLE EXPORT following AGENTS.md rule #7.
  * Only Imagen 4.0 models supported (3.0 removed - superior quality, 2K resolution, better text rendering).
  */
 export const IMAGEN_AI_HINTS = `

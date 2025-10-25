@@ -201,15 +201,13 @@ functions/
 │   │   ├── index.ts                # Central MODEL_REGISTRY and exports
 │   │   ├── _shared/                # Shared adapter utilities
 │   │   │   ├── base.ts             # ModelAdapter interface
-│   │   │   ├── ai-client.ts        # Shared GoogleGenAI singleton
 │   │   │   └── zod-helpers.ts      # Zod schema helpers
-│   │   ├── veo/                    # Video: Veo 2.0/3.0 (async)
-│   │   ├── nano-banana/            # Image: Gemini 2.5 Flash (sync)
+│   │   ├── veo/                    # Video: Veo 2.0/3.0/3.1 (async)
+│   │   ├── gemini-flash-image/     # Image: Gemini 2.5 Flash (sync)
 │   │   ├── imagen/                 # Image: Imagen 4.0 (sync)
 │   │   ├── gemini-tts/             # Audio: Gemini TTS (sync)
-│   │   ├── chirp/                  # Audio: Chirp TTS/STT (sync)
-│   │   ├── lyria/                  # Audio: Lyria music (sync)
-│   │   └── gemini-text/            # Text: Gemini 2.0/2.5 (sync)
+│   │   ├── lyria/                  # Audio: Lyria music (async)
+│   │   └── gemini-text/            # Text: Gemini 2.5 (sync)
 │   │
 │   └── types/                      # TypeScript type definitions
 │       ├── index.ts                # Central exports + JobRequest union
@@ -224,8 +222,7 @@ functions/
 │
 ├── README.md                       # This file - Quick start guide
 ├── ARCHITECTURE.md                 # System design deep-dive (for AI agents)
-├── LLMS.md                         # API guide for AI coding agents
-└── WORKAROUNDS.md                  # Vertex AI SDK integration notes
+└── LLMS.md                         # API guide for AI coding agents
 ```
 
 **Organization Principles:**
@@ -304,22 +301,21 @@ const ALLOWED_NEW_MODELS = new Set(["new-model-v1"]);
 ### Image (4 models - Sync)
 | Model | Speed | Quality | Operation | Notes |
 |-------|-------|---------|-----------|-------|
-| `nano-banana` | 2-5s | Good | Instant | Gemini 2.5 Flash Image, cost-effective |
+| `gemini-2.5-flash-image` | 2-5s | Good | Instant | Gemini 2.5 Flash Image, cost-effective |
 | `imagen-4.0-generate-001` | 3-8s | Highest | Instant | Imagen 4 (2K, superior text generation) |
 | `imagen-4.0-fast-generate-001` | 2-5s | High | Instant | Imagen 4 Fast, balanced quality/speed |
 | `imagen-4.0-ultra-generate-001` | 5-12s | Ultra | Instant | Imagen 4 Ultra, most creative |
 
-### Audio - TTS (3 models - Sync)
+### Audio - TTS (2 models - Sync)
 | Model | Voices | Languages | Operation | Notes |
 |-------|--------|-----------|-----------|-------|
 | `gemini-2.5-flash-preview-tts` | 30 | 24 | Instant | Natural language control |
 | `gemini-2.5-pro-preview-tts` | 30 | 24 | Instant | Higher quality TTS |
-| `chirp-3-hd` | 248 | 31 | Instant | Cloud TTS with wide voice range |
 
-### Audio - Other (2 models)
+### Audio - Music (1 model - Async)
 | Model | Type | Operation | Output | Notes |
 |-------|------|-----------|--------|-------|
-| `chirp` | STT (Speech-to-Text) | Instant | Text | Universal speech recognition |
+| `lyria-002` | Music Generation | Async (polling) | 30s WAV | Instrumental music from text prompts |
 | `lyria-002` | Music Generation | Instant | 32.8s WAV | Instrumental music creation |
 
 ### Text (5 models - Sync)
@@ -479,8 +475,7 @@ onValue(ref(db, `firegen-jobs/${jobId}`), (snapshot) => {
 - **[README.md](./README.md)** (this file) - Quick start and setup guide
 - **[ARCHITECTURE.md](./ARCHITECTURE.md)** - System design, patterns, data flows (for AI agents)
 - **[LLMS.md](./LLMS.md)** - Complete API reference with job schemas (for AI agents)
-- **[WORKAROUNDS.md](./WORKAROUNDS.md)** - Vertex AI SDK integration notes and workarounds
-- **[CLAUDE.md](./CLAUDE.md)** - Working directory rules for AI agents
+- **[AGENTS.md](./AGENTS.md)** - Working directory rules for AI agents
 
 ## Troubleshooting
 
@@ -531,7 +526,7 @@ See [POSTINSTALL.md](./extension/POSTINSTALL.md#troubleshooting) for detailed st
 - Verify all dependencies installed: `npm install`
 - Check Node.js version (requires v22+)
 - Review function logs in Firebase Console
-- See WORKAROUNDS.md for REST API patterns
+- All models use direct Vertex AI REST API (no SDK dependencies)
 
 **For detailed troubleshooting, see [LLMS.md](./LLMS.md#troubleshooting).**
 

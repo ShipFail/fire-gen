@@ -1024,15 +1024,14 @@ export const ai = new GoogleGenAI({
 });
 ```
 
-**Type Assertion Strategy:**
-Several Vertex AI features require `as any` casts due to incomplete SDK types. See [WORKAROUNDS.md](./WORKAROUNDS.md) for details.
+**REST API Migration Complete:**
+All 18 Vertex AI models now use direct REST API calls with full type safety via Zod schemas. No SDK dependencies or type assertions required.
 
-**Models Integration Status:**
-- ✅ Veo: Fully typed
-- ⚠️ Imagen: `generateImages()` not typed
-- ⚠️ Nano Banana: `imageConfig` not typed
-- ⚠️ Gemini TTS: Config partially typed
-- 🔴 Chirp TTS/STT: May not exist in SDK (needs testing)
+**Model Integration Status:**
+- ✅ All models: Fully typed via Zod schemas
+- ✅ Direct REST API calls with google-auth-library
+- ✅ No type assertions needed
+- ✅ Complete control over request/response handling
 - ⚠️ Lyria: `generateMusic()` not typed
 - ✅ Gemini Text: Mostly typed (minor config assertions)
 
@@ -1563,8 +1562,6 @@ The following section documents the SDK-based architecture that was replaced wit
 - SDK version: 1.22.0 (last used)
 - Removed: 2025-10-25
 
-**See WORKAROUNDS.md for detailed historical context.**
-
 ---
 
 ## Architectural Decision Records
@@ -1702,7 +1699,7 @@ The following section documents the SDK-based architecture that was replaced wit
 
 - **[README.md](./README.md)** - Quick start and setup guide (for human developers)
 - **[LLMS.md](./LLMS.md)** - Complete API reference with job schemas (for AI agents consuming FireGen)
-- **[WORKAROUNDS.md](./WORKAROUNDS.md)** - Vertex AI SDK integration notes and workarounds
+- **[AGENTS.md](./AGENTS.md)** - Working directory rules for AI agents developing FireGen
 
 ---
 

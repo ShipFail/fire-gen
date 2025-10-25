@@ -5,8 +5,7 @@ import {GEMINI_2_5_FLASH_AI_HINT} from "./gemini-2.5-flash.js";
 import {GEMINI_2_5_FLASH_LITE_AI_HINT} from "./gemini-2.5-flash-lite.js";
 
 /**
- * Assembled AI hints for all Gemini Text models.
- * Used by AI request analyzer to choose the right model.
+ * AI hints for Gemini Text models - SINGLE EXPORT following AGENTS.md rule #7.
  */
 export const GEMINI_TEXT_AI_HINTS = `
 ### TEXT (sync, 1-10s, no file output)

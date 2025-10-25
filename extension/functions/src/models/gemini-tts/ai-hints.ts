@@ -3,6 +3,9 @@
 import {GEMINI_2_5_FLASH_PREVIEW_TTS_AI_HINT} from "./gemini-2.5-flash-preview-tts.js";
 import {GEMINI_2_5_PRO_PREVIEW_TTS_AI_HINT} from "./gemini-2.5-pro-preview-tts.js";
 
+/**
+ * AI hints for Gemini TTS models - SINGLE EXPORT following AGENTS.md rule #7.
+ */
 export const GEMINI_TTS_AI_HINTS = `
 ### AUDIO - TTS (Text-to-Speech, sync, 2-8s)
 **IMPORTANT: TTS is for SPOKEN WORDS. If request involves speech/voice/narration → Use TTS, NOT music.**

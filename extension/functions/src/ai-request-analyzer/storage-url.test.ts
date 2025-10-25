@@ -66,7 +66,7 @@ describe('extractUrls', () => {
 
 describe('detectMimeType', () => {
   test('detects video MIME type from gs:// URI', () => {
-    expect(detectMimeType('gs://bucket/video.mp4')).toBe('application/mp4'); // Standard MIME type
+    expect(detectMimeType('gs://bucket/video.mp4')).toBe('video/mp4'); // mime package returns video/mp4
     expect(detectMimeType('gs://bucket/movie.mov')).toBe('video/quicktime');
   });
 
@@ -77,7 +77,7 @@ describe('detectMimeType', () => {
 
   test('detects MIME type from Firebase Storage URL', () => {
     expect(detectMimeType('https://firebasestorage.googleapis.com/v0/b/proj/o/video.mp4?token=123'))
-      .toBe('application/mp4'); // Standard MIME type
+      .toBe('video/mp4'); // mime package returns video/mp4
     expect(detectMimeType('https://firebasestorage.googleapis.com/v0/b/proj/o/users%2Ftest%2Fimage.jpg?alt=media'))
       .toBe('image/jpeg');
   });
@@ -99,11 +99,6 @@ describe('getMimeCategory', () => {
     expect(getMimeCategory('video/webm')).toBe('video');
   });
 
-  test('categorizes application/* video types', () => {
-    expect(getMimeCategory('application/mp4')).toBe('video'); // Standard MIME type for mp4
-    expect(getMimeCategory('application/x-matroska')).toBe('video'); // mkv files
-  });
-
   test('categorizes image MIME types', () => {
     expect(getMimeCategory('image/jpeg')).toBe('image');
     expect(getMimeCategory('image/png')).toBe('image');
@@ -113,10 +108,6 @@ describe('getMimeCategory', () => {
   test('categorizes audio MIME types', () => {
     expect(getMimeCategory('audio/mpeg')).toBe('audio');
     expect(getMimeCategory('audio/wav')).toBe('audio');
-  });
-
-  test('categorizes application/* audio types', () => {
-    expect(getMimeCategory('application/ogg')).toBe('audio');
   });
 
   test('categorizes other MIME types', () => {
@@ -129,15 +120,15 @@ describe('replaceUrlsWithTags', () => {
   test('replaces single video URL with tag', () => {
     const result = replaceUrlsWithTags('Continue from https://storage.googleapis.com/bucket/video.mp4');
 
-    expect(result.processedPrompt).toBe("Continue from <GS_VIDEO_URI_REF_1 mimeType='application/mp4'/>");
+    expect(result.processedPrompt).toBe("Continue from <GS_VIDEO_URI_REF_1 mimeType='video/mp4'/>");
     expect(result.replacements).toHaveLength(1);
     expect(result.replacements[0]).toMatchObject({
       original: 'https://storage.googleapis.com/bucket/video.mp4',
       gcsUri: 'gs://bucket/video.mp4',
-      mimeType: 'application/mp4', // Standard MIME type
-      category: 'video', // Correctly categorized despite application/* prefix
+      mimeType: 'video/mp4',
+      category: 'video',
       tag: 'GS_VIDEO_URI_REF_1',
-      placeholder: "<GS_VIDEO_URI_REF_1 mimeType='application/mp4'/>"
+      placeholder: "<GS_VIDEO_URI_REF_1 mimeType='video/mp4'/>"
     });
   });
 
@@ -147,7 +138,7 @@ describe('replaceUrlsWithTags', () => {
     );
 
     expect(result.processedPrompt).toBe(
-      "Show <GS_IMAGE_URI_REF_1 mimeType='image/jpeg'/> and <GS_IMAGE_URI_REF_2 mimeType='image/png'/> finding <GS_VIDEO_URI_REF_1 mimeType='application/mp4'/>"
+      "Show <GS_IMAGE_URI_REF_1 mimeType='image/jpeg'/> and <GS_IMAGE_URI_REF_2 mimeType='image/png'/> finding <GS_VIDEO_URI_REF_1 mimeType='video/mp4'/>"
     );
     expect(result.replacements).toHaveLength(3);
 

@@ -6,7 +6,7 @@
  * and restores/cleans URLs after AI analysis.
  */
 
-import {lookup} from "mime-types";
+import mime from "mime";
 
 /**
  * URL replacement metadata
@@ -67,7 +67,7 @@ export function extractUrls(text: string): string[] {
 /**
  * Detect MIME type from URL or file extension
  *
- * Uses the standard mime-types library.
+ * Uses browser-media-mime-type library which returns video/mp4 for .mp4 files.
  */
 export function detectMimeType(url: string): string {
   // Extract path from URL (handle query params, encoding, etc.)
@@ -96,37 +96,18 @@ export function detectMimeType(url: string): string {
   }
 
   const extension = extensionMatch[1].toLowerCase();
-  const mimeType = lookup(extension);
+  const mimeType = mime.getType(extension);
 
   return mimeType || "application/octet-stream";
 }
 
 /**
  * Categorize MIME type into broad categories for AI processing
- *
- * Note: Handles both standard video/* and application/* video types
- * (e.g., application/mp4 is treated as video)
  */
 export function getMimeCategory(mimeType: string): "video" | "image" | "audio" | "other" {
   if (mimeType.startsWith("video/")) return "video";
   if (mimeType.startsWith("image/")) return "image";
   if (mimeType.startsWith("audio/")) return "audio";
-
-  // Handle application/* types that are actually video/audio
-  // (mime-types library returns application/mp4, application/ogg, etc.)
-  const applicationVideoTypes = [
-    "application/mp4",
-    "application/x-matroska", // mkv
-    "application/x-mpegurl", // m3u8
-    "application/vnd.apple.mpegurl", // m3u8
-  ];
-
-  const applicationAudioTypes = [
-    "application/ogg",
-  ];
-
-  if (applicationVideoTypes.includes(mimeType)) return "video";
-  if (applicationAudioTypes.includes(mimeType)) return "audio";
 
   return "other";
 }

@@ -2,13 +2,13 @@
 
 <p align="center"><img src="./docs/firegen-logo.webp" width="256" alt="FireGen Logo" /></p>
 
-> Serverless AI media generation using Google Vertex AI. Supports 17 models across video, image, audio, and text generation through a unified Firebase RTDB job queue.
+> Serverless AI media generation using Google Vertex AI. Supports 18 models across video, image, audio, and text generation through a unified Firebase RTDB job queue.
 
 [![Firebase](https://img.shields.io/badge/Firebase-Cloud%20Functions-orange)](https://firebase.google.com/docs/functions)
 [![Vertex AI](https://img.shields.io/badge/Vertex%20AI-Powered-blue)](https://cloud.google.com/vertex-ai)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-22-green)](https://nodejs.org/)
-[![SDK Version](https://img.shields.io/badge/Google_GenAI_SDK-1.22.0-purple)](https://www.npmjs.com/package/@google/genai)
+[![REST API](https://img.shields.io/badge/REST%20API-Pure-purple)](https://cloud.google.com/vertex-ai/docs/reference/rest)
 
 ## Overview
 
@@ -16,15 +16,16 @@ FireGen is a Firebase Cloud Functions extension that provides serverless AI medi
 
 **Key Features:**
 - 🤖 **AI-Assisted Mode** - Natural language prompts (just write a string!)
-- 🎬 **Video Generation** - Veo 2.0/3.0 models (async, 5-8s videos, 720p/1080p)
+- 🎬 **Video Generation** - Veo 2.0/3.0/3.1 models (async, 4-8s videos, 720p/1080p)
 - 🖼️ **Image Generation** - Imagen 4, Nano Banana (sync, 2K resolution)
-- 🎵 **Audio Generation** - Gemini TTS, Chirp TTS/STT, Lyria music generation
+- 🎵 **Audio Generation** - Gemini TTS, Lyria music generation
 - 📝 **Text Generation** - Gemini 2.0/2.5 Pro/Flash/Lite models
+- ⚡ **Pure REST API** - No SDK dependencies, direct Vertex AI calls
 - ⏱️ **Async & Sync** - Video polling, instant for other models
 - 🔒 **Secure** - User-scoped jobs, signed URLs, auto-cleanup
 - 💾 **Ephemeral Storage** - Auto-delete after 24h (cost optimization)
 
-**Supported Models:** 17 models across 5 categories
+**Supported Models:** 18 models across 6 categories
 **Generation Speed:** 1-120 seconds depending on model
 **Storage:** Temporary (24h lifetime - must download/copy media)
 **Operation Modes:**
@@ -526,11 +527,11 @@ See [POSTINSTALL.md](./extension/POSTINSTALL.md#troubleshooting) for detailed st
 - Use Explicit Mode for guaranteed behavior
 - Monitor AI analysis logs
 
-### Type errors during build
-- Ensure `@google/genai@1.22.0+` installed
-- Some methods require `as any` (see WORKAROUNDS.md)
-- Run `npm run build` to verify
-- Check discriminated union type definitions
+### Build or Runtime Errors
+- Verify all dependencies installed: `npm install`
+- Check Node.js version (requires v22+)
+- Review function logs in Firebase Console
+- See WORKAROUNDS.md for REST API patterns
 
 **For detailed troubleshooting, see [LLMS.md](./LLMS.md#troubleshooting).**
 

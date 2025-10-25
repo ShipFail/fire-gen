@@ -157,7 +157,7 @@ Top 3 Model Candidates:
 
   // 4. Call AI with greedy decoding for deterministic candidates
   logger.info("Step 1: Calling AI for candidate generation", {jobId});
-  
+
   const endpoint = `v1/projects/${PROJECT_ID}/locations/${REGION}/publishers/google/models/gemini-2.5-flash-lite:generateContent`;
   const response = await callVertexAPI<GeminiResponse>(endpoint, {
     contents: [{role: "user", parts: [{text: aiPrompt}]}],

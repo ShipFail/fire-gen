@@ -1500,30 +1500,28 @@ export function generateStorageFilename(request: JobRequest): string {
 
 ## Technical Debt
 
-### Type Assertions (`as any`)
+### REST API Architecture (2025-10-25)
 
-**Current Count:** ~10 assertions across model adapters
+**Status:** ✅ Completed - No technical debt from SDK
 
-**Primary Cause:** `@google/genai` SDK has incomplete TypeScript types
+**Achievement:**
+- All 18 models migrated to pure REST API
+- Removed `@google/genai` SDK completely
+- No type assertions (`as any`) needed
+- Direct Vertex AI REST API calls
+- Full type safety via Zod schemas
 
-**Affected Areas:**
-- Imagen: `generateImages()` method not typed
-- Lyria: `generateMusic()` method not typed
-- Chirp TTS: `synthesizeSpeech()` method not typed
-- Chirp STT: `transcribeAudio()` method not typed
-- Nano Banana: `imageConfig` parameter not typed
-- Gemini Text: Config structure partially typed
+**Architecture:**
+- `vertex-ai-client.ts` - Generic REST client
+- `google-auth-library` - Authentication
+- Three patterns: `callVertexAPI()`, `predict()`, `predictLongRunning()`
 
-**Mitigation:**
-- ✅ All assertions documented inline with comments
-- ✅ Comprehensive error handling (try-catch)
-- ✅ Response validation before use
-- ✅ Separate WORKAROUNDS.md documenting all issues
-
-**Future Path:**
-- Wait for SDK type updates
-- Submit PRs to @google/genai repository
-- Consider dedicated Cloud SDKs (Speech, Text-to-Speech)
+**Benefits:**
+- ✅ No SDK breaking changes
+- ✅ Complete type safety
+- ✅ Full API control
+- ✅ Reduced dependencies (-19 packages)
+- ✅ Better error handling
 
 ### Model Allowlists
 
@@ -1543,14 +1541,29 @@ const ALLOWED_VEO_MODELS = new Set(VEO_MODEL_IDS);
 
 ### Testing
 
-**Current State:** No tests
+**Current State:** Tests exist but need expectation updates for REST API format
 
-**Available Dependency:** `firebase-functions-test` (unused)
+**Available Dependency:** `vitest`, `firebase-functions-test`
 
 **Recommendation:**
-1. Unit tests for adapters (mock Vertex AI responses)
-2. Integration tests for orchestrator
-3. E2E tests with Firebase emulators
+1. Update test expectations to match REST API format
+2. Add unit tests for new REST client helpers
+3. Integration tests for orchestrator
+4. E2E tests with Firebase emulators
+
+---
+
+## Historical: SDK Integration (Pre-2025-10-25)
+
+The following section documents the SDK-based architecture that was replaced with pure REST API.
+
+**Previous Architecture:**
+- Used `@google/genai` SDK for all model calls
+- Required ~10 type assertions due to incomplete SDK types
+- SDK version: 1.22.0 (last used)
+- Removed: 2025-10-25
+
+**See WORKAROUNDS.md for detailed historical context.**
 
 ---
 

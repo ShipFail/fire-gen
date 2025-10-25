@@ -222,7 +222,7 @@ Parameter Reasoning:
 
   // Call AI with greedy decoding for deterministic decisions
   logger.info("Step 2: Calling AI for final selection", {jobId});
-  
+
   const endpoint = `v1/projects/${PROJECT_ID}/locations/${REGION}/publishers/google/models/gemini-2.5-flash-lite:generateContent`;
   const response = await callVertexAPI<GeminiResponse>(endpoint, {
     contents: [{role: "user", parts: [{text: aiPrompt}]}],

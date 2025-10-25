@@ -1,18 +1,97 @@
-# FireGen Integration Workarounds
+# FireGen Integration History
 
-> **For AI Agents:** Current workarounds for Vertex AI SDK limitations, type assertions, integration issues, and action items for future improvements. Load this context when modifying model adapters or debugging integration issues.
+> **For AI Agents:** Historical documentation of SDK-to-REST migration. FireGen now uses pure REST API architecture with no SDK dependencies. This file is kept for historical reference.
 
-## Purpose
+## Current Status (2025-10-25)
 
-This document tracks workarounds required for integrating with Google Vertex AI through the `@google/genai` SDK. When modifying model adapters or debugging integration issues, review this file to understand:
+✅ **REST API Migration Complete**
 
-- Why certain type assertions (`as any`) are necessary
-- Which API methods may not exist in the SDK runtime
-- How to handle SDK type mismatches
-- Short/medium/long-term migration paths
+FireGen has been fully migrated from the `@google/genai` SDK to direct Vertex AI REST API calls. All 18 models now use pure REST API architecture.
 
-**Last Updated:** 2025-10-07
-**SDK Version:** `@google/genai@1.22.0`
+**Architecture:**
+- ✅ 18/18 Vertex AI models using REST API
+- ✅ 0 SDK dependencies
+- ✅ No type assertions needed
+- ✅ Direct HTTP calls via `google-auth-library`
+
+**Benefits:**
+- Better stability (no SDK breaking changes)
+- Full control over API calls
+- Complete type safety via Zod schemas
+- Reduced dependencies (19 packages removed)
+
+---
+
+## Historical Context (Pre-2025-10-25)
+
+This section documents the workarounds that were required when using the `@google/genai` SDK (now removed).
+
+**Last SDK Version:** `@google/genai@1.22.0` (removed 2025-10-25)
+
+---
+
+## REST API Architecture (Current)
+
+### Implementation Patterns
+
+FireGen uses three main REST API patterns via `vertex-ai-client.ts`:
+
+**1. callVertexAPI() - Generic REST calls**
+```typescript
+import {callVertexAPI} from "../_shared/vertex-ai-client.js";
+
+const endpoint = `v1/projects/${PROJECT_ID}/locations/${REGION}/publishers/google/models/${model}:generateContent`;
+const response = await callVertexAPI<ResponseType>(endpoint, payload);
+```
+
+**2. predict() - Synchronous predictions**
+```typescript
+import {predict} from "../_shared/vertex-ai-client.js";
+
+const response = await predict(modelId, {
+  instances: [{...}],
+  parameters: {...}
+});
+```
+
+**3. predictLongRunning() - Async operations**
+```typescript
+import {predictLongRunning} from "../_shared/vertex-ai-client.js";
+
+const operation = await predictLongRunning(modelId, {
+  instances: [{...}],
+  parameters: {...}
+});
+// Poll operation until complete
+```
+
+### Model Families
+
+| Family | Pattern | Models | Notes |
+|--------|---------|--------|-------|
+| Veo | predictLongRunning | 6 | Video generation (async) |
+| Imagen | predict | 3 | Image generation (sync) |
+| Gemini Text | callVertexAPI | 5 | Text generation (sync) |
+| Gemini TTS | callVertexAPI | 2 | Audio/TTS (sync) |
+| Nano-banana | callVertexAPI | 1 | Image generation (sync) |
+| Lyria | predict | 1 | Music generation (sync) |
+
+### Authentication
+
+Uses `google-auth-library` with Application Default Credentials:
+```typescript
+import {GoogleAuth} from "google-auth-library";
+
+const auth = new GoogleAuth({
+  scopes: ["https://www.googleapis.com/auth/cloud-platform"],
+});
+```
+
+---
+
+## Historical: SDK Workarounds (Pre-2025-10-25)
+
+The following sections document issues that existed when using the SDK. These are kept for historical reference only.
 
 ### Key Updates
 - Enhanced error handling for Chirp TTS/STT
@@ -388,28 +467,37 @@ if (!response?.expectedField) {
 
 ---
 
-## Action Items Summary
+---
 
-### 🔴 High Priority (Short-term)
+## Migration Summary (2025-10-25)
 
-- [ ] **Integration test Chirp TTS/STT** to confirm API availability
-- [ ] **Production test all sync models** (Imagen, TTS, Lyria, Text)
-- [ ] **Monitor production logs** for API errors
-- [ ] **Document actual API response structures** observed in runtime
+**Removed Models:**
+- Chirp TTS (chirp-3-hd) - Not Vertex AI (Cloud Speech API)
+- Chirp STT (chirp) - Not Vertex AI (Cloud Speech API)
 
-### 🟡 Medium Priority (Medium-term)
+**Migrated to REST:**
+- All 18 Vertex AI models now use direct REST API calls
+- Removed `@google/genai` package completely
+- Added explicit dependencies: `google-auth-library`, `mime`
 
-- [ ] **Create custom TypeScript type definition files** for known APIs
-- [ ] **Submit type definition PRs** to @google/genai repository
-- [ ] **Consider migrating Chirp** to dedicated Cloud Speech/TTS clients
-- [ ] **Build integration test suite** for all adapters
+**Action Items (Completed):**
+- ✅ Migrate all models to REST API
+- ✅ Remove SDK package
+- ✅ Remove type assertions
+- ✅ Update all adapters
+- ✅ Verify TypeScript builds
 
-### 🟢 Low Priority (Long-term)
+---
 
-- [ ] **Wait for official SDK updates**
-- [ ] **Remove type assertions** once SDK properly typed
-- [ ] **Migrate to official typed APIs** when available
-- [ ] **Document migration path** for future maintainers
+## Related Documentation
+
+- **[README.md](./README.md)** - Setup and deployment guide
+- **[ARCHITECTURE.md](./ARCHITECTURE.md)** - System design and REST API patterns
+- **[LLMS.md](./LLMS.md)** - API reference for integration
+
+---
+
+**End of Historical Documentation**
 
 ---
 

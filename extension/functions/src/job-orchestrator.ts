@@ -9,6 +9,7 @@ import {generateSignedUrl} from "./storage.js";
 import {enqueuePollTask, initializeJobMeta} from "./poller.js";
 import {analyzePrompt} from "./ai-request-analyzer/index.js";
 import {getModelAdapter, isValidModelId} from "./models/index.js";
+import {getFireGenVersion} from "./version.js";
 import type {JobNode} from "./types/index.js";
 
 /**
@@ -66,9 +67,17 @@ export async function startJob(jobId: string, job: JobNode): Promise<void> {
       // Add metadata if present
       if (result.output.metadata) response.metadata = result.output.metadata;
 
+      // Preserve existing _meta (contains prompt, aiAssisted, analyzedAt for AI-assisted jobs)
+      // and add version tracking
+      const existingMeta = job._meta || {};
+
       await jobRef.update({
         status: "succeeded",
         response,
+        _meta: {
+          ...existingMeta,
+          version: getFireGenVersion(),
+        },
       });
 
       // Log appropriate field based on output type

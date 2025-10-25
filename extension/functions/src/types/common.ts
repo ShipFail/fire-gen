@@ -12,6 +12,7 @@ export type JobStatus =
 
 /** Job metadata (backend-only fields) */
 export interface JobMeta {
+  version?: string;        // FireGen extension version (e.g., "0.1.0")
   operation?: string;      // Vertex AI operation name (for async operations like Veo)
   attempt: number;         // Poll attempts
   nextPoll: number;        // Next poll timestamp ms

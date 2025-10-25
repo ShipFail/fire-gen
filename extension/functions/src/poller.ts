@@ -4,6 +4,7 @@ import {getFunctions} from "firebase-admin/functions";
 import * as logger from "firebase-functions/logger";
 
 import {JOB_TTL_MS, POLL_INTERVAL_MS} from "./config.js";
+import {getFireGenVersion} from "./version.js";
 import type {JobNode} from "./types/index.js";
 
 /**
@@ -54,9 +55,16 @@ export function isJobTerminal(job: JobNode): boolean {
 
 /**
  * Initialize job TTL and metadata for polling.
+ * Includes version tracking for debugging and support.
  */
-export function initializeJobMeta(): { ttl: number; attempt: number; nextPoll: number } {
+export function initializeJobMeta(): {
+  version: string;
+  ttl: number;
+  attempt: number;
+  nextPoll: number;
+} {
   return {
+    version: getFireGenVersion(),
     ttl: Date.now() + JOB_TTL_MS,
     attempt: 0,
     nextPoll: Date.now() + POLL_INTERVAL_MS,

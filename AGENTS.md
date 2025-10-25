@@ -42,3 +42,28 @@
 3. **Tests**: Update to expect new versions - remove tests for old versions
 4. **Documentation**: Mark old versions as "implicit requests only"
 5. **Dependencies**: Always use `@latest` SDK version
+
+
+## Code Architecture
+
+1. **Standalone over Inheritance** - Use separate classes per model to enable parallel AI modifications without conflicts
+2. **Composition for Shared Code** - Extract only truly universal values/functions into shared utilities (e.g., `shared-schemas.ts` for ALL Veo versions)
+3. **One Model = One Complete File** - Each model adapter is self-contained with all necessary code
+4. **No Version Flags** - Create separate files for new versions instead of if-else branches (e.g., `veo-3.1.ts`, not `isVeo31` flag)
+5. **Single Responsibility** - Each class handles one concern only
+6. **Open/Closed** - New model versions = new files, not modifications to existing base classes
+
+## AI Hints & Documentation
+
+1. **Concise over Verbose** - Shortest possible prompts that remain logical and complete
+2. **No Common Sense** - Don't state obvious information LLMs already know
+3. **No Keyword Matching** - Use semantic understanding, not hard-coded keyword rules
+4. **Action-Oriented** - Write direct actions ("Extract gs:// URIs" not "You should extract...")
+5. **Comprehensive in Primary** - Full documentation in main model variant, minimal hints in secondary variants
+6. **Critical Rules First** - Most important detection rules at the top
+
+## Testing & Validation
+
+1. **Incremental Fixes** - Address test failures one category at a time
+2. **Always Validate** - Run full test suite after structural changes
+3. **Balance Brevity** - Hints must be concise but effective enough to guide AI correctly

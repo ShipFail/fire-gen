@@ -43,3 +43,4 @@ export const VEO_COMMON_FIELDS_SCHEMA = z.object({
   aspectRatio: VEO_ASPECT_RATIO_SCHEMA.default("16:9"),
   audio: z.boolean().default(true),
 });
+

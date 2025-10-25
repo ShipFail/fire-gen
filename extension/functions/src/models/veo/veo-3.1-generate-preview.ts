@@ -11,15 +11,36 @@ import type {OperationResult} from "../../poller.js";
 import {VEO_COMMON_FIELDS_SCHEMA} from "./shared-schemas.js";
 import {pollVeoOperation, extractVeoOutput} from "./shared-polling.js";
 
+// ============= VEO 3.1 SPECIFIC SCHEMAS =============
+/**
+ * Veo 3.1 specific parameters (not available in 2.0/3.0)
+ *
+ * Based on official Vertex AI documentation and SDK types:
+ * - compressionQuality: Video file size optimization
+ * - enhancePrompt: AI-powered prompt improvement
+ * - personGeneration: Safety controls for human generation
+ * - seed: Reproducible generation
+ * - referenceType: How reference images are used (ASSET vs STYLE)
+ */
+const VEO_31_COMPRESSION_QUALITY_SCHEMA = z.enum(["optimized", "lossless"]);
+const VEO_31_PERSON_GENERATION_SCHEMA = z.enum(["dont_allow", "allow_adult"]);
+const VEO_31_REFERENCE_TYPE_SCHEMA = z.enum(["asset", "style"]);
+
 // ============= SCHEMA (Single Source of Truth) =============
 export const Veo31GeneratePreviewRequestSchema = VEO_COMMON_FIELDS_SCHEMA.extend({
   model: z.literal("veo-3.1-generate-preview"),
-  // Veo 3.1 specific fields
+  // Veo 3.1 specific fields - Image/Video inputs
   imageGcsUri: UrlOrGcsUriSchema.optional(),
   referenceSubjectImages: z.array(UrlOrGcsUriSchema).max(3).optional(),
   videoGcsUri: UrlOrGcsUriSchema.optional(),
   lastFrameGcsUri: UrlOrGcsUriSchema.optional(),
+  // Veo 3.1 specific fields - Generation controls
   negativePrompt: z.string().optional(),
+  seed: z.number().int().optional(),
+  enhancePrompt: z.boolean().optional(),
+  personGeneration: VEO_31_PERSON_GENERATION_SCHEMA.optional(),
+  compressionQuality: VEO_31_COMPRESSION_QUALITY_SCHEMA.optional(),
+  referenceType: VEO_31_REFERENCE_TYPE_SCHEMA.optional(),
 });
 
 // ============= TYPE (Inferred from Schema) =============
@@ -37,11 +58,10 @@ export const VEO_3_1_GENERATE_PREVIEW_CONFIG = {
 
 // ============= AI HINT =============
 export const VEO_3_1_GENERATE_PREVIEW_AI_HINT = `
-- **veo-3.1-generate-preview**: Latest generation, highest quality video (8s default)
-  - Use when: User EXPLICITLY requests "high quality", "best quality", "cinematic", or detailed/complex scenes
-  - Generation time: 60-120 seconds
-  - New features: Multi-subject references, video extension, frame-specific generation
-  - **ONLY use if user specifically asks for high quality**
+- veo-3.1-generate-preview: High quality variant (60-120s generation)
+  - Use when: Prompt contains "high quality", "best quality", or "cinematic"
+  - Features: Same as veo-3.1-fast-generate-preview (see below for capabilities)
+  - Additional controls: seed, enhancePrompt, personGeneration, compressionQuality
 `;
 
 // ============= ADAPTER (Standalone - No Inheritance) =============
@@ -70,7 +90,7 @@ export class Veo31GeneratePreviewAdapter implements ModelAdapter {
       outputGcsUri,
     };
 
-    // Veo 3.1 specific features
+    // Veo 3.1 specific features - Image/Video inputs
     if (validated.imageGcsUri) {
       config.image = validated.imageGcsUri;
     }
@@ -85,8 +105,22 @@ export class Veo31GeneratePreviewAdapter implements ModelAdapter {
     if (validated.lastFrameGcsUri) {
       config.lastFrame = validated.lastFrameGcsUri;
     }
+
+    // Veo 3.1 specific features - Generation controls
     if (validated.negativePrompt) {
       config.negativePrompt = validated.negativePrompt;
+    }
+    if (validated.seed !== undefined) {
+      config.seed = validated.seed;
+    }
+    if (validated.enhancePrompt !== undefined) {
+      config.enhancePrompt = validated.enhancePrompt;
+    }
+    if (validated.personGeneration) {
+      config.personGeneration = validated.personGeneration;
+    }
+    if (validated.compressionQuality) {
+      config.compressionQuality = validated.compressionQuality.toUpperCase();
     }
 
     const op = await ai.models.generateVideos({

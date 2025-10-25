@@ -116,12 +116,35 @@ export async function analyzePrompt(
         // Extract Job Request from Step 2 output
         request = extractJobRequestFromText(step2Context);
 
+        // DEBUG: Log raw request before restoration
+        if (replacements.length > 0) {
+          logger.info("DEBUG: Raw request before URI restoration", {
+            jobId,
+            imageGcsUri: request.imageGcsUri,
+            videoGcsUri: request.videoGcsUri,
+            lastFrameGcsUri: request.lastFrameGcsUri,
+            referenceSubjectImages: request.referenceSubjectImages,
+            replacements: replacements.map(r => ({tag: r.tag, placeholder: r.placeholder, gcsUri: r.gcsUri}))
+          });
+        }
+
         // Restore URIs in request and prompt
         const {cleanedRequest, cleanedPrompt} = restoreSemanticTagsToUris(
           request,
           request.prompt || "",
           replacements
         );
+
+        // DEBUG: Log cleaned request after restoration
+        if (replacements.length > 0) {
+          logger.info("DEBUG: Cleaned request after URI restoration", {
+            jobId,
+            imageGcsUri: cleanedRequest.imageGcsUri,
+            videoGcsUri: cleanedRequest.videoGcsUri,
+            lastFrameGcsUri: cleanedRequest.lastFrameGcsUri,
+            referenceSubjectImages: cleanedRequest.referenceSubjectImages,
+          });
+        }
 
         // Update request with cleaned versions
         request = cleanedRequest;

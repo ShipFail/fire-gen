@@ -14,29 +14,29 @@ export const VEO_AI_HINTS = `
 ### VIDEO (async, requires polling, 30-120s generation time)
 **IMPORTANT: DEFAULT VIDEO MODEL IS veo-3.1-fast-generate-preview - use this unless explicitly stated otherwise**
 
-**CRITICAL: URL Placeholder Format**
-User prompts contain URL placeholders as semantic XML tags with MIME type information:
-- <GS_VIDEO_URI_REF_N mimeType='video/...'/>  or  <GS_VIDEO_URI_REF_N mimeType='application/mp4'/>
-- <GS_IMAGE_URI_REF_N mimeType='image/...'/>
-- <GS_AUDIO_URI_REF_N mimeType='audio/...'/>
+**CRITICAL: URI Placeholder Format**
+User prompts contain URI placeholders as semantic XML tags:
+- <VIDEO_URI_N/> for video files
+- <IMAGE_URI_N/> for image files
+- <AUDIO_URI_N/> for audio files
 
-**URL Handling Rules:**
-1. **Check mimeType attribute** to determine file type (video/image/audio)
+**URI Handling Rules:**
+1. **Tags are self-describing** - the tag name indicates the file type
 2. **Copy the FULL XML tag exactly** to the appropriate request field
 3. **Remove from prompt** if used in a request parameter field
 4. **Keep in prompt** if NOT used in any parameter field
 
 **Example:**
-Input: "Continue from <GS_VIDEO_URI_REF_1 mimeType='application/mp4'/> with hero finding treasure"
+Input: "Continue from <VIDEO_URI_1/> with hero finding treasure"
 Output: {
-  "videoGcsUri": "<GS_VIDEO_URI_REF_1 mimeType='application/mp4'/>",  // Used - copy tag
+  "videoGcsUri": "<VIDEO_URI_1/>",  // Used - copy tag
   "prompt": "Continue with hero finding treasure"  // Removed from prompt
 }
 
-**Example (unused URL):**
-Input: "Show character finding sword <GS_IMAGE_URI_REF_2 mimeType='image/png'/> in temple"
+**Example (unused URI):**
+Input: "Show character finding sword <IMAGE_URI_2/> in temple"
 Output: {
-  "prompt": "Show character finding sword <GS_IMAGE_URI_REF_2 mimeType='image/png'/> in temple"  // Kept - not used
+  "prompt": "Show character finding sword <IMAGE_URI_2/> in temple"  // Kept - not used
 }
 
 ${VEO_3_1_FAST_GENERATE_PREVIEW_AI_HINT}
@@ -54,45 +54,45 @@ Veo 3.1 has THREE distinct creative capabilities:
 **1. INGREDIENTS TO VIDEO (Multi-subject references)**
    * **referenceSubjectImages**: Array of up to 3 GCS URIs for character/object/scene references
    * **DETECTION RULES**:
-     - Prompt contains multiple <GS_HTTPS_URI_REF_N/> placeholders (e.g., <GS_HTTPS_URI_REF_1/>, <GS_HTTPS_URI_REF_2/>)
+     - Prompt contains multiple <IMAGE_URI_N/> placeholders (e.g., <IMAGE_URI_1/>, <IMAGE_URI_2/>)
      - OR: Single image reference WITHOUT animation keywords AND prompt says "this character", "this person", "show this", "featuring this"
-   * **USAGE**: Include the field "referenceSubjectImages": ["<GS_HTTPS_URI_REF_1/>", "<GS_HTTPS_URI_REF_2/>"]
+   * **USAGE**: Include the field "referenceSubjectImages": ["<IMAGE_URI_1/>", "<IMAGE_URI_2/>"]
    * **IMPORTANT**: The placeholders are XML-style with angle brackets, NOT square brackets
    * Maximum 3 subject images allowed
    * Examples:
-     - "video with <GS_HTTPS_URI_REF_1/> and <GS_HTTPS_URI_REF_2/>" → "referenceSubjectImages": ["<GS_HTTPS_URI_REF_1/>", "<GS_HTTPS_URI_REF_2/>"]
-     - "show this character walking: <GS_HTTPS_URI_REF_1/>" → "referenceSubjectImages": ["<GS_HTTPS_URI_REF_1/>"]
+     - "video with <IMAGE_URI_1/> and <IMAGE_URI_2/>" → "referenceSubjectImages": ["<IMAGE_URI_1/>", "<IMAGE_URI_2/>"]
+     - "show this character walking: <IMAGE_URI_1/>" → "referenceSubjectImages": ["<IMAGE_URI_1/>"]
 
 **2. SCENE EXTENSION (Extend existing videos)**
    * **videoGcsUri**: GCS URI of video to extend
    * **CRITICAL**: Scene extension does NOT require any images - it automatically uses the last second of the video
    * **DETECTION**: If prompt contains "extend video", "continue video", "part 2", "keep going", or similar language with a video reference
-   * **USAGE**: Include ONLY the field "videoGcsUri": "<GS_HTTPS_URI_REF_1/>"
+   * **USAGE**: Include ONLY the field "videoGcsUri": "<VIDEO_URI_1/>"
    * **DO NOT** include imageGcsUri or lastFrameGcsUri for scene extension
    * Examples:
-     - "continue this video: <GS_HTTPS_URI_REF_1/>" → "videoGcsUri": "<GS_HTTPS_URI_REF_1/>"
-     - "extend this clip for 6 more seconds: <GS_HTTPS_URI_REF_1/>" → "videoGcsUri": "<GS_HTTPS_URI_REF_1/>", "duration": 6
-     - "create part 2 of <GS_HTTPS_URI_REF_1/>" → "videoGcsUri": "<GS_HTTPS_URI_REF_1/>"
+     - "continue this video: <VIDEO_URI_1/>" → "videoGcsUri": "<VIDEO_URI_1/>"
+     - "extend this clip for 6 more seconds: <VIDEO_URI_1/>" → "videoGcsUri": "<VIDEO_URI_1/>", "duration": 6
+     - "create part 2 of <VIDEO_URI_1/>" → "videoGcsUri": "<VIDEO_URI_1/>"
 
 **3. FIRST AND LAST FRAME (Image-to-image transitions)**
    * **imageGcsUri** + **lastFrameGcsUri**: Bridge two images with smooth transition
    * **DETECTION**:
      - Prompt explicitly mentions "from [image1] to [image2]", "transition between", "bridge these images"
      - OR: Two image references with transition language
-   * **USAGE**: Include both fields: "imageGcsUri": "<GS_HTTPS_URI_REF_1/>", "lastFrameGcsUri": "<GS_HTTPS_URI_REF_2/>"
+   * **USAGE**: Include both fields: "imageGcsUri": "<IMAGE_URI_1/>", "lastFrameGcsUri": "<IMAGE_URI_2/>"
    * Examples:
-     - "create transition from <GS_HTTPS_URI_REF_1/> to <GS_HTTPS_URI_REF_2/>" → "imageGcsUri": "<GS_HTTPS_URI_REF_1/>", "lastFrameGcsUri": "<GS_HTTPS_URI_REF_2/>"
-     - "animate from this frame <GS_HTTPS_URI_REF_1/> to this frame <GS_HTTPS_URI_REF_2/>" → "imageGcsUri": "<GS_HTTPS_URI_REF_1/>", "lastFrameGcsUri": "<GS_HTTPS_URI_REF_2/>"
+     - "create transition from <IMAGE_URI_1/> to <IMAGE_URI_2/>" → "imageGcsUri": "<IMAGE_URI_1/>", "lastFrameGcsUri": "<IMAGE_URI_2/>"
+     - "animate from this frame <IMAGE_URI_1/> to this frame <IMAGE_URI_2/>" → "imageGcsUri": "<IMAGE_URI_1/>", "lastFrameGcsUri": "<IMAGE_URI_2/>"
 
 **BASIC IMAGE-TO-VIDEO (Single image animation)**
    * **imageGcsUri**: Single image to animate (WITHOUT lastFrameGcsUri)
    * **DETECTION RULES** (Check these BEFORE considering referenceSubjectImages):
      - Prompt contains words like: "animate", "bring to life", "make this photo move", "add motion to", "make move", "come alive"
      - OR: Prompt has a single image URL reference with animation intent
-   * **USAGE**: Extract the image URL and include field "imageGcsUri": "<GS_HTTPS_URI_REF_1/>"
+   * **USAGE**: Extract the image URL and include field "imageGcsUri": "<IMAGE_URI_1/>"
    * Examples:
-     - "animate this image: <GS_HTTPS_URI_REF_1/>" → "imageGcsUri": "<GS_HTTPS_URI_REF_1/>"
-     - "make this photo come alive: <GS_HTTPS_URI_REF_1/>" → "imageGcsUri": "<GS_HTTPS_URI_REF_1/>"
+     - "animate this image: <IMAGE_URI_1/>" → "imageGcsUri": "<IMAGE_URI_1/>"
+     - "make this photo come alive: <IMAGE_URI_1/>" → "imageGcsUri": "<IMAGE_URI_1/>"
 
 **NEGATIVE PROMPTS (All Veo 3.1 modes)**
    * **negativePrompt**: String (NOT array) describing what NOT to include in the video

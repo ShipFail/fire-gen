@@ -62,13 +62,8 @@ ${allHints}
 
 Task: Generate TOP 3 model candidates for this request.
 
-URL Placeholders:
-- <GS_VIDEO_URI_REF_N mimeType='...'/>: Video file
-- <GS_IMAGE_URI_REF_N mimeType='...'/>: Image file
-- <GS_AUDIO_URI_REF_N mimeType='...'/>: Audio file
-
-URL Rules:
-1. Check mimeType attribute to determine file type
+URI Tag Rules:
+1. Tags are self-describing: <VIDEO_URI_N/>, <IMAGE_URI_N/>, <AUDIO_URI_N/>
 2. Copy FULL tag to appropriate field (videoGcsUri, imageGcsUri, referenceSubjectImages, lastFrameGcsUri)
 3. Remove tag from prompt IF used in a field, keep IF unused
 

@@ -872,22 +872,38 @@ const fixtures = [
     id: "video:veo31-negative-no-prefix-stripped",
     prompt: "Mountain landscape without no people, no vehicles, no buildings",
     expected: {
-      type: "video",
       model: expect.stringMatching(/^veo-3\.1-(fast-)?generate-preview$/),
-      prompt: expect.stringMatching(/mountain landscape/i),
-      // "no" prefix should be stripped per Veo best practices - NOT contain word "no"
-      negativePrompt: expect.stringMatching(/^(?!.*\bno\b).*people.*vehicles.*buildings/i),
+      instances: expect.arrayContaining([
+        expect.objectContaining({
+          prompt: expect.stringMatching(/mountain landscape/i),
+        }),
+      ]),
+      parameters: expect.objectContaining({
+        durationSeconds: expect.any(Number),
+        aspectRatio: expect.any(String),
+        generateAudio: expect.any(Boolean),
+        // "no" prefix should be stripped per Veo best practices - NOT contain word "no"
+        negativePrompt: expect.stringMatching(/^(?!.*\bno\b).*people.*vehicles.*buildings/i),
+      }),
     },
   },
   {
     id: "video:veo31-negative-combined-sources",
     prompt: "Ocean waves. Avoid: boats, people. Don't include: stormy weather. Negative: dark colors, gloomy atmosphere",
     expected: {
-      type: "video",
       model: expect.stringMatching(/^veo-3\.1-(fast-)?generate-preview$/),
-      prompt: expect.stringMatching(/ocean waves/i),
-      // All negative indicators combined into one string
-      // negativePrompt moved to parameters.negativePrompt
+      instances: expect.arrayContaining([
+        expect.objectContaining({
+          prompt: expect.stringMatching(/ocean waves/i),
+        }),
+      ]),
+      parameters: expect.objectContaining({
+        durationSeconds: expect.any(Number),
+        aspectRatio: expect.any(String),
+        generateAudio: expect.any(Boolean),
+        // All negative indicators combined into one string
+        negativePrompt: expect.stringMatching(/boats|people|stormy|dark|gloomy/i),
+      }),
     },
   },
 
@@ -898,26 +914,50 @@ const fixtures = [
     id: "video:veo31-complex-product-demo",
     prompt: "Product demo: Show https://storage.googleapis.com/products/shoe-left.jpg and https://storage.googleapis.com/products/shoe-right.jpg rotating on a pedestal. Studio lighting, 9:16 vertical. Avoid: text overlays, price tags, distracting elements. Duration: 6 seconds.",
     expected: {
-      type: "video",
       model: expect.stringMatching(/^veo-3\.1-(fast-)?generate-preview$/),
-      prompt: expect.stringMatching(/^(?!.*https:\/\/)(?!.*gs:\/\/).*rotating.*pedestal.*studio lighting/i),
-      referenceSubjectImages: [
-        "gs://products/shoe-left.jpg",
-        "gs://products/shoe-right.jpg"
-      ],
-      // negativePrompt moved to parameters.negativePrompt
-      aspectRatio: "9:16",
-      duration: 6,
+      instances: expect.arrayContaining([
+        expect.objectContaining({
+          prompt: expect.stringMatching(/^(?!.*https:\/\/)(?!.*gs:\/\/).*rotating.*pedestal.*studio lighting/i),
+          referenceImages: expect.arrayContaining([
+            expect.objectContaining({
+              image: expect.objectContaining({
+                gcsUri: "gs://products/shoe-left.jpg",
+              }),
+              referenceType: expect.any(String),
+            }),
+            expect.objectContaining({
+              image: expect.objectContaining({
+                gcsUri: "gs://products/shoe-right.jpg",
+              }),
+              referenceType: expect.any(String),
+            }),
+          ]),
+        }),
+      ]),
+      parameters: expect.objectContaining({
+        durationSeconds: 6,
+        aspectRatio: "9:16",
+        generateAudio: expect.any(Boolean),
+        negativePrompt: expect.stringMatching(/text overlays|price tags|distracting/i),
+      }),
     },
   },
   {
     id: "video:veo31-character-consistency-narrative",
     prompt: "Continue the story from gs://stories/chapter1.mp4 where the hero gs://characters/hero.jpg discovers a hidden temple. Cinematic 4K quality. Negative prompt: modern elements, technology, urban background",
     expected: {
-      type: "video",
-      model: expect.stringMatching(/^veo-3\.1-(fast-)?generate-preview$/), // Both quality variants OK
-      prompt: expect.any(String), // AI may or may not remove URIs - both OK
-      // AI may extract videoGcsUri and/or referenceSubjectImages - optional
+      model: expect.stringMatching(/^veo-3\.1-(fast-)?generate-preview$/),
+      instances: expect.arrayContaining([
+        expect.objectContaining({
+          prompt: expect.any(String), // AI may or may not remove URIs - both OK
+        }),
+      ]),
+      parameters: expect.objectContaining({
+        durationSeconds: expect.any(Number),
+        aspectRatio: expect.any(String),
+        generateAudio: expect.any(Boolean),
+      }),
+      // AI may extract video and/or referenceImages - optional
       // AI may extract negativePrompt - optional
     },
   },

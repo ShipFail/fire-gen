@@ -43,7 +43,11 @@ export type VeoRequestBase = z.infer<typeof VeoRequestBaseSchema>;
 
 /**
  * Base Zod schema for Veo 3.1 models.
- * New features: video extension, frame-specific generation, multi-subject references, negative prompts.
+ * New features:
+ * - Scene extension: extend videos with just videoGcsUri + prompt (no images needed)
+ * - First and last frame: bridge two images with imageGcsUri + lastFrameGcsUri
+ * - Ingredients to video: multi-subject references with referenceSubjectImages
+ * - Negative prompts: specify what NOT to include
  * Deprecated: resolution parameter (removed from API).
  */
 export const Veo31RequestBaseSchema = z.object({
@@ -54,10 +58,10 @@ export const Veo31RequestBaseSchema = z.object({
   aspectRatio: VeoAspectRatioSchema.default("16:9"),
   audio: z.boolean().default(true),
   // New 3.1 features
-  imageGcsUri: UrlOrGcsUriSchema.optional(), // For image-to-video
-  referenceSubjectImages: z.array(UrlOrGcsUriSchema).max(3).optional(),
-  videoGcsUri: UrlOrGcsUriSchema.optional(), // For video extension
-  lastFrameGcsUri: UrlOrGcsUriSchema.or(z.null()).optional(), // For frame-specific generation (null = backend extracts)
+  imageGcsUri: UrlOrGcsUriSchema.optional(), // For image-to-video or first frame
+  referenceSubjectImages: z.array(UrlOrGcsUriSchema).max(3).optional(), // Up to 3 character/object references
+  videoGcsUri: UrlOrGcsUriSchema.optional(), // For scene extension (no image needed)
+  lastFrameGcsUri: UrlOrGcsUriSchema.optional(), // For first-and-last-frame transitions
   negativePrompt: z.string().optional(), // What NOT to include in the video
 });
 
@@ -104,22 +108,22 @@ export abstract class VeoAdapterBase implements ModelAdapter {
     }
     // Veo 3.1+: use image, referenceImages.subject, video, lastFrame, negativePrompt (resolution deprecated)
     else {
-      // Image-to-video base frame
+      // Image-to-video or first frame (for first-and-last-frame transitions)
       if (validated.imageGcsUri) {
         config.image = validated.imageGcsUri;
       }
-      // Multi-subject reference images
+      // Multi-subject reference images ("Ingredients to video")
       if (validated.referenceSubjectImages && validated.referenceSubjectImages.length > 0) {
         config.referenceImages = {
           subject: validated.referenceSubjectImages,
         };
       }
-      // Video extension mode
+      // Scene extension: extend existing video (no image needed - uses last second automatically)
       if (validated.videoGcsUri) {
         config.video = validated.videoGcsUri;
       }
-      // Frame-specific generation (null means backend should extract)
-      if (validated.lastFrameGcsUri !== undefined && validated.lastFrameGcsUri !== null) {
+      // Last frame for first-and-last-frame transitions (requires imageGcsUri as first frame)
+      if (validated.lastFrameGcsUri) {
         config.lastFrame = validated.lastFrameGcsUri;
       }
       // Negative prompt

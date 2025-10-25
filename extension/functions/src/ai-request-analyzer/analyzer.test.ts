@@ -452,7 +452,7 @@ const fixtures = [
       model: expect.stringMatching(/^veo-3\.1-(fast-)?generate-preview$/),
       prompt: expect.stringMatching(/continue/i),
       videoGcsUri: expect.stringContaining("part1.mp4"),
-      lastFrameGcsUri: null, // Backend will extract
+      // NO lastFrameGcsUri - scene extension uses video only
       duration: 6,
       aspectRatio: "16:9",
       audio: true,
@@ -466,7 +466,7 @@ const fixtures = [
       model: expect.stringMatching(/^veo-3\.1-(fast-)?generate-preview$/),
       prompt: expect.stringMatching(/turning around/i),
       videoGcsUri: "gs://example/scene.mp4",
-      lastFrameGcsUri: "gs://example/scene-last-frame.jpg", // User provided both
+      lastFrameGcsUri: "gs://example/scene-last-frame.jpg", // First-and-last-frame transition with video context
       duration: 8,
       aspectRatio: "16:9",
       audio: true,
@@ -480,7 +480,7 @@ const fixtures = [
       model: expect.stringMatching(/^veo-3\.1-(fast-)?generate-preview$/),
       prompt: expect.stringMatching(/story continues/i),
       videoGcsUri: expect.stringContaining("chapter1.mp4"),
-      lastFrameGcsUri: null, // Backend will extract
+      // NO lastFrameGcsUri - scene extension only
       duration: 8,
       aspectRatio: "16:9",
       audio: true,

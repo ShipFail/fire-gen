@@ -23,7 +23,7 @@ describe("Version Consistency", () => {
 
     // Assert they match
     expect(extensionVersion).toBe(packageVersion);
-    
+
     // Additional check: both should be valid semver format
     expect(extensionVersion).toMatch(/^\d+\.\d+\.\d+$/);
     expect(packageVersion).toMatch(/^\d+\.\d+\.\d+$/);

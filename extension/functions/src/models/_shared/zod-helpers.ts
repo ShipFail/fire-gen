@@ -9,10 +9,10 @@ import {zodToJsonSchema} from "zod-to-json-schema";
 
 /**
  * Convert Zod schema to formatted JSON string for AI hints.
- * 
+ *
  * This ensures AI hints are auto-generated from schemas (SSOT principle #4).
  * When schema changes, AI hints automatically update.
- * 
+ *
  * @param schema - Zod schema to convert
  * @returns Formatted JSON string for AI consumption
  */
@@ -21,7 +21,7 @@ export function zodToJsonExample(schema: z.ZodTypeAny): string {
     name: undefined,
     $refStrategy: "none",
   });
-  
+
   return JSON.stringify(jsonSchema, null, 2);
 }
 

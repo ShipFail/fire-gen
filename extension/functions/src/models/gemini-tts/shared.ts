@@ -5,9 +5,16 @@ import * as logger from "firebase-functions/logger";
 import {callVertexAPI} from "../_shared/vertex-ai-client.js";
 import {PROJECT_ID} from "../../firebase-admin.js";
 import {REGION} from "../../env.js";
-import {TextContentSchema} from "../_shared/zod-helpers.js";
 import {getOutputFileUri, uploadToGcs} from "../../storage.js";
 import type {ModelAdapter, StartResult, ModelOutput} from "../_shared/base.js";
+import {
+  GeminiTTSVoiceSchema,
+  GeminiTTSModelIdSchema,
+  GeminiTTSRequestBaseSchema,
+  type GeminiTTSVoice,
+  type GeminiTTSModelId,
+  type GeminiTTSRequestBase,
+} from "./gemini-tts.schema.js";
 
 /**
  * Gemini TTS-specific types (uses same generateContent API as text)
@@ -52,60 +59,16 @@ async function generateSpeech(
 }
 
 /**
- * Shared Zod schemas for Gemini TTS models
+ * Re-export schemas for external consumers
  */
-
-export const GeminiTTSVoiceSchema = z.enum([
-  "Zephyr", "Puck", "Charon", "Kore", "Fenrir", "Leda", "Aoede", "Callisto",
-  "Dione", "Ganymede", "Helios", "Iapetus", "Juno", "Kairos", "Luna", "Mimas",
-  "Nereus", "Oberon", "Proteus", "Rhea", "Selene", "Titan", "Umbriel", "Vesta",
-  "Xanthe", "Ymir", "Zelus", "Atlas", "Borealis", "Cygnus",
-]);
-export type GeminiTTSVoice = z.infer<typeof GeminiTTSVoiceSchema>;
-
-export const GeminiTTSModelIdSchema = z.enum([
-  "gemini-2.5-flash-preview-tts",
-  "gemini-2.5-pro-preview-tts",
-]);
-export type GeminiTTSModelId = z.infer<typeof GeminiTTSModelIdSchema>;
-
-/**
- * REST API schemas matching Vertex AI Gemini API with TTS configuration
- */
-
-const GeminiTTSContentSchema = z.object({
-  role: z.literal("user").optional(),
-  parts: z.array(z.object({
-    text: TextContentSchema,
-  })),
-});
-
-const GeminiTTSSpeechConfigSchema = z.object({
-  voiceConfig: z.object({
-    prebuiltVoiceConfig: z.object({
-      voiceName: GeminiTTSVoiceSchema,
-    }).optional(),
-  }).optional(),
-}).optional();
-
-const GeminiTTSGenerationConfigSchema = z.object({
-  responseModalities: z.array(z.literal("AUDIO")),
-  speechConfig: GeminiTTSSpeechConfigSchema,
-}).optional();
-
-export const GeminiTTSRequestBaseSchema = z.object({
-  model: GeminiTTSModelIdSchema,
-  contents: z.union([
-    TextContentSchema.transform(text => [{role: "user" as const, parts: [{text}]}]),
-    z.array(GeminiTTSContentSchema),
-  ]),
-  generationConfig: GeminiTTSGenerationConfigSchema.transform(config => ({
-    responseModalities: ["AUDIO"],
-    speechConfig: config?.speechConfig,
-  })),
-});
-
-export type GeminiTTSRequestBase = z.infer<typeof GeminiTTSRequestBaseSchema>;
+export {
+  GeminiTTSVoiceSchema,
+  GeminiTTSModelIdSchema,
+  GeminiTTSRequestBaseSchema,
+  type GeminiTTSVoice,
+  type GeminiTTSModelId,
+  type GeminiTTSRequestBase,
+};
 
 /**
  * Base adapter for Gemini TTS models

@@ -1,12 +1,14 @@
 // functions/src/models/gemini-tts/gemini-2.5-flash-preview-tts.ts
-import {z} from "zod";
-import {GeminiTTSRequestBaseSchema, GeminiTTSAdapterBase} from "./shared.js";
+import {GeminiTTSAdapterBase} from "./shared.js";
+import {
+  Gemini25FlashPreviewTTSRequestSchema,
+  type Gemini25FlashPreviewTTSRequest,
+} from "./gemini-2.5-flash-preview-tts.schema.js";
 
-export const Gemini25FlashPreviewTTSRequestSchema = GeminiTTSRequestBaseSchema.extend({
-  model: z.literal("gemini-2.5-flash-preview-tts"),
-});
-
-export type Gemini25FlashPreviewTTSRequest = z.infer<typeof Gemini25FlashPreviewTTSRequestSchema>;
+/**
+ * Re-export schema for external consumers
+ */
+export {Gemini25FlashPreviewTTSRequestSchema, type Gemini25FlashPreviewTTSRequest};
 
 export const GEMINI_2_5_FLASH_PREVIEW_TTS_CONFIG = {
   modelId: "gemini-2.5-flash-preview-tts" as const,

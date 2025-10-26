@@ -1,12 +1,14 @@
 // functions/src/models/gemini-tts/gemini-2.5-pro-preview-tts.ts
-import {z} from "zod";
-import {GeminiTTSRequestBaseSchema, GeminiTTSAdapterBase} from "./shared.js";
+import {GeminiTTSAdapterBase} from "./shared.js";
+import {
+  Gemini25ProPreviewTTSRequestSchema,
+  type Gemini25ProPreviewTTSRequest,
+} from "./gemini-2.5-pro-preview-tts.schema.js";
 
-export const Gemini25ProPreviewTTSRequestSchema = GeminiTTSRequestBaseSchema.extend({
-  model: z.literal("gemini-2.5-pro-preview-tts"),
-});
-
-export type Gemini25ProPreviewTTSRequest = z.infer<typeof Gemini25ProPreviewTTSRequestSchema>;
+/**
+ * Re-export schema for external consumers
+ */
+export {Gemini25ProPreviewTTSRequestSchema, type Gemini25ProPreviewTTSRequest};
 
 export const GEMINI_2_5_PRO_PREVIEW_TTS_CONFIG = {
   modelId: "gemini-2.5-pro-preview-tts" as const,

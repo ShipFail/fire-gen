@@ -1,13 +1,25 @@
 // functions/src/models/gemini-flash-image/gemini-2.5-flash-image.ts
-import {z} from "zod";
 import * as logger from "firebase-functions/logger";
 
 import {callVertexAPI} from "../_shared/vertex-ai-client.js";
 import {PROJECT_ID} from "../../firebase-admin.js";
 import {REGION} from "../../env.js";
-import {PromptSchema} from "../_shared/zod-helpers.js";
 import {getOutputFileUri, uploadToGcs} from "../../storage.js";
 import type {ModelAdapter, StartResult, ModelOutput} from "../_shared/base.js";
+import {
+  Gemini25FlashImageRequestSchema,
+  Gemini25FlashImageAspectRatioSchema,
+  type Gemini25FlashImageRequest,
+  type Gemini25FlashImageAspectRatio,
+} from "./gemini-2.5-flash-image.schema.js";
+
+// ============= RE-EXPORTS =============
+export {
+  Gemini25FlashImageRequestSchema,
+  Gemini25FlashImageAspectRatioSchema,
+  type Gemini25FlashImageRequest,
+  type Gemini25FlashImageAspectRatio,
+};
 
 /**
  * Gemini 2.5 Flash Image - Fast image generation
@@ -57,60 +69,6 @@ async function generateImage(
   const endpoint = `v1/projects/${PROJECT_ID}/locations/${REGION}/publishers/google/models/${model}:generateContent`;
   return callVertexAPI<Gemini25FlashImageResponse>(endpoint, payload);
 }
-
-export const Gemini25FlashImageAspectRatioSchema = z.enum([
-  "1:1",
-  "3:2",
-  "2:3",
-  "3:4",
-  "4:3",
-  "4:5",
-  "5:4",
-  "9:16",
-  "16:9",
-  "21:9",
-]);
-export type Gemini25FlashImageAspectRatio = z.infer<typeof Gemini25FlashImageAspectRatioSchema>;
-
-const SafetySettingSchema = z.object({
-  category: z.string(),
-  threshold: z.string(),
-});
-
-/**
- * REST API schemas matching Vertex AI Gemini API with IMAGE modality
- */
-
-const Gemini25FlashImageContentSchema = z.object({
-  role: z.literal("user").optional(),
-  parts: z.array(z.object({
-    text: PromptSchema,
-  })),
-});
-
-const Gemini25FlashImageGenerationConfigSchema = z.object({
-  responseModalities: z.array(z.literal("IMAGE")),
-  imageConfig: z.object({
-    aspectRatio: Gemini25FlashImageAspectRatioSchema.optional(),
-  }).optional(),
-}).optional();
-
-// ============= SCHEMA =============
-export const Gemini25FlashImageRequestSchema = z.object({
-  model: z.literal("gemini-2.5-flash-image"),
-  contents: z.union([
-    PromptSchema.transform(text => [{role: "user" as const, parts: [{text}]}]),
-    z.array(Gemini25FlashImageContentSchema),
-  ]),
-  generationConfig: Gemini25FlashImageGenerationConfigSchema.transform(config => ({
-    responseModalities: ["IMAGE" as const],
-    imageConfig: config?.imageConfig,
-  })),
-  safetySettings: z.array(SafetySettingSchema).optional(),
-});
-
-// ============= TYPE =============
-export type Gemini25FlashImageRequest = z.infer<typeof Gemini25FlashImageRequestSchema>;
 
 // ============= CONSTANTS =============
 export const GEMINI_25_FLASH_IMAGE_CONFIG = {

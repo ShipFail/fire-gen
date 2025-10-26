@@ -1,7 +1,15 @@
 // functions/src/types/index.ts
 // System-level types only (model-specific types moved to models/)
 
-export * from "./common.js";
+export {
+  type JobStatus,
+  type FileInfo,
+  type AssistedData,
+  type JobMetadata,
+  type JobError,
+  type JobMeta,
+  type JobResponse,
+} from "./common.js";
 
 import type {JobStatus, JobMetadata, FileInfo, JobError, AssistedData} from "./common.js";
 

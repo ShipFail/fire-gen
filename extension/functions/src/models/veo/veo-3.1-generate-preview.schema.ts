@@ -85,3 +85,27 @@ export const Veo31GeneratePreviewRequestSchema = z.object({
 // ============= TYPE (Inferred from Schema) =============
 
 export type Veo31GeneratePreviewRequest = z.infer<typeof Veo31GeneratePreviewRequestSchema>;
+
+// ============= RESPONSE SCHEMA =============
+
+/**
+ * Vertex AI Long-Running Operation response for Veo.
+ * This is the response from the initial predict call and polling.
+ */
+export const Veo31GeneratePreviewResponseSchema = z.object({
+  name: z.string(), // Operation name: "projects/.../operations/..."
+  done: z.boolean().optional(),
+  error: z.object({
+    code: z.number().optional(),
+    message: z.string().optional(),
+  }).optional(),
+  response: z.object({
+    generatedVideos: z.array(z.object({
+      video: z.object({
+        uri: z.string(), // gs:// URI of generated video
+      }).optional(),
+    })).optional(),
+  }).optional(),
+});
+
+export type Veo31GeneratePreviewResponse = z.infer<typeof Veo31GeneratePreviewResponseSchema>;

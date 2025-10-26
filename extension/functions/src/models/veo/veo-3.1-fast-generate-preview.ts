@@ -9,11 +9,18 @@ import type {OperationResult} from "../../poller.js";
 import {pollVeoOperation, extractVeoOutput} from "./shared-polling.js";
 import {
   Veo31FastGeneratePreviewRequestSchema,
+  Veo31FastGeneratePreviewResponseSchema,
   type Veo31FastGeneratePreviewRequest,
+  type Veo31FastGeneratePreviewResponse,
 } from "./veo-3.1-fast-generate-preview.schema.js";
 
 // ============= RE-EXPORTS =============
-export {Veo31FastGeneratePreviewRequestSchema, type Veo31FastGeneratePreviewRequest};
+export {
+  Veo31FastGeneratePreviewRequestSchema,
+  Veo31FastGeneratePreviewResponseSchema,
+  type Veo31FastGeneratePreviewRequest,
+  type Veo31FastGeneratePreviewResponse,
+};
 
 // ============= CONSTANTS =============
 export const VEO_3_1_FAST_GENERATE_PREVIEW_CONFIG = {

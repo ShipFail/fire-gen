@@ -11,35 +11,16 @@ import {
   GeminiTTSVoiceSchema,
   GeminiTTSModelIdSchema,
   GeminiTTSRequestBaseSchema,
+  GeminiTTSResponseSchema,
   type GeminiTTSVoice,
   type GeminiTTSModelId,
   type GeminiTTSRequestBase,
+  type GeminiTTSResponse,
 } from "./gemini-tts.schema.js";
 
 /**
  * Gemini TTS-specific types (uses same generateContent API as text)
  */
-
-interface GeminiTTSResponse {
-  candidates: Array<{
-    content: {
-      parts: Array<{
-        inlineData?: {
-          mimeType: string;
-          data: string;
-        };
-        [key: string]: unknown;
-      }>;
-      role?: string;
-    };
-    finishReason?: string;
-  }>;
-  usageMetadata?: {
-    promptTokenCount: number;
-    candidatesTokenCount: number;
-    totalTokenCount: number;
-  };
-}
 
 /**
  * Call Gemini generateContent API for TTS
@@ -65,9 +46,11 @@ export {
   GeminiTTSVoiceSchema,
   GeminiTTSModelIdSchema,
   GeminiTTSRequestBaseSchema,
+  GeminiTTSResponseSchema,
   type GeminiTTSVoice,
   type GeminiTTSModelId,
   type GeminiTTSRequestBase,
+  type GeminiTTSResponse,
 };
 
 /**

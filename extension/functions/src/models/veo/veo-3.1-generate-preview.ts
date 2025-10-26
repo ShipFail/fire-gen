@@ -9,11 +9,18 @@ import type {OperationResult} from "../../poller.js";
 import {pollVeoOperation, extractVeoOutput} from "./shared-polling.js";
 import {
   Veo31GeneratePreviewRequestSchema,
+  Veo31GeneratePreviewResponseSchema,
   type Veo31GeneratePreviewRequest,
+  type Veo31GeneratePreviewResponse,
 } from "./veo-3.1-generate-preview.schema.js";
 
 // ============= RE-EXPORTS =============
-export {Veo31GeneratePreviewRequestSchema, type Veo31GeneratePreviewRequest};
+export {
+  Veo31GeneratePreviewRequestSchema,
+  Veo31GeneratePreviewResponseSchema,
+  type Veo31GeneratePreviewRequest,
+  type Veo31GeneratePreviewResponse,
+};
 
 // ============= CONSTANTS =============
 export const VEO_3_1_GENERATE_PREVIEW_CONFIG = {

@@ -61,14 +61,31 @@
 
 ## Zod Schema as Single Source of Truth
 
-**Each model adapter MUST have ONE Zod schema that serves ALL purposes:**
+**Each model MUST have schemas in a dedicated `.schema.ts` file:**
+
+### Request & Response Schemas
 
 1. **Schema matches official Vertex AI REST API** - Exact structure from API docs
 2. **Types inferred from schema** - `type T = z.infer<typeof Schema>` (never duplicate)
-3. **Validation uses schema** - `schema.parse(request)` in validateJobRequest()
-4. **AI hints auto-generated from schema** - Use `zodToJsonSchema()` helper, never hardcode JSON examples
-5. **Tests expect REST API format** - Match schema structure, use `expect.any()` for AI-chosen values
-6. **Schema exported** - Public export from model adapter file
+3. **Both Request AND Response** - Define both schemas in same `.schema.ts` file
+4. **Validation uses schema** - `schema.parse(request)` in validateJobRequest()
+5. **AI hints auto-generated from schema** - Use `zodToJsonSchema()` helper, never hardcode JSON examples
+6. **Tests expect REST API format** - Match schema structure, use `expect.any()` for AI-chosen values
+7. **Schema exported** - Public export from `.schema.ts` file, re-exported from main model file
+
+### Schema File Structure
+
+```typescript
+// model-name.schema.ts
+
+// ============= REQUEST SCHEMA =============
+export const ModelRequestSchema = z.object({...});
+export type ModelRequest = z.infer<typeof ModelRequestSchema>;
+
+// ============= RESPONSE SCHEMA =============
+export const ModelResponseSchema = z.object({...});
+export type ModelResponse = z.infer<typeof ModelResponseSchema>;
+```
 
 ## AI Hints Generation Rules
 

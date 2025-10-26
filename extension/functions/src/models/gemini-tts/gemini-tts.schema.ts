@@ -74,3 +74,31 @@ export const GeminiTTSRequestBaseSchema = z.object({
 });
 
 export type GeminiTTSRequestBase = z.infer<typeof GeminiTTSRequestBaseSchema>;
+
+// ============= RESPONSE SCHEMA =============
+
+/**
+ * Gemini generateContent API response for TTS.
+ * Returns audio data as base64-encoded inline data.
+ */
+export const GeminiTTSResponseSchema = z.object({
+  candidates: z.array(z.object({
+    content: z.object({
+      parts: z.array(z.object({
+        inlineData: z.object({
+          mimeType: z.string(), // e.g., "audio/wav"
+          data: z.string(), // base64-encoded audio
+        }).optional(),
+      })),
+      role: z.string().optional(),
+    }),
+    finishReason: z.string().optional(),
+  })),
+  usageMetadata: z.object({
+    promptTokenCount: z.number(),
+    candidatesTokenCount: z.number(),
+    totalTokenCount: z.number(),
+  }).optional(),
+});
+
+export type GeminiTTSResponse = z.infer<typeof GeminiTTSResponseSchema>;

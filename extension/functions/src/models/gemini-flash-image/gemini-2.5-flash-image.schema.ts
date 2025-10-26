@@ -83,3 +83,31 @@ export const Gemini25FlashImageRequestSchema = z.object({
 // ============= TYPE (Inferred from Schema) =============
 
 export type Gemini25FlashImageRequest = z.infer<typeof Gemini25FlashImageRequestSchema>;
+
+// ============= RESPONSE SCHEMA =============
+
+/**
+ * Gemini generateContent API response for image generation.
+ * Returns image data as base64-encoded inline data.
+ */
+export const Gemini25FlashImageResponseSchema = z.object({
+  candidates: z.array(z.object({
+    content: z.object({
+      parts: z.array(z.object({
+        inlineData: z.object({
+          mimeType: z.string(), // e.g., "image/png"
+          data: z.string(), // base64-encoded image
+        }).optional(),
+      })),
+      role: z.string().optional(),
+    }),
+    finishReason: z.string().optional(),
+  })),
+  usageMetadata: z.object({
+    promptTokenCount: z.number(),
+    candidatesTokenCount: z.number(),
+    totalTokenCount: z.number(),
+  }).optional(),
+});
+
+export type Gemini25FlashImageResponse = z.infer<typeof Gemini25FlashImageResponseSchema>;

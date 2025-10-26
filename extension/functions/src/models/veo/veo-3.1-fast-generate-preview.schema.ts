@@ -61,3 +61,27 @@ export const Veo31FastGeneratePreviewRequestSchema = z.object({
 // ============= TYPE (Inferred from Schema) =============
 
 export type Veo31FastGeneratePreviewRequest = z.infer<typeof Veo31FastGeneratePreviewRequestSchema>;
+
+// ============= RESPONSE SCHEMA =============
+
+/**
+ * Vertex AI Long-Running Operation response for Veo Fast.
+ * Same structure as standard Veo model.
+ */
+export const Veo31FastGeneratePreviewResponseSchema = z.object({
+  name: z.string(), // Operation name: "projects/.../operations/..."
+  done: z.boolean().optional(),
+  error: z.object({
+    code: z.number().optional(),
+    message: z.string().optional(),
+  }).optional(),
+  response: z.object({
+    generatedVideos: z.array(z.object({
+      video: z.object({
+        uri: z.string(), // gs:// URI of generated video
+      }).optional(),
+    })).optional(),
+  }).optional(),
+});
+
+export type Veo31FastGeneratePreviewResponse = z.infer<typeof Veo31FastGeneratePreviewResponseSchema>;

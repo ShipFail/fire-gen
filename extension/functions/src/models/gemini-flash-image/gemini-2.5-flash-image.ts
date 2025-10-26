@@ -8,16 +8,20 @@ import {getOutputFileUri, uploadToGcs} from "../../storage.js";
 import type {ModelAdapter, StartResult, ModelOutput} from "../_shared/base.js";
 import {
   Gemini25FlashImageRequestSchema,
+  Gemini25FlashImageResponseSchema,
   Gemini25FlashImageAspectRatioSchema,
   type Gemini25FlashImageRequest,
+  type Gemini25FlashImageResponse,
   type Gemini25FlashImageAspectRatio,
 } from "./gemini-2.5-flash-image.schema.js";
 
 // ============= RE-EXPORTS =============
 export {
   Gemini25FlashImageRequestSchema,
+  Gemini25FlashImageResponseSchema,
   Gemini25FlashImageAspectRatioSchema,
   type Gemini25FlashImageRequest,
+  type Gemini25FlashImageResponse,
   type Gemini25FlashImageAspectRatio,
 };
 
@@ -25,30 +29,6 @@ export {
  * Gemini 2.5 Flash Image - Fast image generation
  * Uses Gemini generateContent API with IMAGE modality
  */
-
-/**
- * Gemini 2.5 Flash Image response types (uses generateContent API like Gemini text/TTS)
- */
-interface Gemini25FlashImageResponse {
-  candidates: Array<{
-    content: {
-      parts: Array<{
-        inlineData?: {
-          mimeType: string;
-          data: string;
-        };
-        [key: string]: unknown;
-      }>;
-      role?: string;
-    };
-    finishReason?: string;
-  }>;
-  usageMetadata?: {
-    promptTokenCount: number;
-    candidatesTokenCount: number;
-    totalTokenCount: number;
-  };
-}
 
 /**
  * Call Gemini generateContent API for image generation

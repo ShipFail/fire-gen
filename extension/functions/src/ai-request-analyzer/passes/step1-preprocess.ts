@@ -1,9 +1,6 @@
 // functions/src/ai-request-analyzer/passes/step1-preprocess.ts
 import * as logger from "firebase-functions/logger";
 
-import {analyzeGCSUrls} from "../storage-url.js";
-import type {AnalyzerInput, PreprocessResult} from "../types.js";
-import {extractUrls, replaceUrlsWithPlaceholders} from "../url-replacement.js";
 import {callVertexAPI} from "../../lib/vertex-ai-client.js";
 import {PROJECT_ID} from "../../firebase-admin.js";
 import {REGION} from "../../env.js";

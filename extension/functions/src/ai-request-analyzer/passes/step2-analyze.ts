@@ -1,7 +1,7 @@
 // functions/src/ai-request-analyzer/passes/step2-analyze.ts
 import * as logger from "firebase-functions/logger";
 
-import {callVertexAPI} from "../../models/_shared/vertex-ai-client.js";
+import {callVertexAPI} from "../../lib/vertex-ai-client.js";
 import {PROJECT_ID} from "../../firebase-admin.js";
 import {REGION} from "../../env.js";
 import {DEFAULT_VALUES} from "../analyzer-shared-rules.js";

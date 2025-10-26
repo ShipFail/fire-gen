@@ -1,6 +1,6 @@
 // functions/src/models/gemini-tts/gemini-2.5-flash-preview-tts.schema.ts
 import {z} from "zod";
-import {TextContentSchema} from "../_shared/zod-helpers.js";
+import {TextContentSchema} from "../../lib/zod-utils.js";
 
 /**
  * Zod schema for gemini-2.5-flash-preview-tts model.

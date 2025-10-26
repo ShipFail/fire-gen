@@ -1,5 +1,5 @@
-// functions/src/models/_shared/base.ts
-import type {OperationResult} from "../../poller.js";
+// functions/src/lib/model-adapter.ts
+import type {OperationResult} from "../poller.js";
 
 // JobRequest is validated via Zod schemas in each adapter
 type JobRequest = any;

@@ -2,7 +2,7 @@
 
 import {VEO_3_1_GENERATE_PREVIEW_AI_HINT} from "./veo-3.1-generate-preview.js";
 import {VEO_3_1_FAST_GENERATE_PREVIEW_AI_HINT} from "./veo-3.1-fast-generate-preview.js";
-import {zodToJsonExample} from "../_shared/zod-helpers.js";
+import {zodToJsonExample} from "../../lib/zod-utils.js";
 import {Veo31FastGeneratePreviewRequestSchema} from "./veo-3.1-fast-generate-preview.js";
 
 /**

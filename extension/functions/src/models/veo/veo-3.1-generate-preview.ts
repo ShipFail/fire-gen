@@ -1,10 +1,10 @@
 // functions/src/models/veo/veo-3.1-generate-preview.ts
 import * as logger from "firebase-functions/logger";
 
-import {predictLongRunning} from "../_shared/vertex-ai-client.js";
+import {predictLongRunning} from "../../lib/vertex-ai-client.js";
 import {getJobStorageUri} from "../../storage.js";
 import {ensureTrailingSlash} from "../../util.js";
-import type {ModelAdapter, StartResult, ModelOutput} from "../_shared/base.js";
+import type {ModelAdapter, StartResult, ModelOutput} from "../../lib/model-adapter.js";
 import type {OperationResult} from "../../poller.js";
 import {pollVeoOperation, extractVeoOutput} from "./shared-polling.js";
 import {

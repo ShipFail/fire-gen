@@ -2,11 +2,11 @@
 import {z} from "zod";
 import * as logger from "firebase-functions/logger";
 
-import {callVertexAPI} from "../_shared/vertex-ai-client.js";
+import {callVertexAPI} from "../../lib/vertex-ai-client.js";
 import {PROJECT_ID} from "../../firebase-admin.js";
 import {REGION} from "../../env.js";
 import {getOutputFileUri, uploadToGcs} from "../../storage.js";
-import type {ModelAdapter, StartResult, ModelOutput} from "../_shared/base.js";
+import type {ModelAdapter, StartResult, ModelOutput} from "../../lib/model-adapter.js";
 
 /**
  * Gemini TTS Response type

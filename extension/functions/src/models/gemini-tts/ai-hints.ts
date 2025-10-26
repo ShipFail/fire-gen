@@ -1,8 +1,12 @@
 // functions/src/models/gemini-tts/ai-hints.ts
 
-import {GEMINI_2_5_FLASH_PREVIEW_TTS_AI_HINT} from "./gemini-2.5-flash-preview-tts.js";
-import {GEMINI_2_5_PRO_PREVIEW_TTS_AI_HINT} from "./gemini-2.5-pro-preview-tts.js";
-import {zodToJsonExample} from "../_shared/zod-helpers.js";
+import {
+  GEMINI_2_5_FLASH_PREVIEW_TTS_AI_HINT,
+} from "./gemini-2.5-flash-preview-tts.js";
+import {
+  GEMINI_2_5_PRO_PREVIEW_TTS_AI_HINT,
+} from "./gemini-2.5-pro-preview-tts.js";
+import {zodToJsonExample} from "../../lib/zod-utils.js";
 import {Gemini25FlashPreviewTTSRequestSchema} from "./gemini-2.5-flash-preview-tts.js";
 
 /**

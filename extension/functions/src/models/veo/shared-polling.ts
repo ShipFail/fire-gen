@@ -5,8 +5,8 @@
  */
 import * as logger from "firebase-functions/logger";
 
-import {getOperation} from "../_shared/vertex-ai-client.js";
-import type {ModelOutput} from "../_shared/base.js";
+import {getOperation} from "../../lib/vertex-ai-client.js";
+import type {ModelOutput} from "../../lib/model-adapter.js";
 import type {OperationResult} from "../../poller.js";
 
 /**

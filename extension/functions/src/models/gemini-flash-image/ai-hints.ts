@@ -1,7 +1,7 @@
 // functions/src/models/gemini-flash-image/ai-hints.ts
 
 import {GEMINI_25_FLASH_IMAGE_AI_HINT} from "./gemini-2.5-flash-image.js";
-import {zodToJsonExample} from "../_shared/zod-helpers.js";
+import {zodToJsonExample} from "../../lib/zod-utils.js";
 import {Gemini25FlashImageRequestSchema} from "./gemini-2.5-flash-image.js";
 
 /**

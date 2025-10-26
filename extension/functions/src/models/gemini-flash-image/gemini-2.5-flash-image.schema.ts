@@ -1,6 +1,6 @@
 // functions/src/models/gemini-flash-image/gemini-2.5-flash-image.schema.ts
 import {z} from "zod";
-import {PromptSchema} from "../_shared/zod-helpers.js";
+import {PromptSchema} from "../../lib/zod-utils.js";
 
 /**
  * Zod schema for gemini-2.5-flash-image model.

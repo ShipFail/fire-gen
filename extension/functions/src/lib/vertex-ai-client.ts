@@ -1,7 +1,7 @@
-// functions/src/models/_shared/vertex-ai-client.ts
+// functions/src/lib/vertex-ai-client.ts
 import {GoogleAuth} from "google-auth-library";
-import {PROJECT_ID} from "../../firebase-admin.js";
-import {REGION} from "../../env.js";
+import {PROJECT_ID} from "../firebase-admin.js";
+import {REGION} from "../env.js";
 import * as logger from "firebase-functions/logger";
 
 /**

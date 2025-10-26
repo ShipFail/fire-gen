@@ -16,8 +16,8 @@ export * from "./gemini-flash-image/index.js";
 export * from "./gemini-tts/index.js";
 
 // Re-export shared base types
-export * from "./_shared/base.js";
-export * from "./_shared/zod-helpers.js";
+export * from "../lib/model-adapter.js";
+export * from "../lib/zod-utils.js";
 
 /**
  * Complete model registry.

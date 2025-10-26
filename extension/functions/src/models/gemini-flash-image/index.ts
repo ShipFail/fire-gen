@@ -1,15 +1,8 @@
 // functions/src/models/gemini-flash-image/index.ts
 
-export {
-  Gemini25FlashImageRequestSchema,
-  Gemini25FlashImageResponseSchema,
-  Gemini25FlashImageAspectRatioSchema,
-  type Gemini25FlashImageRequest,
-  type Gemini25FlashImageResponse,
-  type Gemini25FlashImageAspectRatio,
-  GEMINI_25_FLASH_IMAGE_AI_HINT,
-  Gemini25FlashImageAdapter,
-} from "./gemini-2.5-flash-image.js";
+// Only export what's needed by models/index.ts (parent module)
+// Keep all schemas, types, and implementation details private to this module
+export {GEMINI_25_FLASH_IMAGE_AI_HINT} from "./gemini-2.5-flash-image.js";
 
 import Gemini25FlashImageAdapter from "./gemini-2.5-flash-image.js";
 

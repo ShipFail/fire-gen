@@ -1,17 +1,11 @@
 // functions/src/types/index.ts
 // System-level types only (model-specific types moved to models/)
 
-export {
-  type JobStatus,
-  type FileInfo,
-  type AssistedData,
-  type JobMetadata,
-  type JobError,
-  type JobMeta,
-  type JobResponse,
-} from "./common.js";
-
+// Import internal types needed for JobNode definition
 import type {JobStatus, JobMetadata, FileInfo, JobError, AssistedData} from "./common.js";
+
+// Only export types that are used by external modules
+export type {FileInfo} from "./common.js";
 
 /**
  * JobRequest moved to models/index.ts

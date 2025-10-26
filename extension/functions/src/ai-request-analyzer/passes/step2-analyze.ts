@@ -5,11 +5,11 @@ import {callVertexAPI} from "../../lib/vertex-ai-client.js";
 import {PROJECT_ID} from "../../firebase-admin.js";
 import {REGION} from "../../env.js";
 import {DEFAULT_VALUES} from "../analyzer-shared-rules.js";
-
-// Import AI hints from all model families
-import {VEO_AI_HINTS} from "../../models/veo/ai-hints.js";
-import {GEMINI_TTS_AI_HINTS} from "../../models/gemini-tts/ai-hints.js";
-import {GEMINI_FLASH_IMAGE_AI_HINTS} from "../../models/gemini-flash-image/ai-hints.js";
+import {
+  VEO_AI_HINTS,
+  GEMINI_TTS_AI_HINTS,
+  GEMINI_25_FLASH_IMAGE_AI_HINT,
+} from "../../models/index.js";
 
 // Assemble all model AI hints for the analyzer
 const ALL_MODEL_HINTS = `
@@ -17,7 +17,7 @@ ${VEO_AI_HINTS}
 
 ${GEMINI_TTS_AI_HINTS}
 
-${GEMINI_FLASH_IMAGE_AI_HINTS}
+${GEMINI_25_FLASH_IMAGE_AI_HINT}
 `;
 
 // Gemini response type

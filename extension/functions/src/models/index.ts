@@ -10,66 +10,11 @@ import {VEO_MODELS, VEO_AI_HINTS} from "./veo/index.js";
 import {GEMINI_FLASH_IMAGE_MODELS, GEMINI_25_FLASH_IMAGE_AI_HINT} from "./gemini-flash-image/index.js";
 import {GEMINI_TTS_MODELS, GEMINI_TTS_AI_HINTS} from "./gemini-tts/index.js";
 
-// Re-export everything from model families
-export {
-  VEO_MODELS,
-  VEO_AI_HINTS,
-  pollVeoOperation,
-  extractVeoOutput,
-  Veo31GeneratePreviewRequestSchema,
-  Veo31GeneratePreviewResponseSchema,
-  type Veo31GeneratePreviewRequest,
-  type Veo31GeneratePreviewResponse,
-  VEO_3_1_GENERATE_PREVIEW_AI_HINT,
-  Veo31GeneratePreviewAdapter,
-  Veo31FastGeneratePreviewRequestSchema,
-  Veo31FastGeneratePreviewResponseSchema,
-  type Veo31FastGeneratePreviewRequest,
-  type Veo31FastGeneratePreviewResponse,
-  VEO_3_1_FAST_GENERATE_PREVIEW_AI_HINT,
-  Veo31FastGeneratePreviewAdapter,
-} from "./veo/index.js";
-export {
-  GEMINI_FLASH_IMAGE_MODELS,
-  GEMINI_25_FLASH_IMAGE_AI_HINT,
-  Gemini25FlashImageRequestSchema,
-  Gemini25FlashImageResponseSchema,
-  Gemini25FlashImageAspectRatioSchema,
-  type Gemini25FlashImageRequest,
-  type Gemini25FlashImageResponse,
-  type Gemini25FlashImageAspectRatio,
-  Gemini25FlashImageAdapter,
-} from "./gemini-flash-image/index.js";
-export {
-  GEMINI_TTS_MODELS,
-  GEMINI_TTS_AI_HINTS,
-  GeminiTTSAdapterBase,
-  Gemini25FlashPreviewTTSRequestSchema,
-  type Gemini25FlashPreviewTTSRequest,
-  GEMINI_2_5_FLASH_PREVIEW_TTS_AI_HINT,
-  Gemini25FlashPreviewTTSAdapter,
-  Gemini25ProPreviewTTSRequestSchema,
-  type Gemini25ProPreviewTTSRequest,
-  GEMINI_2_5_PRO_PREVIEW_TTS_AI_HINT,
-  Gemini25ProPreviewTTSAdapter,
-} from "./gemini-tts/index.js";
-
-// Re-export shared base types
-export {
-  type ModelOutput,
-  type StartResult,
-  type ModelAdapter,
-} from "../lib/model-adapter.js";
-export {
-  zodToJsonExample,
-  GcsUriSchema,
-  UrlOrGcsUriSchema,
-  Bcp47LanguageSchema,
-  PromptSchema,
-  TextContentSchema,
-  PositiveIntSchema,
-  SampleRateSchema,
-} from "../lib/zod-utils.js";
+// Export only what's needed by external modules (triggers, ai-request-analyzer)
+// DO NOT export schemas, types, or adapters - those are internal to model families
+export {VEO_AI_HINTS} from "./veo/index.js";
+export {GEMINI_25_FLASH_IMAGE_AI_HINT} from "./gemini-flash-image/index.js";
+export {GEMINI_TTS_AI_HINTS} from "./gemini-tts/index.js";
 
 /**
  * Complete model registry.

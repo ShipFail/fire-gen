@@ -89,6 +89,11 @@ firegen-jobs/{jobId}/
 - use `gcloud auth application-default login` to authenticate gcloud API requests in development environment
 - Always read file content before editing, especially for front matter or top-of-file modifications to avoid duplication.
 
+## Module Export Rules
+
+1. **Explicit Exports Only** - Never use `export * from`; always use explicit `export { X, Y, Z } from` syntax for clarity and intentionality
+2. **Minimal Public Interface** - Treat each folder as a module; only export what external modules actually use; keep everything private by default; analyze actual usage before exporting
+
 ## Supported Models
 
 - **Latest versions only**: FireGen always uses the newest model versions (Veo, Gemini, etc.)

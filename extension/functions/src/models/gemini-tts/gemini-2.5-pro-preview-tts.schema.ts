@@ -4,7 +4,7 @@ import {GeminiTTSRequestBaseSchema} from "./gemini-tts.schema.js";
 
 /**
  * Zod schema for gemini-2.5-pro-preview-tts model.
- * 
+ *
  * This is the SINGLE SOURCE OF TRUTH for the gemini-2.5-pro-preview-tts request format.
  */
 

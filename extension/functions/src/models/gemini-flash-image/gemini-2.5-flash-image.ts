@@ -50,16 +50,6 @@ async function generateImage(
   return callVertexAPI<Gemini25FlashImageResponse>(endpoint, payload);
 }
 
-// ============= CONSTANTS =============
-export const GEMINI_25_FLASH_IMAGE_CONFIG = {
-  modelId: "gemini-2.5-flash-image" as const,
-  displayName: "Gemini 2.5 Flash Image",
-  category: "image" as const,
-  isAsync: false,
-  generationTime: "2-5s",
-  schema: Gemini25FlashImageRequestSchema,
-} as const;
-
 // ============= AI HINT =============
 export const GEMINI_25_FLASH_IMAGE_AI_HINT = `
 - **gemini-2.5-flash-image**: Fast image generation (Gemini 2.5 Flash Image)
@@ -70,8 +60,15 @@ export const GEMINI_25_FLASH_IMAGE_AI_HINT = `
 
 // ============= ADAPTER =============
 export class Gemini25FlashImageAdapter implements ModelAdapter {
+  static readonly modelId = "gemini-2.5-flash-image" as const;
+  static readonly displayName = "Gemini 2.5 Flash Image";
+  static readonly category = "image" as const;
+  static readonly isAsync = false;
+  static readonly generationTime = "2-5s";
+  static readonly schema = Gemini25FlashImageRequestSchema;
+
   protected schema = Gemini25FlashImageRequestSchema;
-  protected modelId = "gemini-2.5-flash-image";
+  protected modelId = Gemini25FlashImageAdapter.modelId;
 
   async start(request: any, jobId: string): Promise<StartResult> {
     // Validate with Zod schema

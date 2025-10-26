@@ -22,16 +22,6 @@ export {
   type Veo31GeneratePreviewResponse,
 };
 
-// ============= CONSTANTS =============
-export const VEO_3_1_GENERATE_PREVIEW_CONFIG = {
-  modelId: "veo-3.1-generate-preview" as const,
-  displayName: "Veo 3.1 (Highest Quality)",
-  category: "video" as const,
-  isAsync: true,
-  generationTime: "60-120s",
-  schema: Veo31GeneratePreviewRequestSchema,
-} as const;
-
 // ============= AI HINT =============
 export const VEO_3_1_GENERATE_PREVIEW_AI_HINT = `
 - veo-3.1-generate-preview (high quality, 60-120s generation)
@@ -46,7 +36,14 @@ export const VEO_3_1_GENERATE_PREVIEW_AI_HINT = `
 
 // ============= ADAPTER (Standalone - No Inheritance) =============
 export class Veo31GeneratePreviewAdapter implements ModelAdapter {
-  private readonly modelId = "veo-3.1-generate-preview";
+  static readonly modelId = "veo-3.1-generate-preview" as const;
+  static readonly displayName = "Veo 3.1 (Highest Quality)";
+  static readonly category = "video" as const;
+  static readonly isAsync = true;
+  static readonly generationTime = "60-120s";
+  static readonly schema = Veo31GeneratePreviewRequestSchema;
+
+  private readonly modelId = Veo31GeneratePreviewAdapter.modelId;
 
   async start(request: any, jobId: string): Promise<StartResult> {
     // Validate with Zod schema

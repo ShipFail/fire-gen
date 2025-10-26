@@ -21,7 +21,7 @@ export * from "./_shared/zod-helpers.js";
 
 /**
  * Complete model registry.
- * Maps model IDs to their adapter classes and configs.
+ * Maps model IDs to their adapter classes.
  */
 export const MODEL_REGISTRY = {
   ...VEO_MODELS,
@@ -39,22 +39,11 @@ export type ModelId = keyof typeof MODEL_REGISTRY;
  * This is the primary way to retrieve adapters in the system.
  */
 export function getModelAdapter(modelId: ModelId) {
-  const entry = MODEL_REGISTRY[modelId];
-  if (!entry) {
+  const AdapterClass = MODEL_REGISTRY[modelId];
+  if (!AdapterClass) {
     throw new Error(`Unknown model ID: ${modelId}`);
   }
-  return new entry.adapter();
-}
-
-/**
- * Get model configuration by model ID.
- */
-export function getModelConfig(modelId: ModelId) {
-  const entry = MODEL_REGISTRY[modelId];
-  if (!entry) {
-    throw new Error(`Unknown model ID: ${modelId}`);
-  }
-  return entry.config;
+  return new AdapterClass();
 }
 
 /**

@@ -4,7 +4,7 @@ import {PromptSchema} from "../_shared/zod-helpers.js";
 
 /**
  * Zod schema for gemini-2.5-flash-image model.
- * 
+ *
  * This is the SINGLE SOURCE OF TRUTH for the gemini-2.5-flash-image request format.
  * Uses Gemini generateContent API with IMAGE modality.
  */
@@ -55,7 +55,7 @@ const Gemini25FlashImageGenerationConfigSchema = z.object({
 
 /**
  * Complete REST API request schema for gemini-2.5-flash-image.
- * 
+ *
  * Request body format:
  * {
  *   "model": "gemini-2.5-flash-image",

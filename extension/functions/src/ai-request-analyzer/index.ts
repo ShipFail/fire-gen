@@ -243,9 +243,9 @@ function validateJobRequest(request: any): void {
     );
   }
 
-  // 2. Get Zod schema for this model
-  const modelEntry = MODEL_REGISTRY[request.model as keyof typeof MODEL_REGISTRY];
-  const schema = modelEntry.config.schema;
+  // 2. Get Zod schema for this model from adapter class
+  const AdapterClass = MODEL_REGISTRY[request.model as keyof typeof MODEL_REGISTRY];
+  const schema = AdapterClass.schema;
 
   // 3. Validate with Zod (throws ZodError if invalid)
   try {

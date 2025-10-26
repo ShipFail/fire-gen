@@ -9,20 +9,14 @@ export * from "./veo-3.1-fast-generate-preview.js";
 export {VEO_AI_HINTS} from "./ai-hints.js";
 
 // Import for registry
-import Veo31GeneratePreviewAdapter, {VEO_3_1_GENERATE_PREVIEW_CONFIG} from "./veo-3.1-generate-preview.js";
-import Veo31FastGeneratePreviewAdapter, {VEO_3_1_FAST_GENERATE_PREVIEW_CONFIG} from "./veo-3.1-fast-generate-preview.js";
+import Veo31GeneratePreviewAdapter from "./veo-3.1-generate-preview.js";
+import Veo31FastGeneratePreviewAdapter from "./veo-3.1-fast-generate-preview.js";
 
 /**
  * Veo models registry.
- * Maps model IDs to their adapter classes and configs.
+ * Maps model IDs to their adapter classes.
  */
 export const VEO_MODELS = {
-  "veo-3.1-generate-preview": {
-    adapter: Veo31GeneratePreviewAdapter,
-    config: VEO_3_1_GENERATE_PREVIEW_CONFIG,
-  },
-  "veo-3.1-fast-generate-preview": {
-    adapter: Veo31FastGeneratePreviewAdapter,
-    config: VEO_3_1_FAST_GENERATE_PREVIEW_CONFIG,
-  },
+  "veo-3.1-generate-preview": Veo31GeneratePreviewAdapter,
+  "veo-3.1-fast-generate-preview": Veo31FastGeneratePreviewAdapter,
 } as const;

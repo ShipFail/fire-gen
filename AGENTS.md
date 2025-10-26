@@ -166,3 +166,38 @@ firegen-jobs/{jobId}/
 1. **Incremental Fixes** - Address test failures one category at a time
 2. **Always Validate** - Run full test suite after structural changes
 3. **Balance Brevity** - Hints must be concise but effective enough to guide AI correctly
+
+## AI Pipeline Architecture
+
+1. **Multi-step AI pipelines return structured data + reasoning** - Each AI step returns both typed data and reasoning chain for transparency
+2. **Use JSON mode with schema validation** - Always use AI's native JSON mode with schema definitions for type-safe outputs
+3. **System instructions omit role field** - System instruction format is `{parts: [{text}]}`, not `{role: "user", parts: [{text}]}`
+4. **Pre/post-process layers are deterministic** - Separate pure logic (URL extraction, validation) from AI calls
+5. **Semantic tagging for AI context** - Convert complex data (URLs, references) to semantic tags before AI processing, restore after validation
+6. **Single schema per AI generation step** - Never combine multiple schemas in one generation - focus AI on one schema at a time
+7. **Explicit data flow between steps** - Return structured data explicitly instead of parsing AI text output with regex
+
+## Reasoning Chain Pattern
+
+8. **Reasoning chains are flat string arrays** - Each reasoning line is a separate array item, not nested objects or concatenated strings
+9. **One-liner reasoning format** - Each reason must be concise: `"<decision>: <value> → <reason>"`
+10. **Reasoning feeds forward through pipeline** - Each step receives all previous reasoning as context
+11. **No keyword extraction from reasoning** - Trust AI to infer semantically from reasoning text; avoid parsing with regex
+
+## Schema & Validation
+
+12. **Relaxed validation for intermediate representations** - Use lenient schema validation for tagged/intermediate formats, strict validation for final output
+13. **Two-stage validation pattern** - Validate intermediate format during generation, validate final format after transformation
+14. **Validate immediately after AI generation** - Use schema validation right after each AI step, don't defer
+
+## Data Flow
+
+15. **Explicit state tracking between steps** - Return critical state (like model selection) as structured data, not embedded in reasoning text
+16. **Immutable prompts across steps** - Don't add metadata labels to prompts; concatenate raw content only
+17. **Expert persona for schema-based generation** - Use domain expert system prompts for structured output generation tasks
+
+## File Organization
+
+18. **Step files are numbered and self-contained** - Name pipeline steps as `step1-*.ts`, `step2-*.ts` with clear single responsibility
+19. **Orchestrator coordinates without logic** - Main orchestrator file coordinates pipeline flow but contains no business logic
+20. **README in each major module** - Document architecture, data flow, and design principles in module-level README

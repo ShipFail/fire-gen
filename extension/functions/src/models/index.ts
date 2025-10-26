@@ -5,6 +5,8 @@
  * All AI models are registered here and exported for use throughout the system.
  */
 
+import {z} from "zod";
+
 // Import all model families
 import {VEO_MODELS, VEO_AI_HINTS} from "./veo/index.js";
 import {GEMINI_FLASH_IMAGE_MODELS, GEMINI_25_FLASH_IMAGE_AI_HINT} from "./gemini-flash-image/index.js";
@@ -55,6 +57,25 @@ export function isValidModelId(modelId: string): modelId is ModelId {
  */
 export function getAllModelIds(): ModelId[] {
   return Object.keys(MODEL_REGISTRY) as ModelId[];
+}
+
+/**
+ * Get Zod schema for validating model IDs.
+ * Auto-generated from MODEL_REGISTRY.
+ *
+ * Used by AI request analyzer to ensure only valid models are selected.
+ *
+ * @returns Zod enum schema with all registered model IDs
+ * @throws {Error} If MODEL_REGISTRY is empty
+ */
+export function getModelIdSchema(): z.ZodEnum<[string, ...string[]]> {
+  const modelIds = getAllModelIds();
+
+  if (modelIds.length === 0) {
+    throw new Error("MODEL_REGISTRY is empty - no models registered");
+  }
+
+  return z.enum(modelIds as [string, ...string[]]);
 }
 
 /**

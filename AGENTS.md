@@ -65,12 +65,7 @@
 
 ### Schema Independence Rule (CRITICAL)
 
-**NEVER share schemas across models - each `.schema.ts` file must be completely self-contained:**
-
-1. ❌ **NO shared base schemas** - Don't create base schemas that other models extend
-2. ❌ **NO schema imports between models** - Each model defines its own schemas from scratch
-3. ✅ **YES duplicate code** - Duplication is better than coupling for parallel AI modifications
-4. ✅ **YES complete independence** - Each model evolves independently without affecting others
+**Each `.schema.ts` file must be completely self-contained - NEVER import schemas from other models; duplicate code instead to enable independent evolution.**
 
 **Example - WRONG (coupling):**
 ```typescript

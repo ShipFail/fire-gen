@@ -15,7 +15,28 @@ import {
 } from "../poller.js";
 import {getModelAdapter} from "../models/index.js";
 import {isRecord} from "../util.js";
-import type {JobNode} from "../types/index.js";
+import type {JobNode, FileInfo} from "../types/index.js";
+
+/**
+ * Helper to get file extension from URI or mimeType
+ */
+function getFileExtension(uri?: string, mimeType?: string): string {
+  if (uri) {
+    const match = uri.match(/\.([a-z0-9]+)$/i);
+    if (match) return `.${match[1]}`;
+  }
+  if (mimeType) {
+    const typeMap: Record<string, string> = {
+      "video/mp4": ".mp4",
+      "image/png": ".png",
+      "image/jpeg": ".jpg",
+      "audio/wav": ".wav",
+      "audio/mpeg": ".mp3",
+    };
+    return typeMap[mimeType] || "";
+  }
+  return "";
+}
 
 /**
  * Task Queue handler for polling async operations (e.g., Veo).
@@ -50,27 +71,34 @@ export const onJobPoll = onTaskDispatched(
 
     // Check for TTL expiry
     if (isJobExpired(job)) {
-      await jobRef.update({status: "expired"});
+      await jobRef.update({
+        status: "expired",
+        "metadata/updatedAt": Date.now(),
+      });
       return;
     }
 
-    const operationName = job._meta?.operation;
+    const operationName = job.metadata?.operation;
     if (!operationName) {
       await jobRef.update({
         status: "failed",
-        response: {error: {message: "Missing operation name"}},
+        error: {
+          code: "MISSING_OPERATION",
+          message: "Missing operation name",
+        },
+        "metadata/updatedAt": Date.now(),
       });
       return;
     }
 
     try {
       // Get adapter from model ID
-      const modelId = (job.request as any)?.model;
+      const modelId = job.model;
       if (!modelId) {
-        throw new Error("Missing model ID in job request");
+        throw new Error("Missing model ID in job");
       }
 
-      const adapter = getModelAdapter(modelId) as any; // Async adapters have poll()
+      const adapter = getModelAdapter(modelId as any) as any; // Async adapters have poll()
       if (!adapter.poll) {
         throw new Error("Adapter does not support polling");
       }
@@ -82,12 +110,12 @@ export const onJobPoll = onTaskDispatched(
           // Operation failed
           await jobRef.update({
             status: "failed",
-            response: {
-              error: {
-                message: result.error.message || "Unknown error",
-                code: result.error.code,
-              },
+            error: {
+              code: result.error.code || "MODEL_ERROR",
+              message: result.error.message || "Unknown error",
             },
+            response: result.data || {},  // Store raw error response
+            "metadata/updatedAt": Date.now(),
           });
         } else {
           // Operation succeeded
@@ -100,37 +128,39 @@ export const onJobPoll = onTaskDispatched(
 
           logger.info("Operation completed", {jobId, uri: output.uri});
 
-          const response: Record<string, unknown> = {};
-
-          // Add uri/url for media outputs (async operations like Veo always have uri)
+          // Build files map
+          const files: Record<string, FileInfo> = {};
           if (output.uri) {
-            response.uri = output.uri;
-            const url = await generateSignedUrl(output.uri);
-            if (url) response.url = url;
+            const ext = getFileExtension(output.uri, output.metadata?.mimeType as string);
+            const filename = `file0${ext}`;
+            const signedUrl = await generateSignedUrl(output.uri);
+
+            files[filename] = {
+              gs: output.uri,
+              https: signedUrl || "",
+              mimeType: output.metadata?.mimeType as string,
+              size: output.metadata?.size as number,
+            };
           }
-
-          // Add text if present
-          if (output.text) response.text = output.text;
-
-          // Add metadata if present
-          if (output.metadata) response.metadata = output.metadata;
 
           await jobRef.update({
             status: "succeeded",
-            response,
+            response: result.data || {},  // Store raw model response
+            files: Object.keys(files).length > 0 ? files : undefined,
+            "metadata/updatedAt": Date.now(),
           });
         }
         return;
       }
 
       // Not done - increment attempt and re-enqueue
-      await incrementPollAttempt(jobPath, job._meta?.attempt ?? 0);
+      await incrementPollAttempt(jobPath, job.metadata?.attempt ?? 0);
       await enqueuePollTask(jobPath.split("/").pop()!);
     } catch (err: unknown) {
       logger.error("onFiregenJobPoll error", {jobPath, error: err});
 
       // Record error and re-enqueue
-      await recordPollError(jobPath, job._meta?.attempt ?? 0);
+      await recordPollError(jobPath, job.metadata?.attempt ?? 0);
       await enqueuePollTask(jobPath.split("/").pop()!);
     }
   }

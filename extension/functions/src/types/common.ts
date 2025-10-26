@@ -10,32 +10,46 @@ export type JobStatus =
   | "expired"
   | "canceled";
 
-/** Job metadata (backend-only fields) */
-export interface JobMeta {
-  version?: string;        // FireGen extension version (e.g., "0.1.0")
-  operation?: string;      // Vertex AI operation name (for async operations like Veo)
-  attempt: number;         // Poll attempts
-  nextPoll: number;        // Next poll timestamp ms
-  ttl: number;             // Job expiration timestamp ms
-  lastError?: number;      // Last error timestamp ms
-  // AI-Assisted Mode fields
+/** File access information */
+export interface FileInfo {
+  gs: string;              // GCS URI (gs://bucket/path)
+  https: string;           // Signed URL (25h expiry)
+  mimeType?: string;       // e.g., "video/mp4", "image/png"
+  size?: number;           // File size in bytes
+}
+
+/** Job metadata */
+export interface JobMetadata {
+  version: string;         // FireGen extension version (e.g., "0.1.0")
+  createdAt: number;       // Job creation timestamp (ms)
+  updatedAt: number;       // Last update timestamp (ms)
   prompt?: string;         // Original natural language prompt (for AI-assisted jobs)
   aiAssisted?: boolean;    // Flag indicating job was created via AI-assisted mode
-  analyzedAt?: number;     // Timestamp when AI analysis completed (ms)
-  reasons?: string[];      // AI reasoning chain from analyzer (Step 1 candidates, Step 2 selection, validation errors)
+  reasons?: string[];      // AI reasoning chain from analyzer
+  // Polling metadata (for async operations like Veo)
+  operation?: string;      // Vertex AI operation name
+  attempt?: number;        // Poll attempts
+  nextPoll?: number;       // Next poll timestamp ms
+  ttl?: number;            // Job expiration timestamp ms
+  lastError?: number;      // Last error timestamp ms
 }
 
-/** Job error response */
+/** Job error */
 export interface JobError {
+  code: string;
   message: string;
-  code?: string;
+  details?: Record<string, unknown>;
 }
 
-/** Generic job response */
+/** Legacy types for backward compatibility during migration */
+/** @deprecated Use JobMetadata instead */
+export interface JobMeta extends JobMetadata {}
+
+/** @deprecated Use files field instead */
 export interface JobResponse {
-  uri?: string;            // gs://... (ephemeral, 24h lifetime - for backend copy/delete operations)
-  url?: string;            // https://storage.googleapis.com/...?Expires=... (signed URL, 25h expiry, file deleted after 24h)
-  text?: string;           // Text output (for text generation and STT only)
+  uri?: string;
+  url?: string;
+  text?: string;
   error?: JobError;
-  metadata?: Record<string, unknown>; // Model-specific metadata
+  metadata?: Record<string, unknown>;
 }

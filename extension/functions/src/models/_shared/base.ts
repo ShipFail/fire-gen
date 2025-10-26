@@ -21,6 +21,7 @@ export interface ModelOutput {
 export interface StartResult {
   operationName?: string;   // For async operations (polling required)
   output?: ModelOutput;     // For sync operations (immediate result)
+  rawResponse?: Record<string, unknown>; // Raw model API response (for observability)
 }
 
 /**

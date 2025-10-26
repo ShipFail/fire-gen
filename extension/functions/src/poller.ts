@@ -43,8 +43,8 @@ export async function enqueuePollTask(jobId: string, delayMs = POLL_INTERVAL_MS)
  * Check if a job has expired based on TTL.
  */
 export function isJobExpired(job: JobNode): boolean {
-  if (!job._meta?.ttl) return false;
-  return Date.now() > job._meta.ttl;
+  if (!job.metadata?.ttl) return false;
+  return Date.now() > job.metadata.ttl;
 }
 
 /**
@@ -55,20 +55,30 @@ export function isJobTerminal(job: JobNode): boolean {
 }
 
 /**
- * Initialize job TTL and metadata for polling.
+ * Initialize job metadata for a new job.
  * Includes version tracking for debugging and support.
  */
-export function initializeJobMeta(): {
+export function initializeJobMetadata(prompt?: string, reasons?: string[]): {
   version: string;
+  createdAt: number;
+  updatedAt: number;
+  prompt?: string;
+  aiAssisted?: boolean;
+  reasons?: string[];
   ttl: number;
   attempt: number;
   nextPoll: number;
 } {
+  const now = Date.now();
   return {
     version: getFireGenVersion(),
-    ttl: Date.now() + JOB_TTL_MS,
+    createdAt: now,
+    updatedAt: now,
+    ...(prompt && {prompt, aiAssisted: true}),
+    ...(reasons && {reasons}),
+    ttl: now + JOB_TTL_MS,
     attempt: 0,
-    nextPoll: Date.now() + POLL_INTERVAL_MS,
+    nextPoll: now + POLL_INTERVAL_MS,
   };
 }
 
@@ -80,8 +90,9 @@ export async function incrementPollAttempt(jobPath: string, currentAttempt: numb
   const jobRef = db.ref(jobPath);
 
   await jobRef.update({
-    "_meta/attempt": currentAttempt + 1,
-    "_meta/nextPoll": Date.now() + POLL_INTERVAL_MS,
+    "metadata/attempt": currentAttempt + 1,
+    "metadata/nextPoll": Date.now() + POLL_INTERVAL_MS,
+    "metadata/updatedAt": Date.now(),
   });
 }
 
@@ -93,8 +104,9 @@ export async function recordPollError(jobPath: string, currentAttempt: number) {
   const jobRef = db.ref(jobPath);
 
   await jobRef.update({
-    "_meta/attempt": currentAttempt + 1,
-    "_meta/nextPoll": Date.now() + POLL_INTERVAL_MS,
-    "_meta/lastError": Date.now(),
+    "metadata/attempt": currentAttempt + 1,
+    "metadata/nextPoll": Date.now() + POLL_INTERVAL_MS,
+    "metadata/lastError": Date.now(),
+    "metadata/updatedAt": Date.now(),
   });
 }

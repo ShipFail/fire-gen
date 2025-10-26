@@ -12,6 +12,121 @@ rule_format: "Make each rule a high-level, concise, short, and clear one-liner."
 - **AGENTS.md** (this file) - Working directory rules for AI agents (Claude Code, Gemini CLI, etc.)
 - **TEST.md** - Test data examples
 
+## RTDB Schema (Critical User Interface)
+
+**This is the most important interface to end-users. All changes must maintain this structure.**
+
+```typescript
+firegen-jobs/{jobId}/
+  // Core job data
+  uid: string                               // User ID
+  model: string                             // Model identifier (e.g., "veo-3.1-fast-generate-preview")
+  status: "requested" | "starting" | "running" | "succeeded" | "failed" | "expired" | "canceled"
+  
+  // Model communication (raw data)
+  request: Record<string, unknown>          // Raw request sent to model API
+  response?: Record<string, unknown>        // Raw response from model API (includes tokens, safety, etc.)
+  
+  // Generated files (user access)
+  files?: {
+    "file0.mp4": {                          // Sequential naming: file0, file1, file2...
+      gs: string                            // GCS URI (gs://bucket/path/file0.mp4)
+      https: string                         // Signed URL (expires in 25h)
+      mimeType?: string                     // e.g., "video/mp4", "image/png"
+      size?: number                         // File size in bytes
+    }
+  }
+  
+  // Errors
+  error?: {
+    code: string                            // Error code (e.g., "VALIDATION_ERROR")
+    message: string                         // Human-readable error message
+    details?: Record<string, unknown>       // Additional error context
+  }
+  
+  // Metadata
+  metadata: {
+    version: string                         // FireGen version
+    createdAt: number                       // Job creation timestamp (ms)
+    updatedAt: number                       // Last update timestamp (ms)
+    prompt?: string                         // Original user prompt (AI-assisted mode only)
+    aiAssisted?: boolean                    // Whether AI analyzer was used
+    reasons?: string[]                      // AI reasoning chain (AI-assisted mode only)
+    // Polling metadata (async operations only)
+    operation?: string                      // Vertex AI operation name
+    attempt?: number                        // Poll attempts
+    nextPoll?: number                       // Next poll timestamp (ms)
+    ttl?: number                            // Job expiration timestamp (ms)
+    lastError?: number                      // Last error timestamp (ms)
+  }
+```
+
+**Key Design Principles:**
+
+1. **`request` and `response` are raw** - Exact model API format, no transformation
+2. **`files` is user-facing** - Clean access URLs with sequential naming (file0, file1, file2...)
+3. **`error` is system errors** - Model errors stay in `response.error`
+4. **`metadata` contains timestamps** - All temporal and diagnostic data in one namespace
+5. **`model` at root level** - Enables efficient querying by model type
+
+**Example - Video Generation (Succeeded):**
+```typescript
+{
+  uid: "user-123",
+  model: "veo-3.1-fast-generate-preview",
+  status: "succeeded",
+  request: {
+    model: "veo-3.1-fast-generate-preview",
+    instances: [{prompt: "A serene sunset"}],
+    parameters: {aspectRatio: "16:9"}
+  },
+  response: {
+    name: "projects/.../operations/123",
+    done: true,
+    response: {
+      videos: [{gcsUri: "gs://...", mimeType: "video/mp4"}],
+      raiMediaFilteredCount: 0
+    }
+  },
+  files: {
+    "file0.mp4": {
+      gs: "gs://bucket/firegen-jobs/abc123/file0.mp4",
+      https: "https://storage.googleapis.com/...?Expires=...",
+      mimeType: "video/mp4",
+      size: 12345678
+    }
+  },
+  metadata: {
+    version: "1.2.3",
+    createdAt: 1730000000000,
+    updatedAt: 1730000030000,
+    prompt: "create a video of sunset",
+    aiAssisted: true,
+    reasons: ["Detected video request", "Selected veo-3.1-fast for speed"]
+  }
+}
+```
+
+**Example - Failed Job:**
+```typescript
+{
+  uid: "user-123",
+  model: "gemini-2.5-flash-image",
+  status: "failed",
+  request: {...},
+  error: {
+    code: "VALIDATION_ERROR",
+    message: "Invalid aspect ratio: must be 1:1, 3:4, 4:3, 9:16, or 16:9",
+    details: {field: "aspectRatio", value: "21:9"}
+  },
+  metadata: {
+    version: "1.2.3",
+    createdAt: 1730000000000,
+    updatedAt: 1730000005000
+  }
+}
+```
+
 ## Rules
 
 - Use TypeScript as possible as you can, because TypeScript is preferred as primary language.

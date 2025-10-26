@@ -6,11 +6,32 @@ import {z} from "zod";
 
 import {JOB_TTL_MS, POLL_INTERVAL_MS} from "./config.js";
 import {generateSignedUrl} from "./storage.js";
-import {enqueuePollTask, initializeJobMeta} from "./poller.js";
+import {enqueuePollTask} from "./poller.js";
 import {analyzePrompt} from "./ai-request-analyzer/index.js";
 import {getModelAdapter, isValidModelId} from "./models/index.js";
 import {getFireGenVersion} from "./version.js";
-import type {JobNode} from "./types/index.js";
+import type {JobNode, FileInfo} from "./types/index.js";
+
+/**
+ * Helper to get file extension from URI or mimeType
+ */
+function getFileExtension(uri?: string, mimeType?: string): string {
+  if (uri) {
+    const match = uri.match(/\.([a-z0-9]+)$/i);
+    if (match) return `.${match[1]}`;
+  }
+  if (mimeType) {
+    const typeMap: Record<string, string> = {
+      "video/mp4": ".mp4",
+      "image/png": ".png",
+      "image/jpeg": ".jpg",
+      "audio/wav": ".wav",
+      "audio/mpeg": ".mp3",
+    };
+    return typeMap[mimeType] || "";
+  }
+  return "";
+}
 
 /**
  * Start a job by invoking the appropriate model adapter.
@@ -22,10 +43,13 @@ export async function startJob(jobId: string, job: JobNode): Promise<void> {
   const jobRef = db.ref(jobPath);
 
   try {
-    await jobRef.update({status: "starting"});
+    await jobRef.update({
+      status: "starting",
+      "metadata/updatedAt": Date.now(),
+    });
 
     // Get adapter from registry - validates model ID exists
-    const modelId = (job.request as any).model;
+    const modelId = job.model;
     if (!isValidModelId(modelId)) {
       throw new Error(`Unknown model ID: ${modelId}`);
     }
@@ -35,49 +59,41 @@ export async function startJob(jobId: string, job: JobNode): Promise<void> {
 
     if (result.operationName) {
       // Async operation (e.g., Veo) - set up polling
-      // Preserve existing _meta (contains prompt, aiAssisted, analyzedAt for AI-assisted jobs)
-      const existingMeta = job._meta || {};
-      const meta = initializeJobMeta();
-
+      const now = Date.now();
       await jobRef.update({
         status: "running",
-        _meta: {
-          ...existingMeta,  // Preserve prompt, aiAssisted, analyzedAt, etc.
-          ...meta,          // Update ttl, attempt, nextPoll
-          operation: result.operationName,
-        },
+        "metadata/updatedAt": now,
+        "metadata/operation": result.operationName,
+        "metadata/ttl": now + JOB_TTL_MS,
+        "metadata/attempt": 0,
+        "metadata/nextPoll": now + POLL_INTERVAL_MS,
       });
 
       await enqueuePollTask(jobId);
       logger.info("Job started (async)", {jobId, operationName: result.operationName});
     } else if (result.output) {
-      // Sync operation (e.g., Nano Banana, Gemini Text, Chirp STT) - complete immediately
-      const response: Record<string, unknown> = {};
+      // Sync operation - complete immediately
+      const files: Record<string, FileInfo> = {};
 
-      // Add uri/url for media outputs (not for text/STT)
+      // Build files map
       if (result.output.uri) {
-        response.uri = result.output.uri;
-        const url = await generateSignedUrl(result.output.uri);
-        if (url) response.url = url;
+        const ext = getFileExtension(result.output.uri, result.output.metadata?.mimeType as string);
+        const filename = `file0${ext}`;
+        const signedUrl = await generateSignedUrl(result.output.uri);
+
+        files[filename] = {
+          gs: result.output.uri,
+          https: signedUrl || "",
+          mimeType: result.output.metadata?.mimeType as string,
+          size: result.output.metadata?.size as number,
+        };
       }
-
-      // Add text for text/STT outputs
-      if (result.output.text) response.text = result.output.text;
-
-      // Add metadata if present
-      if (result.output.metadata) response.metadata = result.output.metadata;
-
-      // Preserve existing _meta (contains prompt, aiAssisted, analyzedAt for AI-assisted jobs)
-      // and add version tracking
-      const existingMeta = job._meta || {};
 
       await jobRef.update({
         status: "succeeded",
-        response,
-        _meta: {
-          ...existingMeta,
-          version: getFireGenVersion(),
-        },
+        response: result.rawResponse || {},  // Store raw model response
+        files: Object.keys(files).length > 0 ? files : undefined,
+        "metadata/updatedAt": Date.now(),
       });
 
       // Log appropriate field based on output type
@@ -107,7 +123,8 @@ export async function startJob(jobId: string, job: JobNode): Promise<void> {
 
     await jobRef.update({
       status: "failed",
-      response: {error: {message, code}},
+      error: {code, message},
+      "metadata/updatedAt": Date.now(),
     });
   }
 }
@@ -139,20 +156,23 @@ export async function analyzeAndTransformJob(
     });
 
     // Step 2: Build complete job structure
+    const now = Date.now();
     const completeJob: JobNode = {
       uid,
+      model: analyzed.request.model,      // Model at root level
       status: "requested",
-      request: analyzed.request,      // From analyzer
-      _meta: {
-        // Job orchestration metadata
-        ttl: Date.now() + JOB_TTL_MS,
-        attempt: 0,
-        nextPoll: Date.now() + POLL_INTERVAL_MS,
-        // AI-assisted metadata
-        prompt,
+      request: analyzed.request,          // Raw request to model
+      metadata: {
+        version: getFireGenVersion(),
+        createdAt: now,
+        updatedAt: now,
+        prompt,                           // Original prompt
         aiAssisted: true,
-        analyzedAt: Date.now(),
-        reasons: analyzed.reasons,    // Store AI reasoning chain
+        reasons: analyzed.reasons,        // AI reasoning chain
+        // Polling metadata (will be set when job starts)
+        ttl: now + JOB_TTL_MS,
+        attempt: 0,
+        nextPoll: now + POLL_INTERVAL_MS,
       },
     };
 
@@ -187,22 +207,24 @@ export async function analyzeAndTransformJob(
     logger.error("analyzeAndTransformJob failed", errorDetails);
 
     // Write failure to database
+    const now = Date.now();
     await jobRef.set({
       uid,
+      model: "unknown",                  // Model unknown since analysis failed
       status: "failed",
-      response: {
-        error: {
-          message: `AI analysis failed: ${message}`,
-          code: "AI_ANALYSIS_FAILED",
-          details: err instanceof Error ? err.name : undefined, // Include error type for debugging
-        },
+      request: {},                       // Empty request
+      error: {
+        code: "AI_ANALYSIS_FAILED",
+        message: `AI analysis failed: ${message}`,
+        details: err instanceof Error ? {name: err.name, stack: err.stack} : undefined,
       },
-      _meta: {
-        prompt, // Save original prompt even on failure
+      metadata: {
+        version: getFireGenVersion(),
+        createdAt: now,
+        updatedAt: now,
+        prompt,                          // Save original prompt even on failure
         aiAssisted: true,
-        analyzedAt: Date.now(),
-        reasons: [], // Empty array for consistency
-        errorType: err instanceof Error ? err.name : typeof err, // Save error type for analytics
+        reasons: [],                     // Empty array for consistency
       },
     });
   }

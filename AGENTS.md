@@ -71,6 +71,7 @@ firegen-jobs/{jobId}/
 3. **`error` is system errors** - Model errors stay in `response.error`
 4. **`metadata` contains timestamps** - All temporal and diagnostic data in one namespace
 5. **`model` at root level** - Enables efficient querying by model type
+6. **`assisted` optional** - Only present for AI-assisted jobs
 
 ## Rules
 
@@ -126,79 +127,14 @@ firegen-jobs/{jobId}/
 
 ## Zod Schema as Single Source of Truth
 
-**Each model MUST have schemas in a dedicated `.schema.ts` file:**
-
-### Schema Independence Rule (CRITICAL)
-
-**Each `.schema.ts` file must be completely self-contained - NEVER import schemas from other models; duplicate code instead to enable independent evolution.**
-
-**Example - WRONG (coupling):**
-```typescript
-// ❌ shared-base.schema.ts - DON'T DO THIS
-export const BaseSchema = z.object({...});
-
-// ❌ model-a.schema.ts - DON'T IMPORT FROM OTHER SCHEMAS
-import {BaseSchema} from "./shared-base.schema.js";
-export const ModelASchema = BaseSchema.extend({...});
-```
-
-**Example - CORRECT (independence):**
-```typescript
-// ✅ model-a.schema.ts - COMPLETELY SELF-CONTAINED
-export const ModelASchema = z.object({
-  // Define EVERYTHING inline, even if duplicated in model-b.schema.ts
-  commonField1: z.string(),
-  commonField2: z.number(),
-  modelSpecificField: z.literal("model-a"),
-});
-```
-
-### Request & Response Schemas
-
-1. **Schema matches official Vertex AI REST API** - Exact structure from API docs
-2. **Types inferred from schema** - `type T = z.infer<typeof Schema>` (never duplicate)
-3. **Both Request AND Response** - Define both schemas in same `.schema.ts` file
-4. **Complete independence** - Each `.schema.ts` file is fully self-contained (no imports from other model schemas)
-5. **Validation uses schema** - `schema.parse(request)` in validateJobRequest()
-6. **AI hints auto-generated from schema** - Use `zodToJsonSchema()` helper, never hardcode JSON examples
-7. **Tests expect REST API format** - Match schema structure, use `expect.any()` for AI-chosen values
-8. **Schema exported** - Public export from `.schema.ts` file, re-exported from main model file
-
-### Schema File Structure
-
-```typescript
-// model-name.schema.ts
-// MUST BE COMPLETELY SELF-CONTAINED - NO IMPORTS FROM OTHER MODEL SCHEMAS
-
-import {z} from "zod";
-import {TextContentSchema} from "../_shared/zod-helpers.js"; // ✅ OK: shared utilities
-// ❌ NEVER: import {SomeSchema} from "../other-model/schema.js"
-
-// ============= INTERNAL SCHEMAS (not exported) =============
-const InternalHelperSchema = z.object({...}); // Private, model-specific
-
-// ============= REQUEST SCHEMA =============
-export const ModelRequestSchema = z.object({
-  // Define ALL fields inline, even if similar to other models
-  ...
-});
-export type ModelRequest = z.infer<typeof ModelRequestSchema>;
-
-// ============= RESPONSE SCHEMA =============
-export const ModelResponseSchema = z.object({
-  // Define ALL response fields inline
-  ...
-});
-export type ModelResponse = z.infer<typeof ModelResponseSchema>;
-```
-
-### Why Schema Independence?
-
-1. **Parallel AI modifications** - Different AI agents can modify different models simultaneously
-2. **No cascading changes** - Updating one model never breaks another
-3. **Clear ownership** - Each schema file owns its complete definition
-4. **Version independence** - New model versions are truly independent files
-5. **Merge conflict prevention** - No shared files = fewer conflicts in parallel development
+- Each `.schema.ts` file must be completely self-contained - NEVER import schemas from other models; duplicate code instead to enable independent evolution.
+- Schema structure must match official Vertex AI REST API exactly - no transformations or additions.
+- Both Request AND Response schemas must be defined in same `.schema.ts` file.
+- Types are inferred from schemas using `z.infer<typeof Schema>` - never manually duplicate type definitions.
+- Use `schema.parse(request)` for validation in all model adapters.
+- AI hints auto-generated from schema using `zodToJsonSchema()` - never hardcode JSON examples.
+- Tests must expect REST API format - use `expect.any()` for AI-chosen values only.
+- Export schemas publicly from `.schema.ts` and re-export from main model file for easy imports.
 
 ## AI Hints Generation Rules
 

@@ -37,10 +37,6 @@ export const VEO_3_1_GENERATE_PREVIEW_AI_HINT = `
 // ============= ADAPTER (Standalone - No Inheritance) =============
 export class Veo31GeneratePreviewAdapter implements ModelAdapter {
   static readonly modelId = "veo-3.1-generate-preview" as const;
-  static readonly displayName = "Veo 3.1 (Highest Quality)";
-  static readonly category = "video" as const;
-  static readonly isAsync = true;
-  static readonly generationTime = "60-120s";
   static readonly schema = Veo31GeneratePreviewRequestSchema;
 
   private readonly modelId = Veo31GeneratePreviewAdapter.modelId;

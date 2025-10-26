@@ -61,10 +61,6 @@ export const GEMINI_25_FLASH_IMAGE_AI_HINT = `
 // ============= ADAPTER =============
 export class Gemini25FlashImageAdapter implements ModelAdapter {
   static readonly modelId = "gemini-2.5-flash-image" as const;
-  static readonly displayName = "Gemini 2.5 Flash Image";
-  static readonly category = "image" as const;
-  static readonly isAsync = false;
-  static readonly generationTime = "2-5s";
   static readonly schema = Gemini25FlashImageRequestSchema;
 
   protected schema = Gemini25FlashImageRequestSchema;

@@ -22,11 +22,6 @@ export const GEMINI_2_5_FLASH_PREVIEW_TTS_AI_HINT = `
 
 export class Gemini25FlashPreviewTTSAdapter extends GeminiTTSAdapterBase {
   static readonly modelId = "gemini-2.5-flash-preview-tts" as const;
-  static readonly displayName = "Gemini 2.5 Flash TTS";
-  static readonly category = "audio" as const;
-  static readonly subtype = "tts" as const;
-  static readonly isAsync = false;
-  static readonly generationTime = "2-8s";
   static readonly schema = Gemini25FlashPreviewTTSRequestSchema;
 
   protected schema = Gemini25FlashPreviewTTSRequestSchema;

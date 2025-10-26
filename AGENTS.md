@@ -47,11 +47,11 @@
 ## Code Architecture
 
 1. **Standalone over Inheritance** - Use separate classes per model to enable parallel AI modifications without conflicts
-2. **Composition for Shared Code** - Extract only truly universal values/functions into shared utilities (e.g., `shared-schemas.ts` for ALL Veo versions)
-3. **One Model = One Complete File** - Each model adapter is self-contained with all necessary code
-4. **No Version Flags** - Create separate files for new versions instead of if-else branches (e.g., `veo-3.1.ts`, not `isVeo31` flag)
-5. **Single Responsibility** - Each class handles one concern only
-6. **Open/Closed** - New model versions = new files, not modifications to existing base classes
+2. **One Model = One Complete File** - Each model adapter is self-contained with all necessary code
+3. **No Version Flags** - Create separate files for new versions instead of if-else branches (e.g., `veo-3.1.ts`, not `isVeo31` flag)
+4. **Single Responsibility** - Each class handles one concern only
+5. **Open/Closed** - New model versions = new files, not modifications to existing base classes
+6. **Duplication over Coupling** - Each schema file is self-contained; duplicating code is better than sharing schemas across models
 
 ## Model Naming Rules
 

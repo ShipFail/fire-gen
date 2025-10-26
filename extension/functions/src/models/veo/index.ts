@@ -1,7 +1,6 @@
 // functions/src/models/veo/index.ts
 
-// Export shared utilities (only truly universal values)
-export * from "./shared-schemas.js";
+// Export shared utilities (only truly universal functions)
 export * from "./shared-polling.js";
 
 // Export all model-specific types and schemas

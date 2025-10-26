@@ -63,29 +63,82 @@
 
 **Each model MUST have schemas in a dedicated `.schema.ts` file:**
 
+### Schema Independence Rule (CRITICAL)
+
+**NEVER share schemas across models - each `.schema.ts` file must be completely self-contained:**
+
+1. ❌ **NO shared base schemas** - Don't create base schemas that other models extend
+2. ❌ **NO schema imports between models** - Each model defines its own schemas from scratch
+3. ✅ **YES duplicate code** - Duplication is better than coupling for parallel AI modifications
+4. ✅ **YES complete independence** - Each model evolves independently without affecting others
+
+**Example - WRONG (coupling):**
+```typescript
+// ❌ shared-base.schema.ts - DON'T DO THIS
+export const BaseSchema = z.object({...});
+
+// ❌ model-a.schema.ts - DON'T IMPORT FROM OTHER SCHEMAS
+import {BaseSchema} from "./shared-base.schema.js";
+export const ModelASchema = BaseSchema.extend({...});
+```
+
+**Example - CORRECT (independence):**
+```typescript
+// ✅ model-a.schema.ts - COMPLETELY SELF-CONTAINED
+export const ModelASchema = z.object({
+  // Define EVERYTHING inline, even if duplicated in model-b.schema.ts
+  commonField1: z.string(),
+  commonField2: z.number(),
+  modelSpecificField: z.literal("model-a"),
+});
+```
+
 ### Request & Response Schemas
 
 1. **Schema matches official Vertex AI REST API** - Exact structure from API docs
 2. **Types inferred from schema** - `type T = z.infer<typeof Schema>` (never duplicate)
 3. **Both Request AND Response** - Define both schemas in same `.schema.ts` file
-4. **Validation uses schema** - `schema.parse(request)` in validateJobRequest()
-5. **AI hints auto-generated from schema** - Use `zodToJsonSchema()` helper, never hardcode JSON examples
-6. **Tests expect REST API format** - Match schema structure, use `expect.any()` for AI-chosen values
-7. **Schema exported** - Public export from `.schema.ts` file, re-exported from main model file
+4. **Complete independence** - Each `.schema.ts` file is fully self-contained (no imports from other model schemas)
+5. **Validation uses schema** - `schema.parse(request)` in validateJobRequest()
+6. **AI hints auto-generated from schema** - Use `zodToJsonSchema()` helper, never hardcode JSON examples
+7. **Tests expect REST API format** - Match schema structure, use `expect.any()` for AI-chosen values
+8. **Schema exported** - Public export from `.schema.ts` file, re-exported from main model file
 
 ### Schema File Structure
 
 ```typescript
 // model-name.schema.ts
+// MUST BE COMPLETELY SELF-CONTAINED - NO IMPORTS FROM OTHER MODEL SCHEMAS
+
+import {z} from "zod";
+import {TextContentSchema} from "../_shared/zod-helpers.js"; // ✅ OK: shared utilities
+// ❌ NEVER: import {SomeSchema} from "../other-model/schema.js"
+
+// ============= INTERNAL SCHEMAS (not exported) =============
+const InternalHelperSchema = z.object({...}); // Private, model-specific
 
 // ============= REQUEST SCHEMA =============
-export const ModelRequestSchema = z.object({...});
+export const ModelRequestSchema = z.object({
+  // Define ALL fields inline, even if similar to other models
+  ...
+});
 export type ModelRequest = z.infer<typeof ModelRequestSchema>;
 
 // ============= RESPONSE SCHEMA =============
-export const ModelResponseSchema = z.object({...});
+export const ModelResponseSchema = z.object({
+  // Define ALL response fields inline
+  ...
+});
 export type ModelResponse = z.infer<typeof ModelResponseSchema>;
 ```
+
+### Why Schema Independence?
+
+1. **Parallel AI modifications** - Different AI agents can modify different models simultaneously
+2. **No cascading changes** - Updating one model never breaks another
+3. **Clear ownership** - Each schema file owns its complete definition
+4. **Version independence** - New model versions are truly independent files
+5. **Merge conflict prevention** - No shared files = fewer conflicts in parallel development
 
 ## AI Hints Generation Rules
 

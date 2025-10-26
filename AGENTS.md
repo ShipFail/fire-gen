@@ -66,9 +66,17 @@
 1. **Schema matches official Vertex AI REST API** - Exact structure from API docs
 2. **Types inferred from schema** - `type T = z.infer<typeof Schema>` (never duplicate)
 3. **Validation uses schema** - `schema.parse(request)` in validateJobRequest()
-4. **AI hints reference schema** - Include JSON structure to guide LLM output
+4. **AI hints auto-generated from schema** - Use `zodToJsonSchema()` helper, never hardcode JSON examples
 5. **Tests expect REST API format** - Match schema structure, use `expect.any()` for AI-chosen values
 6. **Schema exported** - Public export from model adapter file
+
+## AI Hints Generation Rules
+
+**AI hints must be auto-generated from Zod schemas to prevent drift:**
+
+1. **Use `zodToJsonSchema()`** - Convert Zod schema to JSON Schema format for AI hints (one function call only)
+2. **No hardcoded JSON examples** - Schema structure comes from Zod, not manual JSON strings
+3. **Update schema → hints update automatically** - Changing Zod schema immediately updates AI guidance
 
 ## Model Naming Rules
 

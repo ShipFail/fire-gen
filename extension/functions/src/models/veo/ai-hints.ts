@@ -2,6 +2,8 @@
 
 import {VEO_3_1_GENERATE_PREVIEW_AI_HINT} from "./veo-3.1-generate-preview.js";
 import {VEO_3_1_FAST_GENERATE_PREVIEW_AI_HINT} from "./veo-3.1-fast-generate-preview.js";
+import {zodToJsonExample} from "../_shared/zod-helpers.js";
+import {Veo31FastGeneratePreviewRequestSchema} from "./veo-3.1-fast-generate-preview.js";
 
 /**
  * AI hints for Veo models - SINGLE EXPORT following AGENTS.md rule #7.
@@ -13,28 +15,9 @@ import {VEO_3_1_FAST_GENERATE_PREVIEW_AI_HINT} from "./veo-3.1-fast-generate-pre
 export const VEO_AI_HINTS = `
 ### VIDEO (async, 30-120s generation time)
 
-**OUTPUT FORMAT - Vertex AI REST API Schema:**
+**OUTPUT FORMAT - Vertex AI REST API Schema (auto-generated from Zod):**
 \`\`\`json
-{
-  "model": "veo-3.1-fast-generate-preview",
-  "instances": [{
-    "prompt": "...",
-    "image": {"gcsUri": "gs://..."} // optional
-    "video": {"gcsUri": "gs://..."} // optional
-    "lastFrame": {"gcsUri": "gs://..."} // optional
-    "referenceImages": [{"image": {"gcsUri": "gs://..."}, "referenceType": "ASSET"}] // optional
-  }],
-  "parameters": {
-    "durationSeconds": 4 | 6 | 8,
-    "aspectRatio": "16:9" | "9:16" | "1:1" | "21:9" | "3:4" | "4:3",
-    "generateAudio": true | false,
-    "negativePrompt": "...", // optional
-    "seed": 123, // optional
-    "enhancePrompt": true, // optional
-    "personGeneration": "allow_adult" | "dont_allow", // optional
-    "compressionQuality": "OPTIMIZED" | "LOSSLESS" // optional
-  }
-}
+${zodToJsonExample(Veo31FastGeneratePreviewRequestSchema)}
 \`\`\`
 
 URI Placeholders:

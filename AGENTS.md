@@ -26,6 +26,7 @@ rule_format: "Make each rule a high-level, concise, short, and clear one-liner."
 - create temp files in `/tmp` directory. i.e. log files, debug code files.
 - Avoid git operations (clone, commit, push, pull, etc.) unless user approved.
 - use `gcloud auth application-default login` to authenticate gcloud API requests in development environment
+- Always read file content before editing, especially for front matter or top-of-file modifications to avoid duplication.
 
 ## Supported Models
 

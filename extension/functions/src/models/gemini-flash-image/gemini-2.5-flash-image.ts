@@ -112,7 +112,10 @@ export class Gemini25FlashImageAdapter implements ModelAdapter {
       },
     };
 
-    return {output};
+    return {
+      output,
+      rawResponse: response,  // Include raw model response for observability
+    };
   }
 
   // Gemini 2.5 Flash Image is synchronous - no polling needed

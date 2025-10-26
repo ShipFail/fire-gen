@@ -105,6 +105,9 @@ export abstract class GeminiTTSAdapterBase implements ModelAdapter {
       },
     };
 
-    return {output};
+    return {
+      output,
+      rawResponse: response,  // Include raw model response for observability
+    };
   }
 }

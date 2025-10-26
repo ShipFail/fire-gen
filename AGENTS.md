@@ -43,15 +43,18 @@ firegen-jobs/{jobId}/
     message: string                         // Human-readable error message
     details?: Record<string, unknown>       // Additional error context
   }
-  
+
+  // AI Assisted Mode only
+  assisted?: {
+    prompt: string                          // Original user prompt (AI-assisted mode only)
+    reasons: string[]                       // AI reasoning chain (AI-assisted mode only)
+  }
+
   // Metadata
   metadata: {
     version: string                         // FireGen version
     createdAt: number                       // Job creation timestamp (ms)
     updatedAt: number                       // Last update timestamp (ms)
-    prompt?: string                         // Original user prompt (AI-assisted mode only)
-    aiAssisted?: boolean                    // Whether AI analyzer was used
-    reasons?: string[]                      // AI reasoning chain (AI-assisted mode only)
     // Polling metadata (async operations only)
     operation?: string                      // Vertex AI operation name
     attempt?: number                        // Poll attempts
@@ -68,64 +71,6 @@ firegen-jobs/{jobId}/
 3. **`error` is system errors** - Model errors stay in `response.error`
 4. **`metadata` contains timestamps** - All temporal and diagnostic data in one namespace
 5. **`model` at root level** - Enables efficient querying by model type
-
-**Example - Video Generation (Succeeded):**
-```typescript
-{
-  uid: "user-123",
-  model: "veo-3.1-fast-generate-preview",
-  status: "succeeded",
-  request: {
-    model: "veo-3.1-fast-generate-preview",
-    instances: [{prompt: "A serene sunset"}],
-    parameters: {aspectRatio: "16:9"}
-  },
-  response: {
-    name: "projects/.../operations/123",
-    done: true,
-    response: {
-      videos: [{gcsUri: "gs://...", mimeType: "video/mp4"}],
-      raiMediaFilteredCount: 0
-    }
-  },
-  files: {
-    "file0.mp4": {
-      gs: "gs://bucket/firegen-jobs/abc123/file0.mp4",
-      https: "https://storage.googleapis.com/...?Expires=...",
-      mimeType: "video/mp4",
-      size: 12345678
-    }
-  },
-  metadata: {
-    version: "1.2.3",
-    createdAt: 1730000000000,
-    updatedAt: 1730000030000,
-    prompt: "create a video of sunset",
-    aiAssisted: true,
-    reasons: ["Detected video request", "Selected veo-3.1-fast for speed"]
-  }
-}
-```
-
-**Example - Failed Job:**
-```typescript
-{
-  uid: "user-123",
-  model: "gemini-2.5-flash-image",
-  status: "failed",
-  request: {...},
-  error: {
-    code: "VALIDATION_ERROR",
-    message: "Invalid aspect ratio: must be 1:1, 3:4, 4:3, 9:16, or 16:9",
-    details: {field: "aspectRatio", value: "21:9"}
-  },
-  metadata: {
-    version: "1.2.3",
-    createdAt: 1730000000000,
-    updatedAt: 1730000005000
-  }
-}
-```
 
 ## Rules
 

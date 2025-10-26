@@ -18,14 +18,17 @@ export interface FileInfo {
   size?: number;           // File size in bytes
 }
 
+/** AI-assisted mode data */
+export interface AssistedData {
+  prompt: string;          // Original user prompt (before AI transformation)
+  reasons: string[];       // AI reasoning chain from analyzer
+}
+
 /** Job metadata */
 export interface JobMetadata {
   version: string;         // FireGen extension version (e.g., "0.1.0")
   createdAt: number;       // Job creation timestamp (ms)
   updatedAt: number;       // Last update timestamp (ms)
-  prompt?: string;         // Original natural language prompt (for AI-assisted jobs)
-  aiAssisted?: boolean;    // Flag indicating job was created via AI-assisted mode
-  reasons?: string[];      // AI reasoning chain from analyzer
   // Polling metadata (for async operations like Veo)
   operation?: string;      // Vertex AI operation name
   attempt?: number;        // Poll attempts

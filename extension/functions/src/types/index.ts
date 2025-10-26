@@ -3,7 +3,7 @@
 
 export * from "./common.js";
 
-import type {JobStatus, JobMetadata, FileInfo, JobError} from "./common.js";
+import type {JobStatus, JobMetadata, FileInfo, JobError, AssistedData} from "./common.js";
 
 /**
  * JobRequest moved to models/index.ts
@@ -19,5 +19,6 @@ export interface JobNode {
   response?: Record<string, unknown>;       // Raw response from model
   files?: Record<string, FileInfo>;         // Generated files (file0.mp4, file1.png, etc.)
   error?: JobError;                         // System errors (model errors in response.error)
-  metadata: JobMetadata;                    // Job metadata (timestamps, version, AI reasoning, etc.)
+  assisted?: AssistedData;                  // AI-assisted mode data (only present if AI analyzer was used)
+  metadata: JobMetadata;                    // Job metadata (timestamps, version, polling info, etc.)
 }

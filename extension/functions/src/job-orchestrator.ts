@@ -162,13 +162,14 @@ export async function analyzeAndTransformJob(
       model: analyzed.request.model,      // Model at root level
       status: "requested",
       request: analyzed.request,          // Raw request to model
+      assisted: {                         // AI-assisted mode data
+        prompt,                           // Original prompt
+        reasons: analyzed.reasons,        // AI reasoning chain
+      },
       metadata: {
         version: getFireGenVersion(),
         createdAt: now,
         updatedAt: now,
-        prompt,                           // Original prompt
-        aiAssisted: true,
-        reasons: analyzed.reasons,        // AI reasoning chain
         // Polling metadata (will be set when job starts)
         ttl: now + JOB_TTL_MS,
         attempt: 0,
@@ -218,13 +219,14 @@ export async function analyzeAndTransformJob(
         message: `AI analysis failed: ${message}`,
         details: err instanceof Error ? {name: err.name, stack: err.stack} : undefined,
       },
+      assisted: {                        // Still mark as AI-assisted mode
+        prompt,                          // Save original prompt even on failure
+        reasons: [],                     // Empty array for consistency
+      },
       metadata: {
         version: getFireGenVersion(),
         createdAt: now,
         updatedAt: now,
-        prompt,                          // Save original prompt even on failure
-        aiAssisted: true,
-        reasons: [],                     // Empty array for consistency
       },
     });
   }

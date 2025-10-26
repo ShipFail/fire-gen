@@ -58,13 +58,10 @@ export function isJobTerminal(job: JobNode): boolean {
  * Initialize job metadata for a new job.
  * Includes version tracking for debugging and support.
  */
-export function initializeJobMetadata(prompt?: string, reasons?: string[]): {
+export function initializeJobMetadata(): {
   version: string;
   createdAt: number;
   updatedAt: number;
-  prompt?: string;
-  aiAssisted?: boolean;
-  reasons?: string[];
   ttl: number;
   attempt: number;
   nextPoll: number;
@@ -74,8 +71,6 @@ export function initializeJobMetadata(prompt?: string, reasons?: string[]): {
     version: getFireGenVersion(),
     createdAt: now,
     updatedAt: now,
-    ...(prompt && {prompt, aiAssisted: true}),
-    ...(reasons && {reasons}),
     ttl: now + JOB_TTL_MS,
     attempt: 0,
     nextPoll: now + POLL_INTERVAL_MS,

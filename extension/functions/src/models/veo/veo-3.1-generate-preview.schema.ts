@@ -90,7 +90,8 @@ export type Veo31GeneratePreviewRequest = z.infer<typeof Veo31GeneratePreviewReq
 
 /**
  * Vertex AI Long-Running Operation response for Veo.
- * This is the response from the initial predict call and polling.
+ * Matches official API response format from:
+ * https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/veo-video-generation
  */
 export const Veo31GeneratePreviewResponseSchema = z.object({
   name: z.string(), // Operation name: "projects/.../operations/..."
@@ -100,10 +101,13 @@ export const Veo31GeneratePreviewResponseSchema = z.object({
     message: z.string().optional(),
   }).optional(),
   response: z.object({
-    generatedVideos: z.array(z.object({
-      video: z.object({
-        uri: z.string(), // gs:// URI of generated video
-      }).optional(),
+    "@type": z.string().optional(), // "type.googleapis.com/cloud.ai.large_models.vision.GenerateVideoResponse"
+    raiMediaFilteredCount: z.number().optional(),
+    raiMediaFilteredReasons: z.array(z.string()).optional(),
+    videos: z.array(z.object({
+      gcsUri: z.string().optional(), // gs:// URI of generated video
+      bytesBase64Encoded: z.string().optional(), // base64-encoded video bytes (if no storageUri)
+      mimeType: z.string().optional(), // e.g., "video/mp4"
     })).optional(),
   }).optional(),
 });

@@ -7,20 +7,30 @@ import {PROJECT_ID} from "../../firebase-admin.js";
 import {REGION} from "../../env.js";
 import {getOutputFileUri, uploadToGcs} from "../../storage.js";
 import type {ModelAdapter, StartResult, ModelOutput} from "../_shared/base.js";
-import {
-  GeminiTTSVoiceSchema,
-  GeminiTTSModelIdSchema,
-  GeminiTTSRequestBaseSchema,
-  GeminiTTSResponseSchema,
-  type GeminiTTSVoice,
-  type GeminiTTSModelId,
-  type GeminiTTSRequestBase,
-  type GeminiTTSResponse,
-} from "./gemini-tts.schema.js";
 
 /**
- * Gemini TTS-specific types (uses same generateContent API as text)
+ * Gemini TTS Response type
+ * (matches structure from individual model schema files)
  */
+type GeminiTTSResponse = {
+  candidates?: Array<{
+    content: {
+      parts: Array<{
+        inlineData?: {
+          mimeType?: string;
+          data?: string;
+        };
+      }>;
+      role?: string;
+    };
+    finishReason?: string;
+  }>;
+  usageMetadata?: {
+    promptTokenCount: number;
+    candidatesTokenCount: number;
+    totalTokenCount: number;
+  };
+};
 
 /**
  * Call Gemini generateContent API for TTS
@@ -38,20 +48,6 @@ async function generateSpeech(
   const endpoint = `v1/projects/${PROJECT_ID}/locations/${REGION}/publishers/google/models/${model}:generateContent`;
   return callVertexAPI<GeminiTTSResponse>(endpoint, payload);
 }
-
-/**
- * Re-export schemas for external consumers
- */
-export {
-  GeminiTTSVoiceSchema,
-  GeminiTTSModelIdSchema,
-  GeminiTTSRequestBaseSchema,
-  GeminiTTSResponseSchema,
-  type GeminiTTSVoice,
-  type GeminiTTSModelId,
-  type GeminiTTSRequestBase,
-  type GeminiTTSResponse,
-};
 
 /**
  * Base adapter for Gemini TTS models
@@ -77,7 +73,8 @@ export abstract class GeminiTTSAdapterBase implements ModelAdapter {
 
     // Extract audio data from first candidate
     const audioPart = response.candidates?.[0]?.content?.parts?.find(
-      (part) => part.inlineData?.mimeType?.startsWith("audio/")
+      (part: {inlineData?: {mimeType?: string; data?: string}}) =>
+        part.inlineData?.mimeType?.startsWith("audio/")
     );
 
     if (!audioPart?.inlineData?.data) {

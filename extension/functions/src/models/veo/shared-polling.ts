@@ -20,7 +20,9 @@ export async function pollVeoOperation(operationName: string): Promise<Operation
     done: updated?.done ?? false,
     error: updated?.error as {message?: string; code?: string} | undefined,
     data: updated?.response as {
-      generatedVideos?: Array<{video?: {uri?: string}}>;
+      videos?: Array<{gcsUri?: string; mimeType?: string}>;
+      raiMediaFilteredCount?: number;
+      raiMediaFilteredReasons?: string[];
     } | undefined,
   };
 }
@@ -34,10 +36,10 @@ export async function extractVeoOutput(
   jobId: string
 ): Promise<ModelOutput> {
   const response = result.data as {
-    generatedVideos?: Array<{video?: {uri?: string}}>;
+    videos?: Array<{gcsUri?: string; mimeType?: string}>;
   } | undefined;
 
-  const uri = response?.generatedVideos?.[0]?.video?.uri;
+  const uri = response?.videos?.[0]?.gcsUri;
 
   if (!uri) {
     throw new Error("No video URI in Veo response");

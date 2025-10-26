@@ -1,3 +1,11 @@
+---
+
+---
+
+---
+rule_format: "Make each rule a high-level, concise, short, and clear one-liner."
+---
+
 # AGENTS.md
 
 ## Files Usage

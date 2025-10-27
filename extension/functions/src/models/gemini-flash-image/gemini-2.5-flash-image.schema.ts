@@ -30,34 +30,34 @@ export type Gemini25FlashImageAspectRatio = z.infer<typeof Gemini25FlashImageAsp
 
 const SafetySettingSchema = z.object({
   category: z.string()
-    .describe("Safety category to filter (e.g., HARM_CATEGORY_HATE_SPEECH, HARM_CATEGORY_SEXUALLY_EXPLICIT)."),
+    .describe("Harmful content category: HARM_CATEGORY_HATE_SPEECH, SEXUALLY_EXPLICIT, HARASSMENT, DANGEROUS_CONTENT"),
   threshold: z.string()
-    .describe("Blocking threshold level (e.g., BLOCK_MEDIUM_AND_ABOVE, BLOCK_ONLY_HIGH)."),
+    .describe("Blocking sensitivity: BLOCK_NONE allows all, BLOCK_ONLY_HIGH blocks severe, BLOCK_MEDIUM_AND_ABOVE blocks moderate+"),
 });
 
 // ============= CONTENT SCHEMA =============
 
 const Gemini25FlashImageContentSchema = z.object({
   role: z.literal("user").optional()
-    .describe("Role of the content sender. Always 'user' for user-provided prompts."),
+    .describe("Message sender role, always user for generation requests"),
   parts: z.array(z.object({
     text: PromptSchema
-      .describe("Text prompt describing the desired image to generate."),
-  })).describe("Content parts containing the generation prompt."),
+      .describe("Image generation prompt describing desired visual content, style, composition, details"),
+  })).describe("Content components containing generation instructions"),
 });
 
 // ============= GENERATION CONFIG SCHEMA =============
 
 const Gemini25FlashImageGenerationConfigSchema = z.object({
   responseModalities: z.array(z.literal("IMAGE"))
-    .describe("Output modality types. Must be ['IMAGE'] for image generation."),
+    .describe("Output format specification, must be IMAGE for image generation"),
   imageConfig: z.object({
     aspectRatio: Gemini25FlashImageAspectRatioSchema.optional()
-      .describe("Image aspect ratio. 1:1 for square, 16:9 for landscape, 9:16 for vertical/mobile."),
+      .describe("Image dimensions: 1:1 square, 16:9 landscape, 9:16 portrait, 21:9 ultrawide, 3:4/4:3 traditional"),
   }).optional()
-    .describe("Image-specific generation configuration."),
+    .describe("Image-specific generation parameters"),
 }).optional()
-  .describe("Model generation parameters for image output.");
+  .describe("Generation configuration controlling output modality and format");
 
 // ============= REQUEST SCHEMA (Complete) =============
 
@@ -77,17 +77,17 @@ const Gemini25FlashImageGenerationConfigSchema = z.object({
  */
 export const Gemini25FlashImageRequestSchema = z.object({
   model: z.literal("gemini-2.5-flash-image")
-    .describe("Model identifier for Gemini 2.5 Flash image generation."),
+    .describe("Gemini 2.5 Flash model with image generation capability"),
   contents: z.union([
     PromptSchema.transform(text => [{role: "user" as const, parts: [{text}]}]),
     z.array(Gemini25FlashImageContentSchema),
-  ]).describe("User prompt content describing the desired image."),
+  ]).describe("User prompt describing desired image content and characteristics"),
   generationConfig: Gemini25FlashImageGenerationConfigSchema.transform(config => ({
     responseModalities: ["IMAGE" as const],
     imageConfig: config?.imageConfig,
-  })).describe("Generation configuration specifying output modality and image settings."),
+  })).describe("Output configuration specifying IMAGE modality and image parameters"),
   safetySettings: z.array(SafetySettingSchema).optional()
-    .describe("Safety filtering settings to control harmful content blocking."),
+    .describe("Content filtering controls for harmful categories"),
 });
 
 // ============= TYPE (Inferred from Schema) =============

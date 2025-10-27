@@ -13,59 +13,58 @@ import {z} from "zod";
 
 const MediaSchema = z.object({
   gcsUri: z.string().optional()
-    .describe("Google Cloud Storage URI in gs:// format"),
+    .describe("Google Cloud Storage URI (gs://bucket/path format) to media file location"),
   bytesBase64Encoded: z.string().optional()
-    .describe("Base64-encoded media bytes (alternative to gcsUri)"),
+    .describe("Base64-encoded media bytes as alternative to Cloud Storage reference"),
   mimeType: z.string().optional()
-    .describe("MIME type (e.g., image/png, video/mp4)"),
+    .describe("Media MIME type specifying format: image/png, image/jpeg, video/mp4, video/mov"),
 });
 
 const ReferenceImageSchema = z.object({
   image: MediaSchema
-    .describe("Reference image for subject or style"),
-  referenceType: z.enum(["ASSET", "STYLE"]).optional()
-    .describe("Type of reference: ASSET for subjects/objects, STYLE for artistic style"),
+    .describe("Reference image providing visual guidance for video generation"),
+  referenceType: z.enum(["asset", "style"]).optional()
+    .describe("Reference purpose: asset maintains subject/object consistency, style applies artistic qualities"),
 });
 
 // ============= INSTANCE SCHEMA =============
 
 const Veo31FastInstanceSchema = z.object({
   prompt: z.string()
-    .describe("Text description of the video to generate. Describe the scene, action, and visual elements without including URLs."),
+    .describe("Text description guiding video generation: scene composition, actions, visual style, camera movement"),
   image: MediaSchema.optional()
-    .describe("Starting image for image-to-video generation. First keyframe when creating video from a still image."),
+    .describe("Starting keyframe for image-to-video generation, defines initial visual state before animation begins"),
   video: MediaSchema.optional()
-    .describe("Source video for video extension. Used when continuing or extending an existing video."),
+    .describe("Source video to extend, continues generation from existing video content"),
   lastFrame: MediaSchema.optional()
-    .describe("Target ending image for video generation. Final keyframe to transition toward."),
+    .describe("Target ending keyframe, guides video to transition toward specific final composition"),
   referenceImages: z.array(ReferenceImageSchema).max(3).optional()
-    .describe("Reference images for subjects or styles (maximum 3). Used to maintain consistency of characters, objects, or artistic style."),
+    .describe("Visual references (max 3) maintaining character, object, or style consistency across generated content"),
 });
 
 // ============= PARAMETERS SCHEMA =============
 
 const Veo31FastParametersSchema = z.object({
   aspectRatio: z.enum(["16:9", "9:16", "1:1", "21:9", "3:4", "4:3"]).default("16:9")
-    .describe("Video aspect ratio. 16:9 for landscape, 9:16 for vertical/mobile, 1:1 for square."),
-  compressionQuality: z.enum(["OPTIMIZED", "LOSSLESS"]).optional()
-    .describe("Video compression quality. OPTIMIZED for smaller files, LOSSLESS for maximum quality."),
-  // Vertex AI requires type: "string" for all enum fields, even for numeric values
-  durationSeconds: z.union([z.literal("4"), z.literal("6"), z.literal("8")]).default("8")
-    .describe("Video duration in seconds. Must be 4, 6, or 8 seconds."),
+    .describe("Output frame dimensions: 16:9 landscape, 9:16 mobile vertical, 1:1 square, 21:9 ultrawide cinema"),
+  compressionQuality: z.enum(["optimized", "lossless"]).optional()
+    .describe("Encoding quality: optimized reduces file size with minimal quality loss, lossless preserves maximum fidelity"),
+  durationSeconds: z.union([z.literal(4), z.literal(6), z.literal(8)]).default(8)
+    .describe("Generated video length in seconds, accepts 4, 6, or 8"),
   enhancePrompt: z.boolean().optional()
-    .describe("Whether to enhance the prompt with additional details automatically."),
+    .describe("Automatically enrich prompt with additional descriptive details for improved generation"),
   generateAudio: z.boolean().default(true)
-    .describe("Whether to generate audio track for the video."),
+    .describe("Generate synchronized audio track matching video content"),
   negativePrompt: z.string().optional()
-    .describe("Description of elements to avoid in the generated video."),
+    .describe("Elements to suppress: unwanted objects, styles, compositions, or visual features"),
   personGeneration: z.enum(["dont_allow", "allow_adult"]).optional()
-    .describe("Person generation policy. dont_allow prevents any people, allow_adult permits adult humans only."),
+    .describe("Human depiction control: dont_allow excludes all people, allow_adult permits adult humans only"),
   sampleCount: z.number().int().default(1)
-    .describe("Number of video variations to generate."),
+    .describe("Number of video variations to generate from same prompt"),
   seed: z.number().int().optional()
-    .describe("Random seed for reproducible generation."),
+    .describe("Random seed for deterministic generation, identical seeds produce consistent outputs"),
   storageUri: z.string().optional()
-    .describe("GCS bucket path for storing generated videos."),
+    .describe("Google Cloud Storage destination (gs://bucket/path) for generated video files"),
 });
 
 // ============= REQUEST SCHEMA (Complete) =============

@@ -78,3 +78,39 @@ export const SampleRateSchema = z.number().int().positive().refine(
   (rate) => [8000, 16000, 22050, 24000, 44100, 48000].includes(rate),
   {message: "Sample rate must be one of: 8000, 16000, 22050, 24000, 44100, 48000 Hz"}
 );
+
+/**
+ * Transform JSON schema for Gemini's response schema parameter.
+ *
+ * Gemini requires all enum values to be strings in the response_schema,
+ * even for fields that semantically represent numbers. This function
+ * recursively converts integer enum values to string enum values.
+ *
+ * @param schema - JSON schema to transform
+ * @returns Transformed schema with string enums
+ */
+export function transformSchemaForGeminiResponseSchema(
+  schema: unknown
+): unknown {
+  if (typeof schema !== "object" || schema === null) {
+    return schema;
+  }
+
+  if (Array.isArray(schema)) {
+    return schema.map((item) => transformSchemaForGeminiResponseSchema(item));
+  }
+
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(schema as Record<string, unknown>)) {
+    if (key === "enum" && Array.isArray(value)) {
+      // Convert all enum values to strings
+      result[key] = value.map((v) => String(v));
+    } else if (typeof value === "object" && value !== null) {
+      result[key] = transformSchemaForGeminiResponseSchema(value);
+    } else {
+      result[key] = value;
+    }
+  }
+
+  return result;
+}

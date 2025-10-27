@@ -8,6 +8,7 @@
 
 import {zodToJsonSchema} from "zod-to-json-schema";
 import {callVertexAPI} from "../lib/vertex-ai-client.js";
+import {transformSchemaForGeminiResponseSchema} from "../lib/zod-utils.js";
 import {PROJECT_ID} from "../firebase-admin.js";
 import {REGION} from "../env.js";
 import {STEP3_SYSTEM} from "./prompts.js";
@@ -56,11 +57,11 @@ ${allReasons.map((r) => `- ${r}`).join("\n")}`;
     ],
     generationConfig: {
       responseMimeType: "application/json",
-      responseSchema: zodToJsonSchema(modelSchema, {
+      responseSchema: transformSchemaForGeminiResponseSchema(zodToJsonSchema(modelSchema, {
         $refStrategy: "none",
         target: "openApi3",
         errorMessages: false,
-      }),
+      })),
     },
   });
 

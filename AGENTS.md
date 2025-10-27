@@ -142,6 +142,13 @@ firegen-jobs/{jobId}/
 - Tests must expect REST API format - use `expect.any()` for AI-chosen values only.
 - Export schemas publicly from `.schema.ts` and re-export from main model file for easy imports.
 
+## Schema Description Layer Separation
+
+1. **Schema Layer** - `.schema.ts` describes WHAT fields do functionally (capabilities, valid values, constraints, relationships)
+2. **AI Hints Layer** - `ai-hints.ts` describes HOW users express intent (language patterns, decision rules, prompt examples)
+3. **Golden Rule** - Schema descriptions are functional documentation; user language patterns belong exclusively in AI hints
+4. **Never mix layers** - NEVER include "user says..." patterns or keyword matching guidance in schema descriptions
+
 ## AI Hints Generation Rules
 
 **AI hints must be auto-generated from Zod schemas to prevent drift:**

@@ -22,11 +22,11 @@ const Gemini25FlashPreviewTTSVoiceSchema = z.enum([
 
 const Gemini25FlashPreviewTTSContentSchema = z.object({
   role: z.literal("user").optional()
-    .describe("Role of the content sender. Always 'user' for user-provided text."),
+    .describe("Message sender role, always user for synthesis requests"),
   parts: z.array(z.object({
     text: TextContentSchema
-      .describe("Text content to convert to speech."),
-  })).describe("Content parts containing the text to synthesize."),
+      .describe("Text content for speech synthesis conversion"),
+  })).describe("Content components containing text to synthesize"),
 });
 
 // ============= SPEECH CONFIG SCHEMA =============
@@ -35,23 +35,23 @@ const Gemini25FlashPreviewTTSSpeechConfigSchema = z.object({
   voiceConfig: z.object({
     prebuiltVoiceConfig: z.object({
       voiceName: Gemini25FlashPreviewTTSVoiceSchema
-        .describe("Voice selection from preset options (e.g., Zephyr, Puck, Charon)."),
+        .describe("Voice identity: Zephyr (calm male), Puck (energetic), Charon (deep), Kore (warm female), and others"),
     }).optional()
-      .describe("Prebuilt voice configuration using named voice preset."),
+      .describe("Preset voice selection from available voice profiles"),
   }).optional()
-    .describe("Voice characteristics configuration for speech synthesis."),
+    .describe("Voice characteristics configuration"),
 }).optional()
-  .describe("Overall speech generation settings including voice selection.");
+  .describe("Speech synthesis settings including voice selection");
 
 // ============= GENERATION CONFIG SCHEMA =============
 
 const Gemini25FlashPreviewTTSGenerationConfigSchema = z.object({
   responseModalities: z.array(z.literal("AUDIO"))
-    .describe("Output modality types. Must be ['AUDIO'] for text-to-speech."),
+    .describe("Output format specification, must be AUDIO for text-to-speech"),
   speechConfig: Gemini25FlashPreviewTTSSpeechConfigSchema
-    .describe("Speech synthesis configuration including voice selection."),
+    .describe("Speech generation parameters including voice characteristics"),
 }).optional()
-  .describe("Model generation parameters for audio output.");
+  .describe("Generation configuration controlling audio output");
 
 // ============= REQUEST SCHEMA =============
 
@@ -60,15 +60,15 @@ const Gemini25FlashPreviewTTSGenerationConfigSchema = z.object({
  */
 export const Gemini25FlashPreviewTTSRequestSchema = z.object({
   model: z.literal("gemini-2.5-flash-preview-tts")
-    .describe("Model identifier for Gemini 2.5 Flash text-to-speech."),
+    .describe("Gemini 2.5 Flash model with text-to-speech capability"),
   contents: z.union([
     TextContentSchema.transform(text => [{role: "user" as const, parts: [{text}]}]),
     z.array(Gemini25FlashPreviewTTSContentSchema),
-  ]).describe("Text content to convert to speech audio."),
+  ]).describe("Text content for speech synthesis"),
   generationConfig: Gemini25FlashPreviewTTSGenerationConfigSchema.transform(config => ({
     responseModalities: ["AUDIO"],
     speechConfig: config?.speechConfig,
-  })).describe("Generation configuration specifying output modality and voice settings."),
+  })).describe("Audio output configuration specifying voice and synthesis parameters"),
 });
 
 // ============= TYPE (Inferred from Schema) =============

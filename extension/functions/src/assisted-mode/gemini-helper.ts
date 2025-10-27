@@ -47,7 +47,7 @@ interface DeterministicGeminiOptions {
 }
 
 /**
- * Call Gemini with deterministic settings (temperature=0, topK=1, topP=1.0, candidateCount=1).
+ * Call Gemini with deterministic settings (temperature=0, topK=1, candidateCount=1).
  *
  * This is the ONLY function that should be used for Gemini calls in assisted-mode.
  *
@@ -68,12 +68,23 @@ export async function callDeterministicGemini(
 
   const endpoint = `v1/projects/${PROJECT_ID}/locations/${REGION}/publishers/google/models/${ANALYZER_MODEL}:generateContent`;
 
-  // Base generation config (always deterministic)
+  // Deterministic generation config
+  //
+  // Core determinism guarantee:
+  // - topK: 1 → Only the single highest-probability token is considered at each step
+  //
+  // Why topK=1 alone ensures determinism:
+  //   With topK=1, only 1 token survives filtering, making:
+  //   - topP (nucleus sampling) redundant - would filter an already-filtered set
+  //   - temperature (sampling randomness) redundant - only 1 choice exists
+  //   However, we keep temperature=0 for defensive programming:
+  //     • Explicit "no randomness" signal (makes intent clear)
+  //     • Guards against potential API default behavior
+  //     • Zero performance cost
   const generationConfig: Record<string, any> = {
-    temperature: 0,
-    topK: 1,
-    topP: 1.0,
-    candidateCount: 1,
+    temperature: 0,      // Defensive: explicit "no randomness"
+    topK: 1,             // Core: only highest-probability token
+    candidateCount: 1,   // Single response only
     maxOutputTokens,
   };
 

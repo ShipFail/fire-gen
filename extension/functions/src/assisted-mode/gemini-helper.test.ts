@@ -133,7 +133,6 @@ describe("callDeterministicGemini", () => {
           generationConfig: expect.objectContaining({
             temperature: 0,
             topK: 1,
-            topP: 1.0,
             candidateCount: 1,
             maxOutputTokens: 1024,
             responseMimeType: "application/json",
@@ -157,7 +156,6 @@ describe("callDeterministicGemini", () => {
           generationConfig: expect.objectContaining({
             temperature: 0,
             topK: 1,
-            topP: 1.0,
             candidateCount: 1,
             maxOutputTokens: 8192, // default value
           }),
@@ -172,6 +170,7 @@ describe("callDeterministicGemini", () => {
 
       expect(generationConfig.responseMimeType).toBeUndefined();
       expect(generationConfig.responseSchema).toBeUndefined();
+      expect(generationConfig.topP).toBeUndefined();
     });
   });
 });

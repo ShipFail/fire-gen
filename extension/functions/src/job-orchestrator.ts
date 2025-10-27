@@ -10,6 +10,7 @@ import {enqueuePollTask} from "./poller.js";
 import {assistedRequest} from "./assisted-mode/index.js";
 import {getModelAdapter, isValidModelId} from "./models/index.js";
 import {getFireGenVersion} from "./version.js";
+import {serializeError} from "./lib/error-utils.js";
 import type {JobNode, FileInfo} from "./types/index.js";
 
 /**
@@ -120,7 +121,7 @@ export async function startJob(jobId: string, job: JobNode): Promise<void> {
       message = err.message;
     }
 
-    logger.error("startJob failed", {jobId, error: err, code});
+    logger.error("startJob failed", {jobId, error: serializeError(err), code});
 
     await jobRef.update({
       status: "failed",
@@ -197,16 +198,12 @@ export async function analyzeAndTransformJob(
         : "AI analysis failed";
 
     // Enhanced error logging for debugging
-    const errorDetails = {
+    logger.error("analyzeAndTransformJob failed", {
       jobId,
       uid,
       prompt: prompt.substring(0, 200), // First 200 chars for debugging
-      errorMessage: err instanceof Error ? err.message : String(err),
-      errorName: err instanceof Error ? err.name : typeof err,
-      errorStack: err instanceof Error ? err.stack : undefined,
-    };
-
-    logger.error("analyzeAndTransformJob failed", errorDetails);
+      error: serializeError(err),
+    });
 
     // Write failure to database
     const now = Date.now();

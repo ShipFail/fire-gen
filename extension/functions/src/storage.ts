@@ -4,6 +4,7 @@ import * as logger from "firebase-functions/logger";
 
 import {BUCKET_NAME} from "./firebase-admin.js";
 import {SIGNED_URL_EXPIRY_MS} from "./config.js";
+import {serializeError} from "./lib/error-utils.js";
 // JobRequest type moved to models/index.ts
 type JobRequest = any;
 
@@ -69,7 +70,7 @@ export async function generateSignedUrl(gcsUri: string): Promise<string | undefi
     logger.info("Generated signed URL", {gcsUri, signedUrl});
     return signedUrl;
   } catch (err) {
-    logger.error("Failed to generate signed URL", {gcsUri, error: err});
+    logger.error("Failed to generate signed URL", {gcsUri, error: serializeError(err)});
     return undefined;
   }
 }

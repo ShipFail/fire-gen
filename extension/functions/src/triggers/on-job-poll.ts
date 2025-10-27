@@ -6,6 +6,7 @@ import * as logger from "firebase-functions/logger";
 import {REGION} from "../env.js";
 import {MAX_CONCURRENT_POLL_TASKS, POLL_TASK_TIMEOUT_SECONDS} from "../config.js";
 import {generateSignedUrl} from "../storage.js";
+import {serializeError} from "../lib/error-utils.js";
 import {
   enqueuePollTask,
   isJobExpired,
@@ -158,7 +159,7 @@ export const onJobPoll = onTaskDispatched(
       await incrementPollAttempt(jobPath, job.metadata?.attempt ?? 0);
       await enqueuePollTask(jobPath.split("/").pop()!);
     } catch (err: unknown) {
-      logger.error("onFiregenJobPoll error", {jobPath, error: err});
+      logger.error("onFiregenJobPoll error", {jobPath, error: serializeError(err)});
 
       // Record error and re-enqueue
       await recordPollError(jobPath, job.metadata?.attempt ?? 0);

@@ -53,8 +53,11 @@ roles:
     reason:
       Allows the extension to read job requests and write results to your Realtime Database instance.
   - role: aiplatform.user
-    reason:
-      Allows the extension to call Vertex AI models (Veo, Imagen, Gemini, Chirp, Lyria).
+    reason: >
+      Required for Vertex AI model inference via REST API (aiplatform.endpoints.predict permission).
+      Used for video generation (Veo), image generation (Gemini Image), audio generation (Gemini TTS),
+      and AI-assisted mode analysis (Gemini 2.5 Flash Lite). Without this role, all model calls will
+      fail with 403 Forbidden errors.
   - role: storage.objectAdmin
     reason:
       Allows the extension to manage generated media files in Cloud Storage.

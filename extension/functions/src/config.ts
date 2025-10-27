@@ -41,6 +41,13 @@ export const MAX_CONCURRENT_POLL_TASKS = 150;
  */
 export const POLL_TASK_TIMEOUT_SECONDS = 60;
 
+/**
+ * Maximum poll attempts before giving up.
+ * At 1 poll per second, this equals 10 minutes of polling.
+ * Prevents infinite retry loops and runaway costs.
+ */
+export const MAX_POLL_ATTEMPTS = 10 * 60; // 10 minutes = 600 attempts
+
 // Log configuration constants
 logger.info("Configuration constants loaded", {
   jobTtlMinutes: JOB_TTL_MS / 60000,
@@ -48,4 +55,5 @@ logger.info("Configuration constants loaded", {
   signedUrlExpiryHours: SIGNED_URL_EXPIRY_MS / (60 * 60 * 1000),
   maxConcurrentPollTasks: MAX_CONCURRENT_POLL_TASKS,
   pollTaskTimeoutSeconds: POLL_TASK_TIMEOUT_SECONDS,
+  maxPollAttempts: MAX_POLL_ATTEMPTS,
 });

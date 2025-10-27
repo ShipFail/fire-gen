@@ -4,7 +4,7 @@ import {onTaskDispatched} from "firebase-functions/v2/tasks";
 import * as logger from "firebase-functions/logger";
 
 import {REGION} from "../env.js";
-import {MAX_CONCURRENT_POLL_TASKS, POLL_TASK_TIMEOUT_SECONDS} from "../config.js";
+import {MAX_CONCURRENT_POLL_TASKS, POLL_TASK_TIMEOUT_SECONDS, MAX_POLL_ATTEMPTS} from "../config.js";
 import {generateSignedUrl} from "../storage.js";
 import {serializeError} from "../lib/error-utils.js";
 import {
@@ -76,6 +76,21 @@ export const onJobPoll = onTaskDispatched(
         status: "expired",
         "metadata/updatedAt": Date.now(),
       });
+      return;
+    }
+
+    // Check for max poll attempts exceeded
+    const currentAttempt = job.metadata?.attempt ?? 0;
+    if (currentAttempt >= MAX_POLL_ATTEMPTS) {
+      await jobRef.update({
+        status: "failed",
+        error: {
+          code: "MAX_RETRIES_EXCEEDED",
+          message: `Operation polling exceeded maximum attempts (${MAX_POLL_ATTEMPTS}). Job timed out after ${MAX_POLL_ATTEMPTS} seconds.`,
+        },
+        "metadata/updatedAt": Date.now(),
+      });
+      logger.error("Job exceeded max poll attempts", {jobPath, attempts: currentAttempt});
       return;
     }
 

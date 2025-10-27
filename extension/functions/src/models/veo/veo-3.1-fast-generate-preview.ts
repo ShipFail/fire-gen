@@ -99,7 +99,7 @@ export class Veo31FastGeneratePreviewAdapter implements ModelAdapter {
       throw new Error("Veo did not return an operation name.");
     }
 
-    logger.info("Veo operation started", {jobId, operationName: op.name});
+    logger.info("Veo operation started", {jobId, operationName: op.name, storageUri});
 
     return {operationName: op.name};
   }

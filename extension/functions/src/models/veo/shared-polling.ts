@@ -1,7 +1,9 @@
 // functions/src/models/veo/shared-polling.ts
 /**
  * Shared polling and output extraction logic for ALL Veo models.
- * All Veo models use the same polling mechanism via REST API operations.
+ *
+ * Uses the fetchPredictOperation endpoint for publisher models (Veo).
+ * This is different from the standard operations.get endpoint.
  */
 import * as logger from "firebase-functions/logger";
 
@@ -10,10 +12,13 @@ import type {ModelOutput} from "../../lib/model-adapter.js";
 import type {OperationResult} from "../../poller.js";
 
 /**
- * Poll a Veo generation operation.
- * Used by ALL Veo models (2.0, 3.0, 3.1+).
+ * Poll a Veo generation operation using the fetchPredictOperation endpoint.
+ *
+ * Publisher models (like Veo) use a different polling endpoint than standard models.
+ * The getOperation() function automatically handles this by detecting publisher models.
  */
 export async function pollVeoOperation(operationName: string): Promise<OperationResult> {
+  // Poll using fetchPredictOperation endpoint (for publisher models like Veo)
   const updated = await getOperation(operationName);
 
   return {

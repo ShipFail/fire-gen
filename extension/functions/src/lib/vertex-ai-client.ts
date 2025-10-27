@@ -53,23 +53,52 @@ export async function predictLongRunning(
 /**
  * Get the status of a long-running operation.
  *
- * WORKAROUND: Google's predictLongRunning for publisher models (Veo, etc.) returns operation names
- * in format: "projects/{project}/locations/{location}/publishers/google/models/{model}/operations/{id}"
- * but the operations.get API only accepts: "projects/{project}/locations/{location}/operations/{id}"
+ * For publisher model operations (Veo, etc.), uses the fetchPredictOperation endpoint.
+ * For standard Vertex AI operations, uses the operations.get endpoint.
  *
- * We need to strip out the "/publishers/google/models/{model}" segment to make it work.
- * This appears to be a Google API design issue that emerged recently.
+ * Based on Google's official @google/genai SDK implementation:
+ * https://github.com/googleapis/js-genai/blob/main/src/operations.ts#L175-L203
  */
 export async function getOperation(operationName: string): Promise<VertexAIOperation> {
   const token = await auth.getAccessToken();
 
-  // Strip /publishers/google/models/{model} segment if present (Google API quirk)
-  const normalizedName = operationName.replace(
-    /\/publishers\/google\/models\/[^/]+\/operations\//,
-    "/operations/"
-  );
+  // Check if this is a publisher model operation (contains /publishers/)
+  const isPublisherModel = operationName.includes("/publishers/");
 
-  const endpoint = `https://${REGION}-aiplatform.googleapis.com/v1beta1/${normalizedName}`;
+  if (isPublisherModel) {
+    // Publisher model operations use a special fetchPredictOperation endpoint
+    // Extract resource name (everything before /operations/)
+    const resourceName = operationName.split("/operations/")[0];
+
+    const endpoint = `https://${REGION}-aiplatform.googleapis.com/v1beta1/${resourceName}:fetchPredictOperation`;
+
+    logger.debug("Polling publisher model operation", {
+      operationName,
+      resourceName,
+      endpoint,
+    });
+
+    const response = await fetch(endpoint, {
+      method: "POST",  // fetchPredictOperation uses POST, not GET
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        operationName: operationName,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      throw new Error(`Vertex AI fetchPredictOperation error: ${response.status} ${response.statusText} - ${errorBody}`);
+    }
+
+    return response.json() as Promise<VertexAIOperation>;
+  }
+
+  // For standard Vertex AI operations (non-publisher models)
+  const endpoint = `https://${REGION}-aiplatform.googleapis.com/v1beta1/${operationName}`;
 
   const response = await fetch(endpoint, {
     method: "GET",

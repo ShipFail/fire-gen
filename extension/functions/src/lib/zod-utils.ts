@@ -80,15 +80,58 @@ export const SampleRateSchema = z.number().int().positive().refine(
 );
 
 /**
+ * TWO-LAYER SCHEMA ARCHITECTURE
+ * ==============================
+ *
+ * FireGen uses a two-layer schema transformation pattern to bridge incompatibilities
+ * between Vertex AI model requirements and Gemini's response_schema parameter.
+ *
+ * **Layer 1: Model API Schema (Source of Truth)**
+ * - Defined in Zod schemas (e.g., veo-3.1-fast-generate-preview.schema.ts)
+ * - Uses semantically correct types (e.g., durationSeconds: z.union([z.literal(4), z.literal(6), z.literal(8)]))
+ * - Integers are integers, strings are strings - matches actual Vertex AI REST API
+ * - Example: durationSeconds accepts numbers 4, 6, or 8
+ *
+ * **Layer 2: Gemini Response Schema (Transformation)**
+ * - Gemini's response_schema parameter has stricter requirements than the actual API
+ * - ALL enum values must be strings, regardless of semantic type
+ * - Type field must be "string" for any object containing enum
+ * - Example: durationSeconds enum becomes ["4", "6", "8"] with type "string"
+ *
+ * **Transformation Flow:**
+ * 1. Define schema in Layer 1 (Zod with correct types)
+ * 2. Transform Layer 1 → Layer 2 via transformSchemaForGeminiResponseSchema()
+ * 3. Send Layer 2 to Gemini's response_schema parameter
+ * 4. Gemini returns JSON with string enums
+ * 5. Convert Layer 2 → Layer 1 via convertStringEnumsToNumbers() (in validate-json.ts)
+ * 6. Validate against Layer 1 Zod schema
+ *
+ * **Why This Pattern:**
+ * - Gemini API rejects integer enums in response_schema (returns 400 error)
+ * - Model APIs (Veo, etc.) expect integer types for numeric fields
+ * - Schema must match actual API for validation to pass
+ * - Transformation layer bridges this gap transparently
+ *
+ * @see validateFinalJson in validate-json.ts for reverse transformation
+ */
+
+/**
  * Transform JSON schema for Gemini's response schema parameter.
  *
- * Gemini requires all enum values to be strings in the response_schema,
- * AND the type field must be "string" when enum is present.
- * This function recursively converts integer enum values to string enum values
- * and ensures type is "string" for enum fields.
+ * Converts Layer 1 (Model API Schema) → Layer 2 (Gemini Response Schema).
  *
- * @param schema - JSON schema to transform
- * @returns Transformed schema with string enums and correct types
+ * Transformations:
+ * - All enum values → strings (e.g., [4, 6, 8] → ["4", "6", "8"])
+ * - Type field → "string" for any object containing enum
+ *
+ * @param schema - JSON schema to transform (from zodToJsonSchema())
+ * @returns Transformed schema compatible with Gemini response_schema parameter
+ * @example
+ * // Before transformation (Layer 1):
+ * { type: "number", enum: [4, 6, 8] }
+ *
+ * // After transformation (Layer 2):
+ * { type: "string", enum: ["4", "6", "8"] }
  */
 export function transformSchemaForGeminiResponseSchema(
   schema: unknown

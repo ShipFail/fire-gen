@@ -4,15 +4,41 @@
  * Post-process: JSON Validation
  *
  * Validate JSON against model's Zod schema.
+ *
+ * **Two-Layer Schema Architecture - Reverse Transformation**
+ *
+ * This module handles Layer 2 → Layer 1 conversion:
+ * - Layer 2: Gemini returns JSON with string enums (e.g., durationSeconds: "8")
+ * - Layer 1: Model API expects correct types (e.g., durationSeconds: 8)
+ *
+ * @see transformSchemaForGeminiResponseSchema in zod-utils.ts for forward transformation
  */
 
 /**
  * Convert string enum values back to their original types.
- * Gemini returns all enums as strings, but some models (like Veo)
- * expect numeric enums.
  *
- * @param obj - Object to transform
- * @returns Object with converted enum values
+ * Converts Layer 2 (Gemini Response) → Layer 1 (Model API).
+ *
+ * **Why This Is Needed:**
+ * - Gemini response_schema requires all enums as strings
+ * - Model APIs (Veo, etc.) expect integer types for numeric fields
+ * - This function bridges the gap by converting strings back to numbers
+ *
+ * **Current Conversions:**
+ * - durationSeconds: "4" | "6" | "8" → 4 | 6 | 8
+ *
+ * **Adding New Conversions:**
+ * When adding new models with numeric enums, add field name checks here.
+ * Pattern: `if (key === "fieldName" && typeof value === "string")`
+ *
+ * @param obj - Object from Gemini (with string enums)
+ * @returns Object with converted numeric enums (ready for Zod validation)
+ * @example
+ * // Input (Layer 2 - from Gemini):
+ * { durationSeconds: "8" }
+ *
+ * // Output (Layer 1 - for Model API):
+ * { durationSeconds: 8 }
  */
 function convertStringEnumsToNumbers(obj: unknown): unknown {
   if (typeof obj !== "object" || obj === null) {

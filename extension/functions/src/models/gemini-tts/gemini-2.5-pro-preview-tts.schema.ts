@@ -21,7 +21,7 @@ const Gemini25ProPreviewTTSVoiceSchema = z.enum([
 // ============= CONTENT SCHEMA =============
 
 const Gemini25ProPreviewTTSContentSchema = z.object({
-  role: z.literal("user").optional()
+  role: z.literal("user")
     .describe("Message sender role, always user for synthesis requests"),
   parts: z.array(z.object({
     text: TextContentSchema

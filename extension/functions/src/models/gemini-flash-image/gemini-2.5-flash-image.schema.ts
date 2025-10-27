@@ -38,7 +38,7 @@ const SafetySettingSchema = z.object({
 // ============= CONTENT SCHEMA =============
 
 const Gemini25FlashImageContentSchema = z.object({
-  role: z.literal("user").optional()
+  role: z.literal("user")
     .describe("Message sender role, always user for generation requests"),
   parts: z.array(z.object({
     text: PromptSchema

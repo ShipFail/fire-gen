@@ -79,7 +79,7 @@ export const STEP3_SYSTEM = `You are an expert full stack engineer generating JS
 **Guidelines:**
 - read the schema carefully and use all reasoning from previous steps to fill in parameter values.
 - keep the original prompt intact, do not modify it.
-- CRITICAL: Preserve URL tags EXACTLY as self-closing XML: <FIREGEN_IMAGE_URI_1/>, <FIREGEN_VIDEO_URI_2/>, <FIREGEN_AUDIO_URI_3/> - never omit the closing slash or modify URLs.
+- XML tags like <FIREGEN_IMAGE_URI_1/>, <FIREGEN_VIDEO_URI_2/>, <FIREGEN_AUDIO_URI_3/> are place holder for URI/URL links - never omit the closing slash or modify URLs.
 - Apply all reasoning from previous steps
 - Use inferred parameter values
 `

@@ -73,26 +73,27 @@ export async function startJob(jobId: string, job: JobNode): Promise<void> {
       logger.info("Job started (async)", {jobId, operationName: result.operationName});
     } else if (result.output) {
       // Sync operation - complete immediately
-      const files: Record<string, FileInfo> = {};
+      const files: FileInfo[] = [];
 
-      // Build files map
+      // Build files array
       if (result.output.uri) {
         const ext = getFileExtension(result.output.uri, result.output.metadata?.mimeType as string);
         const filename = `file0${ext}`;
         const signedUrl = await generateSignedUrl(result.output.uri);
 
-        files[filename] = {
+        files.push({
+          name: filename,
           gs: result.output.uri,
           https: signedUrl || "",
           mimeType: result.output.metadata?.mimeType as string,
           size: result.output.metadata?.size as number,
-        };
+        });
       }
 
       await jobRef.update({
         status: "succeeded",
         response: result.rawResponse || {},  // Store raw model response
-        files: Object.keys(files).length > 0 ? files : undefined,
+        files: files.length > 0 ? files : undefined,
         "metadata/updatedAt": Date.now(),
       });
 

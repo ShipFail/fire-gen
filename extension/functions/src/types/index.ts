@@ -19,7 +19,7 @@ export interface JobNode {
   status: JobStatus;
   request: Record<string, unknown>;         // Raw request sent to model
   response?: Record<string, unknown>;       // Raw response from model
-  files?: Record<string, FileInfo>;         // Generated files (file0.mp4, file1.png, etc.)
+  files?: FileInfo[];                       // Generated files array (ordered)
   error?: JobError;                         // System errors (model errors in response.error)
   assisted?: AssistedData;                  // AI-assisted mode data (only present if AI analyzer was used)
   metadata: JobMetadata;                    // Job metadata (timestamps, version, polling info, etc.)

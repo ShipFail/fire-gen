@@ -12,6 +12,11 @@ rule_format: "Make each rule a high-level, concise, short, and clear one-liner."
 - **AGENTS.md** (this file) - Working directory rules for AI agents (Claude Code, Gemini CLI, etc.)
 - **TEST.md** - Test data examples
 
+## Documentation Positioning
+
+1. **LLMS.md is for external consumers** - AI agents integrating FireGen use LLMS.md for API schemas, job structure, and integration examples (consumer perspective: "how to USE")
+2. **README.md is for internal developers** - Human developers building/deploying FireGen use README.md for setup, installation, and development workflow (builder perspective: "how to BUILD")
+
 ## RTDB Schema (Critical User Interface)
 
 **This is the most important interface to end-users. All changes must maintain this structure.**
@@ -28,14 +33,15 @@ firegen-jobs/{jobId}/
   response?: Record<string, unknown>        // Raw response from model API (includes tokens, safety, etc.)
   
   // Generated files (user access)
-  files?: {
-    "file0.mp4": {                          // Sequential naming: file0, file1, file2...
+  files?: [
+    {
+      name: string                          // Filename (e.g., "file0.mp4", "file1.png")
       gs: string                            // GCS URI (gs://bucket/path/file0.mp4)
       https: string                         // Signed URL (expires in 25h)
       mimeType?: string                     // e.g., "video/mp4", "image/png"
       size?: number                         // File size in bytes
     }
-  }
+  ]
   
   // Errors
   error?: {

@@ -37,22 +37,55 @@ FireGen is a Firebase Cloud Functions extension that provides serverless AI medi
 
 FireGen supports **two modes** for creating jobs:
 
-1. **🤖 AI-Assisted Mode (Recommended for AI agents)** - Just write natural language prompts
-2. **🎯 Explicit Mode (Recommended for precision control)** - Write structured requests
+1. **🎯 Explicit Mode (Production - Precise Control)** ✅ **DEFAULT** - Write structured requests for production apps
+2. **🤖 AI-Assisted Mode (Development - Debug Tool)** - Natural language prompts for prototyping
 
-#### AI-Assisted Mode - Ultra Simple
+#### Explicit Mode - Production Default
 
 ```typescript
-import {getDatabase, ref, push, set} from "firebase/database";
+import {getDatabase, ref, push} from "firebase/database";
+
+// Structured request with explicit model choice
+async function createJob() {
+  const db = getDatabase();
+
+  const newJobRef = await push(ref(db, 'firegen-jobs'), {
+    model: "veo-3.1-fast-generate-preview",
+    status: "requested",
+    request: {
+      model: "veo-3.1-fast-generate-preview",
+      instances: [{
+        prompt: "A serene sunset over majestic mountains",
+      }],
+      parameters: {
+        durationSeconds: 8,
+        aspectRatio: "16:9",
+        generateAudio: true,
+      },
+    },
+  });
+
+  return newJobRef.key;
+}
+```
+
+**Use when:**
+- Production applications requiring precise control
+- You know the exact model and parameters
+- Automated systems and APIs
+- Cost-sensitive scenarios (no AI overhead)
+
+**See [LLMS.md](./LLMS.md#mode-1-explicit-mode-production) for complete examples.**
+
+#### AI-Assisted Mode - Development Only
+
+```typescript
+import {getDatabase, ref, push} from "firebase/database";
 
 // Just write a string! AI chooses the best model automatically.
 async function createAIJob(prompt: string) {
   const db = getDatabase();
-  const jobsRef = ref(db, 'firegen-jobs');
-  const newJobRef = push(jobsRef);
-
-  await set(newJobRef, prompt);  // ← Just the string!
-
+  const newJobRef = await push(ref(db, 'firegen-jobs'), prompt);
   return newJobRef.key;
 }
 
@@ -68,33 +101,13 @@ await createAIJob("Say 'Welcome to FireGen' in a cheerful voice");
 - Extracts parameters intelligently (duration, aspect ratio, quality)
 - Your `uid` extracted securely from auth (no client input needed)
 
-**See [LLMS.md](./LLMS.md#ai-assisted-mode-natural-language-interface) for complete examples.**
+**Use when:**
+- Rapid prototyping and iteration
+- Learning FireGen capabilities
+- Debugging with natural language
+- Non-production environments
 
-#### Explicit Mode - Full Control
-
-```typescript
-import {getDatabase, ref, push, set} from "firebase/database";
-
-// Structured request with explicit model choice
-const job = {
-  uid: user.uid,
-  status: "requested",
-  request: {
-    type: "video",
-    model: "veo-3.1-fast-generate-preview",
-    prompt: "A serene sunset over majestic mountains",
-    duration: 8,
-    aspectRatio: "16:9",
-    resolution: "1080p",
-    audio: true
-  }
-};
-
-const newJobRef = push(ref(db, 'firegen-jobs'));
-await set(newJobRef, job);
-```
-
-**See [LLMS.md](./LLMS.md#explicit-mode-structured-requests) for job schemas.**
+**See [LLMS.md](./LLMS.md#mode-2-ai-assisted-mode-development) for complete examples.**
 
 ---
 

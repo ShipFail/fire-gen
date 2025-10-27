@@ -128,25 +128,26 @@ export const onJobPoll = onTaskDispatched(
 
           logger.info("Operation completed", {jobId, uri: output.uri});
 
-          // Build files map
-          const files: Record<string, FileInfo> = {};
+          // Build files array
+          const files: FileInfo[] = [];
           if (output.uri) {
             const ext = getFileExtension(output.uri, output.metadata?.mimeType as string);
             const filename = `file0${ext}`;
             const signedUrl = await generateSignedUrl(output.uri);
 
-            files[filename] = {
+            files.push({
+              name: filename,
               gs: output.uri,
               https: signedUrl || "",
               mimeType: output.metadata?.mimeType as string,
               size: output.metadata?.size as number,
-            };
+            });
           }
 
           await jobRef.update({
             status: "succeeded",
             response: result.data || {},  // Store raw model response
-            files: Object.keys(files).length > 0 ? files : undefined,
+            files: files.length > 0 ? files : undefined,
             "metadata/updatedAt": Date.now(),
           });
         }

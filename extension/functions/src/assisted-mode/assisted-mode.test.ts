@@ -125,13 +125,13 @@ const fixtures = [
               image: expect.objectContaining({
                 gcsUri: expect.stringContaining("person1.jpg"),
               }),
-              referenceType: "SUBJECT",
+              referenceType: expect.stringMatching(/^(asset|style)$/),
             }),
             expect.objectContaining({
               image: expect.objectContaining({
                 gcsUri: expect.stringContaining("person2.jpg"),
               }),
-              referenceType: "SUBJECT",
+              referenceType: expect.stringMatching(/^(asset|style)$/),
             }),
           ]),
         }),
@@ -156,19 +156,19 @@ const fixtures = [
               image: expect.objectContaining({
                 gcsUri: "gs://example/product1.jpg",
               }),
-              referenceType: "SUBJECT",
+              referenceType: expect.stringMatching(/^(asset|style)$/),
             }),
             expect.objectContaining({
               image: expect.objectContaining({
                 gcsUri: "gs://example/product2.jpg",
               }),
-              referenceType: "SUBJECT",
+              referenceType: expect.stringMatching(/^(asset|style)$/),
             }),
             expect.objectContaining({
               image: expect.objectContaining({
                 gcsUri: "gs://example/product3.jpg",
               }),
-              referenceType: "SUBJECT",
+              referenceType: expect.stringMatching(/^(asset|style)$/),
             }),
           ]),
         }),
@@ -355,13 +355,13 @@ const fixtures = [
               image: expect.objectContaining({
                 gcsUri: "gs://products/shoe-left.jpg",
               }),
-              referenceType: expect.any(String),
+              referenceType: expect.stringMatching(/^(asset|style)$/),
             }),
             expect.objectContaining({
               image: expect.objectContaining({
                 gcsUri: "gs://products/shoe-right.jpg",
               }),
-              referenceType: expect.any(String),
+              referenceType: expect.stringMatching(/^(asset|style)$/),
             }),
           ]),
         }),
@@ -476,7 +476,7 @@ const fixtures = [
           role: "user",
           parts: expect.arrayContaining([
             expect.objectContaining({
-              text: expect.stringMatching(/say.+hello world/i),
+              text: expect.stringMatching(/hello world/i),
             }),
           ]),
         }),

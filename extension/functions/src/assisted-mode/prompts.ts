@@ -24,10 +24,10 @@ Select the best model for the user's prompt. Return JSON with:
 }
 
 **Guidelines:**
-- **Video keywords** → veo-3.1-fast-generate-preview: animate, bring to life, movement, motion, video, walk, run, fly, rotate, zoom, pan, extend, continue
-- **Image keywords** → gemini-2.5-flash-image: generate, create, edit, modify, style, photo, picture, portrait, landscape (static only)
-- **Audio keywords** → gemini-2.5-flash-preview-tts: speak, say, voice, audio, TTS, narrate
-- **When in doubt**: If prompt mentions ANY motion/animation → choose video model
+- Understand the user's intent semantically - what output modality do they need?
+- Video model → temporal content (movement, sequences, animation over time)
+- Image model → static visual content (single frame, no temporal dimension)
+- Audio model → speech synthesis, voice output
 - Provide detailed reasoning for your selection`;
 
 /**

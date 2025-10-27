@@ -37,7 +37,8 @@ const Veo31InstanceSchema = z.object({
 const Veo31ParametersSchema = z.object({
   aspectRatio: z.enum(["16:9", "9:16", "1:1", "21:9", "3:4", "4:3"]).default("16:9"),
   compressionQuality: z.enum(["OPTIMIZED", "LOSSLESS"]).optional(),
-  durationSeconds: z.union([z.literal(4), z.literal(6), z.literal(8)]).default(8),
+  // Vertex AI requires type: "string" for all enum fields, even for numeric values
+  durationSeconds: z.union([z.literal("4"), z.literal("6"), z.literal("8")]).default("8"),
   enhancePrompt: z.boolean().optional(),
   generateAudio: z.boolean().default(true),
   negativePrompt: z.string().optional(),
@@ -65,7 +66,7 @@ const Veo31ParametersSchema = z.object({
  *   "parameters": {
  *     "aspectRatio": "16:9" | "9:16" | "1:1" | "21:9" | "3:4" | "4:3",
  *     "compressionQuality": "OPTIMIZED" | "LOSSLESS",
- *     "durationSeconds": 4 | 6 | 8,
+ *     "durationSeconds": "4" | "6" | "8",
  *     "enhancePrompt": boolean,
  *     "generateAudio": boolean,
  *     "negativePrompt": string,

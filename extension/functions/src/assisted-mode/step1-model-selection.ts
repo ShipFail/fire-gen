@@ -65,7 +65,11 @@ export async function step1ModelSelection(
         candidateCount: 1,
         maxOutputTokens: 8192,
         responseMimeType: "application/json",
-        responseSchema: zodToJsonSchema(Step1Schema),
+        responseSchema: zodToJsonSchema(Step1Schema, {
+          $refStrategy: "none",
+          target: "openApi3",
+          errorMessages: false,
+        }),
       },
     });
 

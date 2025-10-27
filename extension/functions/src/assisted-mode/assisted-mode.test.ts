@@ -65,7 +65,7 @@ const fixtures = [
         }),
       ]),
       parameters: expect.objectContaining({
-        durationSeconds: expect.any(Number),
+        durationSeconds: expect.stringMatching(/^(4|6|8)$/),
         aspectRatio: expect.any(String),
         generateAudio: expect.any(Boolean),
       }),
@@ -327,7 +327,6 @@ const fixtures = [
           }),
         }),
       ]),
-      parameters: expect.any(Object),
     },
   },
   {

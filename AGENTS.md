@@ -134,6 +134,7 @@ firegen-jobs/{jobId}/
 
 - Each `.schema.ts` file must be completely self-contained - NEVER import schemas from other models; duplicate code instead to enable independent evolution.
 - Schema structure must match official Vertex AI REST API exactly - no transformations or additions.
+- **When API requirements conflict with semantic types, follow API requirements** - e.g., Vertex AI requires `type: "string"` for all enum fields, so use `z.union([z.literal("4"), z.literal("6"), z.literal("8")])` instead of `z.union([z.literal(4), z.literal(6), z.literal(8)])` even though semantically they're numbers. The API contract is the source of truth, not semantic ideals.
 - Both Request AND Response schemas must be defined in same `.schema.ts` file.
 - Types are inferred from schemas using `z.infer<typeof Schema>` - never manually duplicate type definitions.
 - Use `schema.parse(request)` for validation in all model adapters.

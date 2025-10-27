@@ -41,7 +41,11 @@ export async function step2ParameterInference(
 
   // Get model-specific JSON Schema
   const modelSchema = getModelSchema(selectedModel);
-  const jsonSchema = JSON.stringify(zodToJsonSchema(modelSchema), null, 2);
+  const jsonSchema = JSON.stringify(zodToJsonSchema(modelSchema, {
+    $refStrategy: "none",
+    target: "openApi3",
+    errorMessages: false,
+  }), null, 2);
 
   // Build system instruction with JSON Schema
   const systemInstruction = `You are an expert full stack engineer inferring parameters for ${selectedModel}.

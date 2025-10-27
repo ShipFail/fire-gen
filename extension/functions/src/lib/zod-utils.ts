@@ -20,6 +20,8 @@ export function zodToJsonExample(schema: z.ZodTypeAny): string {
   const jsonSchema = zodToJsonSchema(schema, {
     name: undefined,
     $refStrategy: "none",
+    target: "openApi3",
+    errorMessages: false,
   });
 
   return JSON.stringify(jsonSchema, null, 2);

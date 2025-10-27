@@ -96,6 +96,45 @@ export async function predict(
 }
 
 /**
+ * Remove Vertex AI unsupported JSON Schema fields (defense-in-depth safety layer).
+ *
+ * Schemas should be generated correctly using:
+ *   zodToJsonSchema(schema, { $refStrategy: "none", target: "openApi3" })
+ *
+ * This function acts as a runtime safety net for edge cases and handles
+ * unavoidable transformations required by Vertex AI API limitations.
+ *
+ * Transformations:
+ * - $schema, $ref: Removed (should not be generated with proper zodToJsonSchema options)
+ * - const: Converted to enum with single value (Vertex AI API limitation - unavoidable)
+ */
+function stripSchemaFields(obj: unknown): unknown {
+  if (obj === null || typeof obj !== "object") {
+    return obj;
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map(stripSchemaFields);
+  }
+
+  const result: Record<string, unknown> = {};
+
+  for (const [key, value] of Object.entries(obj)) {
+    // Skip unsupported fields
+    if (key === "$schema" || key === "$ref") {
+      continue;
+    }
+
+    // Convert 'const' to 'enum' with single value (Vertex AI compatible)
+    if (key === "const") {
+      result["enum"] = [value];
+      continue;
+    }
+
+    result[key] = stripSchemaFields(value);
+  }
+  return result;
+}/**
  * Generic REST API call to any Vertex AI endpoint.
  * Returns raw JSON response - model adapters handle type casting.
  */
@@ -106,9 +145,12 @@ export async function callVertexAPI<T = unknown>(
   const token = await auth.getAccessToken();
   const fullEndpoint = `https://${REGION}-aiplatform.googleapis.com/${endpoint}`;
 
+  // Strip $schema fields from payload (Vertex AI doesn't accept them)
+  const cleanedPayload = stripSchemaFields(payload) as Record<string, unknown>;
+
   logger.debug("Vertex AI API request", {
     endpoint: fullEndpoint,
-    payload,
+    payload: cleanedPayload,
   });
 
   const response = await fetch(fullEndpoint, {
@@ -117,7 +159,7 @@ export async function callVertexAPI<T = unknown>(
       "Authorization": `Bearer ${token}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(cleanedPayload),
   });
 
   if (!response.ok) {

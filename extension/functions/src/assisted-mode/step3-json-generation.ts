@@ -56,7 +56,11 @@ ${allReasons.map((r) => `- ${r}`).join("\n")}`;
     ],
     generationConfig: {
       responseMimeType: "application/json",
-      responseSchema: zodToJsonSchema(modelSchema),
+      responseSchema: zodToJsonSchema(modelSchema, {
+        $refStrategy: "none",
+        target: "openApi3",
+        errorMessages: false,
+      }),
     },
   });
 

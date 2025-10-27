@@ -230,7 +230,7 @@ const fixtures = [
           video: expect.objectContaining({
             gcsUri: "gs://example/scene.mp4",
           }),
-          image: expect.objectContaining({
+          lastFrame: expect.objectContaining({
             gcsUri: "gs://example/scene-last-frame.jpg",
           }),
         }),
@@ -271,25 +271,21 @@ const fixtures = [
         expect.objectContaining({
           // Prompt should describe the action/scene WITHOUT URLs
           prompt: expect.stringMatching(/^(?!.*firebasestorage).*man.*stretches.*smiles.*Henley.*coffee.*work/i),
-          // URLs converted to exact GCS format (gs:// URI requirement)
+          // First frame goes in image field
           image: expect.objectContaining({
             gcsUri: "gs://studio-3670859293-6f970.firebasestorage.app/users/nZ86oPazPgT3yZjTHhFFjkj7sR42/projects/x5f8I6Tq99AGgj4HJrzF/keyframes/fd3d84c9-9331-49ed-9739-7b35e76d9f9b.png",
           }),
-          referenceImages: expect.arrayContaining([
-            expect.objectContaining({
-              image: expect.objectContaining({
-                gcsUri: "gs://studio-3670859293-6f970.firebasestorage.app/users/nZ86oPazPgT3yZjTHhFFjkj7sR42/projects/x5f8I6Tq99AGgj4HJrzF/keyframes/5879bd22-6927-4549-9199-9281a6cd8115.png",
-              }),
-              referenceType: "LAST_FRAME",
-            }),
-          ]),
+          // Last frame goes in lastFrame field (not referenceImages)
+          lastFrame: expect.objectContaining({
+            gcsUri: "gs://studio-3670859293-6f970.firebasestorage.app/users/nZ86oPazPgT3yZjTHhFFjkj7sR42/projects/x5f8I6Tq99AGgj4HJrzF/keyframes/5879bd22-6927-4549-9199-9281a6cd8115.png",
+          }),
         }),
       ]),
       parameters: expect.objectContaining({
         aspectRatio: "9:16",
-        durationSeconds: expect.any(Number), // AI may select different durations (4, 6, or 8 seconds) - all valid
+        durationSeconds: "8",
         generateAudio: true, // Explicit: prompt says "audio: Sounds appropriate to the scene"
-        negativePrompt: expect.stringMatching(/text overlays|distracting music/i),
+        negativePrompt: expect.stringMatching(/(text overlays|distracting music)/i),
       }),
     },
   },

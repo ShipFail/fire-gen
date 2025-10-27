@@ -3,7 +3,7 @@ import {describe, test, expect} from "vitest";
 import {assistedRequest} from "./index.js";
 
 /**
- * AI Request Analyzer Test Suite
+ * AssistedMode Test Suite
  *
  * Uses test.concurrent.each() for parallel test execution.
  * Each fixture becomes one named test that can be filtered with -t flag.
@@ -12,10 +12,10 @@ import {assistedRequest} from "./index.js";
  * around Vitest issue #4963 (test.concurrent.each context not properly typed).
  *
  * Usage:
- * - Run all tests: npm run test:analyzer
- * - Run single test: npm run test:analyzer -- -t "video:sunset"
- * - Run category: npm run test:analyzer -- -t "video:"
- * - Run in watch mode: npm run test:analyzer:watch -- -t "image:"
+ * - Run all tests: npm run test:assisted-mode
+ * - Run single test: npm run test:assisted-mode -- -t "video:sunset"
+ * - Run category: npm run test:assisted-mode -- -t "video:"
+ * - Run in watch mode: npm run test:assisted-mode:watch -- -t "image:"
  */
 
 /**

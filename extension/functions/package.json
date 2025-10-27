@@ -14,13 +14,13 @@
     "logs": "firebase functions:log",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:analyzer": "vitest run ai-request-analyzer",
-    "test:analyzer:watch": "vitest ai-request-analyzer",
-    "test:video": "vitest run ai-request-analyzer -- -t \"video:\"",
-    "test:image": "vitest run ai-request-analyzer -- -t \"image:\"",
-    "test:audio": "vitest run ai-request-analyzer -- -t \"audio:\"",
-    "test:text": "vitest run ai-request-analyzer -- -t \"text:\"",
-    "debug:text": "npm run build && node lib/ai-request-analyzer/debug-reasoning.js"
+    "test:analyzer": "vitest run assisted-mode",
+    "test:analyzer:watch": "vitest assisted-mode",
+    "test:video": "vitest run assisted-mode -- -t \"video:\"",
+    "test:image": "vitest run assisted-mode -- -t \"image:\"",
+    "test:audio": "vitest run assisted-mode -- -t \"audio:\"",
+    "test:text": "vitest run assisted-mode -- -t \"text:\"",
+    "debug:text": "npm run build && node lib/assisted-mode/debug-reasoning.js"
   },
   "engines": {
     "node": "22"

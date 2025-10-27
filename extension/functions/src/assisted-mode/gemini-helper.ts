@@ -33,8 +33,11 @@ interface DeterministicGeminiOptions {
   /** System instruction text */
   systemInstruction: string;
 
-  /** User prompt text */
+  /** User's original prompt (first part of user message) */
   userPrompt: string;
+
+  /** Additional context/reasoning (optional - added as second part if provided) */
+  additionalContext?: string;
 
   /** Job ID for error messages */
   jobId: string;
@@ -61,6 +64,7 @@ export async function callDeterministicGemini(
   const {
     systemInstruction,
     userPrompt,
+    additionalContext,
     jobId,
     jsonSchema,
     maxOutputTokens = 8192,
@@ -100,6 +104,15 @@ export async function callDeterministicGemini(
     );
   }
 
+  // Build user message parts
+  // Part 1: User's original prompt (always first)
+  // Part 2: Additional context/reasoning (optional - if provided)
+  const userParts: Array<{text: string}> = [{text: userPrompt}];
+  
+  if (additionalContext) {
+    userParts.push({text: additionalContext});
+  }
+
   const response = await callVertexAPI<GeminiResponse>(endpoint, {
     systemInstruction: {
       parts: [{text: systemInstruction}],
@@ -107,7 +120,7 @@ export async function callDeterministicGemini(
     contents: [
       {
         role: "user",
-        parts: [{text: userPrompt}],
+        parts: userParts,
       },
     ],
     generationConfig,

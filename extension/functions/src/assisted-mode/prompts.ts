@@ -1,4 +1,4 @@
-// functions/src/ai-request-analyzer-v2/prompts.ts
+// functions/src/assisted-mode/prompts.ts
 
 /**
  * System Instructions for AI Steps

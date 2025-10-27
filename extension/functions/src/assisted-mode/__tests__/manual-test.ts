@@ -1,9 +1,9 @@
-// functions/src/ai-request-analyzer-v2/__tests__/manual-test.ts
+// functions/src/assisted-mode/__tests__/manual-test.ts
 
 /**
  * Manual test for AI Request Analyzer V2
  *
- * Run with: npx tsx src/ai-request-analyzer-v2/__tests__/manual-test.ts
+ * Run with: npx tsx src/assisted-mode/__tests__/manual-test.ts
  */
 
 import {analyzePrompt} from "../orchestrator.js";

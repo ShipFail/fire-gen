@@ -1,4 +1,4 @@
-// functions/src/ai-request-analyzer-v2/validate-json.ts
+// functions/src/assisted-mode/validate-json.ts
 
 /**
  * Post-process: JSON Validation

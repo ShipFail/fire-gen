@@ -1,4 +1,4 @@
-// functions/src/ai-request-analyzer-v2/step1-model-selection.ts
+// functions/src/assisted-mode/step1-model-selection.ts
 
 /**
  * Step 1: Model Selection (AI JSON Mode)

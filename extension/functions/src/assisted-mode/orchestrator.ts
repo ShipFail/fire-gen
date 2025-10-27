@@ -1,9 +1,9 @@
-// functions/src/ai-request-analyzer-v2/orchestrator.ts
+// functions/src/assisted-mode/orchestrator.ts
 
 /**
- * Pipeline Orchestrator
+ * Assisted Mode Pipeline Orchestrator
  *
- * Coordinates 3-step AI reasoning chain:
+ * Coordinates 3-step AI reasoning chain for prompt-to-request conversion.
  * Pre-process → Step 1 → Step 2 → Step 3 → Post-process
  */
 

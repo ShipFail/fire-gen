@@ -1,4 +1,4 @@
-// functions/src/ai-request-analyzer-v2/constants.ts
+// functions/src/assisted-mode/constants.ts
 
 /**
  * Constants for AI Request Analyzer V2

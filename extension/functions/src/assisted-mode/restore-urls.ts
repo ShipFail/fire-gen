@@ -1,4 +1,4 @@
-// functions/src/ai-request-analyzer-v2/restore-urls.ts
+// functions/src/assisted-mode/restore-urls.ts
 
 /**
  * Post-process: URL Restoration

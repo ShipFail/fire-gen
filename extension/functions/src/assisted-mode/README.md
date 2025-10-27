@@ -1,6 +1,20 @@
-# AI Request Analyzer V2
+# Assisted Mode
 
-**Reasoning Chain Architecture** - 3-step transparent AI pipeline for converting natural language to structured model requests.
+**AI-Powered Prompt Analysis with Reasoning Chain Architecture**
+
+Converts natural language prompts into structured model requests with full transparency through a 3-step AI reasoning pipeline.
+
+## What is Assisted Mode?
+
+Assisted Mode is FireGen's AI-powered interface that allows users to create media using natural language instead of explicit API parameters. When a job includes an `assisted.prompt` field, this module:
+
+1. Analyzes the user's natural language request
+2. Selects the optimal AI model (Veo, Gemini Image, Gemini TTS)
+3. Infers all necessary parameters
+4. Generates a validated JSON request
+5. Provides complete reasoning transparency via `assisted.reasons`
+
+**Contrast with Explicit Mode:** Users can also make direct API requests with exact model and parameters (no AI analysis needed).
 
 ## Architecture Overview
 
@@ -205,7 +219,7 @@ interface AnalyzeResult {
 ## Usage
 
 ```typescript
-import {analyzePrompt} from "./ai-request-analyzer-v2/index.js";
+import {analyzePrompt} from "./assisted-mode/index.js";
 
 const result = await analyzePrompt(
   "Create a 6-second video of a sunset with gs://bucket/reference.jpg",
@@ -223,7 +237,7 @@ console.log("Request:", result.request);
 
 Run with:
 ```bash
-npx tsx src/ai-request-analyzer-v2/__tests__/manual-test.ts
+npx tsx src/assisted-mode/__tests__/manual-test.ts
 ```
 
 Tests 3 scenarios:

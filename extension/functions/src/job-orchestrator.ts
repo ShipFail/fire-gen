@@ -7,7 +7,7 @@ import {z} from "zod";
 import {JOB_TTL_MS, POLL_INTERVAL_MS} from "./config.js";
 import {generateSignedUrl} from "./storage.js";
 import {enqueuePollTask} from "./poller.js";
-import {analyzePrompt} from "./ai-request-analyzer/index.js";
+import {analyzePrompt} from "./assisted-mode/index.js";
 import {getModelAdapter, isValidModelId} from "./models/index.js";
 import {getFireGenVersion} from "./version.js";
 import type {JobNode, FileInfo} from "./types/index.js";
@@ -151,15 +151,15 @@ export async function analyzeAndTransformJob(
 
     logger.info("Prompt analyzed successfully", {
       jobId,
-      analyzedType: analyzed.request.type,
-      analyzedModel: analyzed.request.model,
+      model: analyzed.model,
+      reasoningSteps: analyzed.reasons.length,
     });
 
     // Step 2: Build complete job structure
     const now = Date.now();
     const completeJob: JobNode = {
       uid,
-      model: analyzed.request.model,      // Model at root level
+      model: analyzed.model,              // Model at root level
       status: "requested",
       request: analyzed.request,          // Raw request to model
       assisted: {                         // AI-assisted mode data

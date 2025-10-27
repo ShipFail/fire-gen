@@ -1,4 +1,4 @@
-// functions/src/ai-request-analyzer-v2/step3-json-generation.ts
+// functions/src/assisted-mode/step3-json-generation.ts
 
 /**
  * Step 3: JSON Generation (AI JSON Schema Mode)

@@ -1,4 +1,4 @@
-// functions/src/ai-request-analyzer-v2/step2-parameter-inference.ts
+// functions/src/assisted-mode/step2-parameter-inference.ts
 
 /**
  * Step 2: Parameter Inference (AI Reasoning)

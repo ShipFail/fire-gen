@@ -3,44 +3,42 @@
 /**
  * Post-process: URL Restoration
  *
- * Replace URL tags with actual GCS URIs.
+ * Replace URL tags with actual GCS URIs using unified global indexing.
  */
-
-import type {ExtractedUrls} from "./preprocess-urls.js";
 
 /**
  * Restore URLs in JSON by replacing tags with actual URIs.
  *
- * Tags:
- * - <FIREGEN_IMAGE_URI_1/> → extractedUrls.images[0]
- * - <FIREGEN_VIDEO_URI_1/> → extractedUrls.videos[0]
- * - <FIREGEN_AUDIO_URI_1/> → extractedUrls.audio[0]
+ * Tags use unified global indexing:
+ * - <FIREGEN_IMAGE_URI_1/> → extractedUrls[0]
+ * - <FIREGEN_VIDEO_URI_2/> → extractedUrls[1]
+ * - <FIREGEN_AUDIO_URI_3/> → extractedUrls[2]
+ *
+ * All tags (IMAGE/VIDEO/AUDIO) share the same index space,
+ * so we can extract the tag number and look up directly in the flat array.
  */
 export function restoreUrls(
   jsonWithTags: Record<string, unknown>,
-  extractedUrls: ExtractedUrls,
+  extractedUrls: string[],
 ): Record<string, unknown> {
-  const jsonString = JSON.stringify(jsonWithTags);
+  let restoredString = JSON.stringify(jsonWithTags);
 
-  let restoredString = jsonString;
+  // Match any FIREGEN tag and extract the tag number
+  // Pattern: <FIREGEN_(IMAGE|VIDEO|AUDIO)_URI_(\d+)/>
+  restoredString = restoredString.replace(
+    /<FIREGEN_(IMAGE|VIDEO|AUDIO)_URI_(\d+)\/>/g,
+    (match, mediaType, tagNumber) => {
+      const index = parseInt(tagNumber, 10) - 1; // Convert 1-based to 0-based
+      const url = extractedUrls[index];
 
-  // Restore image URIs
-  extractedUrls.images.forEach((uri, index) => {
-    const tag = `<FIREGEN_IMAGE_URI_${index + 1}/>`;
-    restoredString = restoredString.replace(new RegExp(tag, "g"), uri);
-  });
+      if (!url) {
+        console.warn(`[restore-urls] Tag ${match} not found in extractedUrls (index ${index})`);
+        return match; // Return original tag if URL not found
+      }
 
-  // Restore video URIs
-  extractedUrls.videos.forEach((uri, index) => {
-    const tag = `<FIREGEN_VIDEO_URI_${index + 1}/>`;
-    restoredString = restoredString.replace(new RegExp(tag, "g"), uri);
-  });
-
-  // Restore audio URIs
-  extractedUrls.audio.forEach((uri, index) => {
-    const tag = `<FIREGEN_AUDIO_URI_${index + 1}/>`;
-    restoredString = restoredString.replace(new RegExp(tag, "g"), uri);
-  });
+      return url;
+    }
+  );
 
   return JSON.parse(restoredString) as Record<string, unknown>;
 }

@@ -12,9 +12,9 @@ import type {ExtractedUrls} from "./preprocess-urls.js";
  * Restore URLs in JSON by replacing tags with actual URIs.
  *
  * Tags:
- * - <IMAGE_URI_1/> → extractedUrls.images[0]
- * - <VIDEO_URI_1/> → extractedUrls.videos[0]
- * - <AUDIO_URI_1/> → extractedUrls.audio[0]
+ * - <FIREGEN_IMAGE_URI_1/> → extractedUrls.images[0]
+ * - <FIREGEN_VIDEO_URI_1/> → extractedUrls.videos[0]
+ * - <FIREGEN_AUDIO_URI_1/> → extractedUrls.audio[0]
  */
 export function restoreUrls(
   jsonWithTags: Record<string, unknown>,
@@ -26,19 +26,19 @@ export function restoreUrls(
 
   // Restore image URIs
   extractedUrls.images.forEach((uri, index) => {
-    const tag = `<IMAGE_URI_${index + 1}/>`;
+    const tag = `<FIREGEN_IMAGE_URI_${index + 1}/>`;
     restoredString = restoredString.replace(new RegExp(tag, "g"), uri);
   });
 
   // Restore video URIs
   extractedUrls.videos.forEach((uri, index) => {
-    const tag = `<VIDEO_URI_${index + 1}/>`;
+    const tag = `<FIREGEN_VIDEO_URI_${index + 1}/>`;
     restoredString = restoredString.replace(new RegExp(tag, "g"), uri);
   });
 
   // Restore audio URIs
   extractedUrls.audio.forEach((uri, index) => {
-    const tag = `<AUDIO_URI_${index + 1}/>`;
+    const tag = `<FIREGEN_AUDIO_URI_${index + 1}/>`;
     restoredString = restoredString.replace(new RegExp(tag, "g"), uri);
   });
 

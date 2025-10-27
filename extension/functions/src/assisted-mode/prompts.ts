@@ -24,9 +24,10 @@ Select the best model for the user's prompt. Return JSON with:
 }
 
 **Guidelines:**
-- Video generation → veo-3.1-fast-generate-preview
-- Image generation/editing → gemini-2.5-flash-image
-- Text-to-speech → gemini-2.5-flash-preview-tts
+- **Video keywords** → veo-3.1-fast-generate-preview: animate, bring to life, movement, motion, video, walk, run, fly, rotate, zoom, pan, extend, continue
+- **Image keywords** → gemini-2.5-flash-image: generate, create, edit, modify, style, photo, picture, portrait, landscape (static only)
+- **Audio keywords** → gemini-2.5-flash-preview-tts: speak, say, voice, audio, TTS, narrate
+- **When in doubt**: If prompt mentions ANY motion/animation → choose video model
 - Provide detailed reasoning for your selection`;
 
 /**
@@ -52,10 +53,12 @@ One reasoning line per parameter, format:
 Example:
 "durationSeconds: 8 → Default duration for short videos"
 "aspectRatio: 9:16 → User requested vertical video"
+"image.gcsUri: <FIREGEN_IMAGE_URI_1/> → User provided image URL"
 
 **Guidelines:**
 - Use default values when not specified
 - Infer from context when possible
+- For URL placeholders, use FIREGEN_ prefix: <FIREGEN_IMAGE_URI_1/>, <FIREGEN_VIDEO_URI_1/>, etc.
 - Be explicit about your reasoning`;
 }
 
@@ -71,6 +74,17 @@ Generate a valid JSON request matching the provided schema.
 
 **Guidelines:**
 - Follow the schema exactly
-- Use URL tags as-is (e.g., <IMAGE_URI_1/>)
+- Use URL placeholders EXACTLY as shown in the prompt with FIREGEN_ prefix and angle brackets
+- NEVER use placeholders without FIREGEN_ prefix or angle brackets
+- Examples: <FIREGEN_IMAGE_URI_1/>, <FIREGEN_VIDEO_URI_1/>, <FIREGEN_AUDIO_URI_1/>
 - Apply all reasoning from previous steps
-- Use inferred parameter values`;
+- Use inferred parameter values
+
+**CRITICAL - URL Placeholder Format (MUST match exactly):**
+- Image URLs: "<FIREGEN_IMAGE_URI_1/>", "<FIREGEN_IMAGE_URI_2/>", etc.
+- Video URLs: "<FIREGEN_VIDEO_URI_1/>", "<FIREGEN_VIDEO_URI_2/>", etc.
+- Audio URLs: "<FIREGEN_AUDIO_URI_1/>", "<FIREGEN_AUDIO_URI_2/>", etc.
+- Format: "<FIREGEN_" + type + "_URI_" + number + "/>"
+- WRONG: "<FIREGEN_IMAGE_URI_1>" (missing />)
+- WRONG: "FIREGEN_IMAGE_URI_1" (missing < and />)
+- RIGHT: "<FIREGEN_IMAGE_URI_1/>" (self-closing XML tag)`;

@@ -26,9 +26,9 @@ export interface UrlExtractionResult {
  * - HTTPS URLs → infer type from extension
  *
  * Tags:
- * - <IMAGE_URI_1/>, <IMAGE_URI_2/>, ...
- * - <VIDEO_URI_1/>, <VIDEO_URI_2/>, ...
- * - <AUDIO_URI_1/>, <AUDIO_URI_2/>, ...
+ * - <FIREGEN_IMAGE_URI_1/>, <FIREGEN_IMAGE_URI_2/>, ...
+ * - <FIREGEN_VIDEO_URI_1/>, <FIREGEN_VIDEO_URI_2/>, ...
+ * - <FIREGEN_AUDIO_URI_1/>, <FIREGEN_AUDIO_URI_2/>, ...
  */
 export function preprocessUrls(prompt: string): UrlExtractionResult {
   const extractedUrls: ExtractedUrls = {
@@ -51,21 +51,21 @@ export function preprocessUrls(prompt: string): UrlExtractionResult {
 
     // Detect type from extension
     if (path.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
-      const tag = `<IMAGE_URI_${imageIndex++}/>`;
+      const tag = `<FIREGEN_IMAGE_URI_${imageIndex++}/>`;
       extractedUrls.images.push(gcsUri);
       return tag;
     } else if (path.match(/\.(mp4|mov|avi|webm)$/i)) {
-      const tag = `<VIDEO_URI_${videoIndex++}/>`;
+      const tag = `<FIREGEN_VIDEO_URI_${videoIndex++}/>`;
       extractedUrls.videos.push(gcsUri);
       return tag;
     } else if (path.match(/\.(mp3|wav|aac|ogg)$/i)) {
-      const tag = `<AUDIO_URI_${audioIndex++}/>`;
+      const tag = `<FIREGEN_AUDIO_URI_${audioIndex++}/>`;
       extractedUrls.audio.push(gcsUri);
       return tag;
     }
 
     // Default to image
-    const tag = `<IMAGE_URI_${imageIndex++}/>`;
+    const tag = `<FIREGEN_IMAGE_URI_${imageIndex++}/>`;
     extractedUrls.images.push(gcsUri);
     return tag;
   });
@@ -75,21 +75,21 @@ export function preprocessUrls(prompt: string): UrlExtractionResult {
 
   taggedPrompt = taggedPrompt.replace(gcsRegex, (match) => {
     if (match.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
-      const tag = `<IMAGE_URI_${imageIndex++}/>`;
+      const tag = `<FIREGEN_IMAGE_URI_${imageIndex++}/>`;
       extractedUrls.images.push(match);
       return tag;
     } else if (match.match(/\.(mp4|mov|avi|webm)$/i)) {
-      const tag = `<VIDEO_URI_${videoIndex++}/>`;
+      const tag = `<FIREGEN_VIDEO_URI_${videoIndex++}/>`;
       extractedUrls.videos.push(match);
       return tag;
     } else if (match.match(/\.(mp3|wav|aac|ogg)$/i)) {
-      const tag = `<AUDIO_URI_${audioIndex++}/>`;
+      const tag = `<FIREGEN_AUDIO_URI_${audioIndex++}/>`;
       extractedUrls.audio.push(match);
       return tag;
     }
 
     // Default to image
-    const tag = `<IMAGE_URI_${imageIndex++}/>`;
+    const tag = `<FIREGEN_IMAGE_URI_${imageIndex++}/>`;
     extractedUrls.images.push(match);
     return tag;
   });
@@ -98,7 +98,7 @@ export function preprocessUrls(prompt: string): UrlExtractionResult {
   const httpsImageRegex = /https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|webp)/gi;
 
   taggedPrompt = taggedPrompt.replace(httpsImageRegex, (match) => {
-    const tag = `<IMAGE_URI_${imageIndex++}/>`;
+    const tag = `<FIREGEN_IMAGE_URI_${imageIndex++}/>`;
     extractedUrls.images.push(match);
     return tag;
   });
@@ -107,7 +107,7 @@ export function preprocessUrls(prompt: string): UrlExtractionResult {
   const httpsVideoRegex = /https?:\/\/[^\s]+\.(mp4|mov|avi|webm)/gi;
 
   taggedPrompt = taggedPrompt.replace(httpsVideoRegex, (match) => {
-    const tag = `<VIDEO_URI_${videoIndex++}/>`;
+    const tag = `<FIREGEN_VIDEO_URI_${videoIndex++}/>`;
     extractedUrls.videos.push(match);
     return tag;
   });
@@ -116,7 +116,7 @@ export function preprocessUrls(prompt: string): UrlExtractionResult {
   const httpsAudioRegex = /https?:\/\/[^\s]+\.(mp3|wav|aac|ogg)/gi;
 
   taggedPrompt = taggedPrompt.replace(httpsAudioRegex, (match) => {
-    const tag = `<AUDIO_URI_${audioIndex++}/>`;
+    const tag = `<FIREGEN_AUDIO_URI_${audioIndex++}/>`;
     extractedUrls.audio.push(match);
     return tag;
   });

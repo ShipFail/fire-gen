@@ -56,15 +56,14 @@ Example:
 - Use default values when not specified
 - Be explicit about your reasoning`;
 
-  // Build user prompt with step1 reasoning
-  const userPrompt = `${taggedPrompt}
-
-**Previous Reasoning:**
+  // Build additional context with step1 reasoning
+  const additionalContext = `**Previous Reasoning:**
 ${step1Reasons.map((r) => `- ${r}`).join("\n")}`;
 
   const text = await callDeterministicGemini({
     systemInstruction,
-    userPrompt,
+    userPrompt: taggedPrompt,
+    additionalContext,
     jobId,
     // No jsonSchema - text mode
   });

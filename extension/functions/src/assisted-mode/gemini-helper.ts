@@ -108,7 +108,7 @@ export async function callDeterministicGemini(
   // Part 1: User's original prompt (always first)
   // Part 2: Additional context/reasoning (optional - if provided)
   const userParts: Array<{text: string}> = [{text: userPrompt}];
-  
+
   if (additionalContext) {
     userParts.push({text: additionalContext});
   }

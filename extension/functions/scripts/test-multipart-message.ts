@@ -1,10 +1,10 @@
 #!/usr/bin/env npx tsx
 /**
  * Test script to verify multi-part user message feature
- * 
+ *
  * Tests that additionalContext is properly sent as a second part
  * in the user message array.
- * 
+ *
  * Usage: npx tsx scripts/test-multipart-message.ts
  */
 

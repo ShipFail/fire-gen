@@ -21,15 +21,14 @@ export async function step3JsonGeneration(
   modelSchema: any, // Zod schema
   jobId: string,
 ): Promise<Record<string, unknown>> {
-  // Build user prompt with all reasoning
-  const userPrompt = `${taggedPrompt}
-
-**Reasoning Chain:**
+  // Build additional context with all accumulated reasoning
+  const additionalContext = `**Reasoning Chain:**
 ${allReasons.map((r) => `- ${r}`).join("\n")}`;
 
   const text = await callDeterministicGemini({
     systemInstruction: STEP3_SYSTEM,
-    userPrompt,
+    userPrompt: taggedPrompt,
+    additionalContext,
     jobId,
     jsonSchema: modelSchema,
   });

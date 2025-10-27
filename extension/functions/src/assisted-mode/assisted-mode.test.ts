@@ -513,6 +513,10 @@ describe("Assisted Mode", () => {
     async ({id, prompt, expected}) => {
       const analyzed = await assistedRequest(prompt, `test-${id}`);
 
+      console.log(analyzed.reasons)
+      console.log(JSON.stringify(analyzed.request, null, 2));
+      console.log(prompt)
+
       // Verify request structure matches expected
       expect(analyzed.request).toMatchObject(expected);
 

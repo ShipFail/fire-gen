@@ -44,13 +44,15 @@ export async function extractVeoOutput(
     videos?: Array<{gcsUri?: string; mimeType?: string}>;
   } | undefined;
 
-  const uri = response?.videos?.[0]?.gcsUri;
+  const video = response?.videos?.[0];
+  const uri = video?.gcsUri;
 
   if (!uri) {
     throw new Error("No video URI in Veo response");
   }
 
-  logger.info("Extracted Veo output", {jobId, uri});
+  const mimeType = video?.mimeType || "video/mp4";
+  logger.info("Extracted Veo output", {jobId, uri, mimeType});
 
-  return {uri};
+  return {uri, mimeType};
 }

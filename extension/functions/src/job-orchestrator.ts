@@ -78,17 +78,25 @@ export async function startJob(jobId: string, job: JobNode): Promise<void> {
 
       // Build files array
       if (result.output.uri) {
-        const ext = getFileExtension(result.output.uri, result.output.metadata?.mimeType as string);
+        const ext = getFileExtension(result.output.uri, result.output.mimeType);
         const filename = `file0${ext}`;
         const signedUrl = await generateSignedUrl(result.output.uri);
 
-        files.push({
+        const fileInfo: FileInfo = {
           name: filename,
           gs: result.output.uri,
           https: signedUrl || "",
-          mimeType: result.output.metadata?.mimeType as string,
-          size: result.output.metadata?.size as number,
-        });
+        };
+
+        // Only include optional fields if they have values
+        if (result.output.mimeType) {
+          fileInfo.mimeType = result.output.mimeType;
+        }
+        if (result.output.size !== undefined) {
+          fileInfo.size = result.output.size;
+        }
+
+        files.push(fileInfo);
       }
 
       await jobRef.update({

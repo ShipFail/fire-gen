@@ -105,11 +105,8 @@ export class Gemini25FlashImageAdapter implements ModelAdapter {
     // Synchronous operation - return output immediately
     const output: ModelOutput = {
       uri: outputUri,
-      metadata: {
-        mimeType,
-        size: imageData.length,
-        aspectRatio: validated.generationConfig?.imageConfig?.aspectRatio || "1:1",
-      },
+      mimeType,
+      size: imageData.length,
     };
 
     return {

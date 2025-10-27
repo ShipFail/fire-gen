@@ -147,17 +147,25 @@ export const onJobPoll = onTaskDispatched(
           // Build files array
           const files: FileInfo[] = [];
           if (output.uri) {
-            const ext = getFileExtension(output.uri, output.metadata?.mimeType as string);
+            const ext = getFileExtension(output.uri, output.mimeType);
             const filename = `file0${ext}`;
             const signedUrl = await generateSignedUrl(output.uri);
 
-            files.push({
+            const fileInfo: FileInfo = {
               name: filename,
               gs: output.uri,
               https: signedUrl || "",
-              mimeType: output.metadata?.mimeType as string,
-              size: output.metadata?.size as number,
-            });
+            };
+
+            // Only include optional fields if they have values
+            if (output.mimeType) {
+              fileInfo.mimeType = output.mimeType;
+            }
+            if (output.size !== undefined) {
+              fileInfo.size = output.size;
+            }
+
+            files.push(fileInfo);
           }
 
           await jobRef.update({

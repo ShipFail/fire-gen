@@ -10,7 +10,8 @@ type JobRequest = any;
 export interface ModelOutput {
   uri?: string;             // GCS URI of generated output (omitted for text/STT)
   text?: string;            // Text output (for text generation and STT only)
-  metadata?: Record<string, unknown>; // Model-specific metadata
+  mimeType?: string;        // MIME type of generated file
+  size?: number;            // File size in bytes
 }
 
 /**

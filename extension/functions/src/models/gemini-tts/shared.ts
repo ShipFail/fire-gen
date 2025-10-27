@@ -90,19 +90,10 @@ export abstract class GeminiTTSAdapterBase implements ModelAdapter {
 
     logger.info("Gemini TTS generation completed", {jobId, uri: outputUri});
 
-    // Calculate duration (24kHz, mono, 16-bit PCM)
-    const durationSeconds = audioData.length / (24000 * 1 * 2);
-
     const output: ModelOutput = {
       uri: outputUri,
-      metadata: {
-        mimeType,
-        size: audioData.length,
-        voice: validated.generationConfig?.speechConfig?.voiceConfig?.prebuiltVoiceConfig?.voiceName || "auto",
-        duration: durationSeconds,
-        sampleRate: 24000,
-        channels: 1,
-      },
+      mimeType,
+      size: audioData.length,
     };
 
     return {

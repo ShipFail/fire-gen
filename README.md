@@ -2,7 +2,7 @@
 
 <p align="center"><img src="./docs/firegen-logo.webp" width="256" alt="FireGen Logo" /></p>
 
-> Serverless AI media generation using Google Vertex AI. MVP supports 5 models across video, image, and audio generation through a unified Firebase RTDB job queue.
+> **Turn Firebase RTDB into your universal Generative AI API.**
 
 [![Firebase](https://img.shields.io/badge/Firebase-Cloud%20Functions-orange)](https://firebase.google.com/docs/functions)
 [![Vertex AI](https://img.shields.io/badge/Vertex%20AI-Powered-blue)](https://cloud.google.com/vertex-ai)
@@ -10,26 +10,113 @@
 [![Node.js](https://img.shields.io/badge/Node.js-22-green)](https://nodejs.org/)
 [![REST API](https://img.shields.io/badge/REST%20API-Pure-purple)](https://cloud.google.com/vertex-ai/docs/reference/rest)
 
-## Overview
+## The Problem
 
-FireGen is a Firebase Cloud Functions extension that provides serverless AI media generation using Google's Vertex AI models. It manages the complete lifecycle of AI generation requests through a simple RTDB job queue pattern.
+Solo founders and AI co-founder practitioners waste **days debugging Vertex AI integration** instead of shipping features:
 
-**Key Features:**
-- 🤖 **AI-Assisted Mode** - Natural language prompts (just write a string!)
-- 🎬 **Video Generation** - Veo 3.1 models (async, 4-8s videos, 720p/1080p)
-- 🖼️ **Image Generation** - Gemini 2.5 Flash Image (sync, multimodal)
-- �️ **Audio Generation** - Gemini TTS (text-to-speech)
-- ⚡ **Pure REST API** - No SDK dependencies, direct Vertex AI calls
-- ⏱️ **Async & Sync** - Video polling, instant for other models
-- 🔒 **Secure** - User-scoped jobs, signed URLs, auto-cleanup
-- 💾 **Ephemeral Storage** - Auto-delete after 24h (cost optimization)
+- **SDK Hell**: Multiple SDKs (Veo, Gemini, Imagen) with inconsistent APIs, outdated docs, and breaking changes
+- **Async Complexity**: Long-running operations (LROs) require custom polling, exponential backoff, TTL management, and dead-letter queues
+- **Storage Gymnastics**: Juggling GCS URIs, signed URLs, file transfers between GCS and Firebase Storage
+- **Auth Confusion**: OIDC tokens, service accounts, and security rules across multiple Google services
+- **Model Catalog Chaos**: Guessing which model fits your prompt, which parameters are valid, and which combinations break
+- **Time Drain**: What should take 15 minutes takes 3 days of Stack Overflow, trial-and-error, and debugging
 
-**Supported Models:** 5 models across 3 families (MVP focus)
-**Generation Speed:** 1-120 seconds depending on model
-**Storage:** Temporary (24h lifetime - must download/copy media)
-**Operation Modes:**
-- Async for Veo video generation
-- Sync for images, audio, text generation
+**Result**: Founders spend time fighting infrastructure instead of validating ideas with real users.
+
+## The Solution
+
+FireGen is a **Firebase Extension** that turns RTDB into a universal AI generation queue with **two operational modes**:
+
+### 🤖 AI-Assisted Mode (Natural Language)
+```typescript
+// Just write a string - AI picks the model automatically
+await push(ref(db, 'firegen-jobs'), 
+  "Create a 4-second vertical video of a waterfall with ambient sound"
+);
+```
+
+**How it works:**
+- Gemini 2.5 Flash analyzes your prompt semantically (~1-2s)
+- Automatically selects best model (Veo 3.1, Gemini Image, TTS)
+- Extracts parameters intelligently (duration, aspect ratio, audio, quality)
+- Saves reasoning chain to `assisted.reasons` for transparency
+- Perfect for prototyping, learning the API, and AI-to-AI workflows
+
+### 🎯 Explicit Mode (Production Control)
+```typescript
+// Structured request with full parameter control
+await push(ref(db, 'firegen-jobs'), {
+  model: "veo-3.1-fast-generate-preview",
+  request: {
+    instances: [{prompt: "A serene sunset over mountains"}],
+    parameters: {durationSeconds: 8, aspectRatio: "16:9"}
+  }
+});
+```
+
+**What happens behind the scenes:**
+1. **onCreate trigger** validates job and routes to model adapter
+2. **Task Queue** handles async polling (Veo) or **sync execution** (Gemini, TTS)
+3. **Results written back** to RTDB with signed URLs in `files[]` array
+4. **Auto-cleanup** after 24h (ephemeral storage saves costs)
+
+**Unified interface across 5 models:**
+- Video: Veo 3.1 Generate, Veo 3.1 Fast (async, 60-120s)
+- Image: Gemini 2.5 Flash Image (sync, 2-5s)
+- Audio: Gemini 2.5 Flash TTS, Gemini 2.5 Pro TTS (sync, 2-6s)
+
+## Why FireGen
+
+### For Solo Founders Practicing AI Co-Founder Frameworks:
+
+**1. Ship in Minutes, Not Days**
+- Install extension → Write to RTDB → Subscribe to results
+- Zero SDK juggling, zero model guessing, zero schema errors
+- **Time saved**: 3 days → 15 minutes
+
+**2. AI-Native DX for AI-First Builders**
+- Natural language prompts work out-of-box (AI-to-AI communication)
+- Reasoning chains stored for transparency (`assisted.reasons`)
+- Single interface for all models (video, image, audio, text)
+
+**3. Firebase-Native Architecture**
+- Built on familiar primitives: RTDB triggers, Cloud Functions v2, Task Queue
+- Secure by default: user-scoped jobs via `event.auth.uid`, App Check ready
+- No new infrastructure: works with your existing Firebase project
+
+**4. Production-Ready Patterns**
+- **Async/Sync unified**: Same client code for Veo (async) and Gemini (sync)
+- **LRO polling handled**: Exponential backoff, TTL, retries, dead-letter
+- **Big-file friendly**: GCS integration with signed URLs (no 10MB Firebase limits)
+- **Cost optimized**: 24h ephemeral storage, minimal polling overhead
+
+**5. Iterate Faster with AI Assistance**
+- **Development mode**: Use natural language to prototype and learn
+- **Production mode**: Switch to explicit parameters for full control
+- **Debugging**: Inspect `assisted.reasons` to understand AI model selection
+
+**6. Open Source & Extensible**
+- MIT licensed, verifiable source on GitHub
+- Adapter pattern for adding new models
+- Zod schema validation for type safety
+- Full TypeScript support
+
+### Perfect for:
+- **Solo founders** building AI-powered apps without DevOps teams
+- **AI co-founder practitioners** using LLMs to build product features
+- **Prototyping** - Test ideas fast with natural language prompts
+- **Production apps** - Scale with explicit mode and full parameter control
+- **Multi-modal apps** - Unified interface across video, image, audio, text
+
+### Not Another SDK Wrapper:
+FireGen isn't a thin API layer—it's a **complete job orchestration system** with:
+- State machine (requested → starting → running → succeeded/failed)
+- Polling infrastructure with backoff and TTL
+- Security rules and user isolation
+- Storage lifecycle management
+- AI-powered request analysis (unique to FireGen)
+
+**Bottom Line**: FireGen lets solo founders and AI co-founder practitioners **focus on product validation** instead of infrastructure debugging. Write a string to RTDB, get AI-generated media back. That's it.
 
 ## Quick Start
 

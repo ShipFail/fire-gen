@@ -6,24 +6,8 @@
  * Generate final JSON using Gemini JSON mode with model-specific schema.
  */
 
-import {zodToJsonSchema} from "zod-to-json-schema";
-import {callVertexAPI} from "../lib/vertex-ai-client.js";
-import {transformSchemaForGeminiResponseSchema} from "../lib/zod-utils.js";
-import {PROJECT_ID} from "../firebase-admin.js";
-import {REGION} from "../env.js";
 import {STEP3_SYSTEM} from "./prompts.js";
-import {ANALYZER_MODEL} from "./constants.js";
-
-/**
- * Gemini API response type
- */
-interface GeminiResponse {
-  candidates?: Array<{
-    content?: {
-      parts?: Array<{text?: string}>;
-    };
-  }>;
-}
+import {callDeterministicGemini} from "./gemini-helper.js";
 
 /**
  * Generate final JSON request.
@@ -37,42 +21,18 @@ export async function step3JsonGeneration(
   modelSchema: any, // Zod schema
   jobId: string,
 ): Promise<Record<string, unknown>> {
-  const endpoint = `v1/projects/${PROJECT_ID}/locations/${REGION}/publishers/google/models/${ANALYZER_MODEL}:generateContent`;
-
   // Build user prompt with all reasoning
   const userPrompt = `${taggedPrompt}
 
 **Reasoning Chain:**
 ${allReasons.map((r) => `- ${r}`).join("\n")}`;
 
-  const response = await callVertexAPI<GeminiResponse>(endpoint, {
-    systemInstruction: {
-      parts: [{text: STEP3_SYSTEM}],
-    },
-    contents: [
-      {
-        role: "user",
-        parts: [{text: userPrompt}],
-      },
-    ],
-    generationConfig: {
-      temperature: 0,
-      topK: 1,
-      topP: 1.0,
-      candidateCount: 1,
-      responseMimeType: "application/json",
-      responseSchema: transformSchemaForGeminiResponseSchema(zodToJsonSchema(modelSchema, {
-        $refStrategy: "none",
-        target: "openApi3",
-        errorMessages: false,
-      })),
-    },
+  const text = await callDeterministicGemini({
+    systemInstruction: STEP3_SYSTEM,
+    userPrompt,
+    jobId,
+    jsonSchema: modelSchema,
   });
-
-  const text = response.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) {
-    throw new Error(`[${jobId}] Step 3 failed: No response from Gemini`);
-  }
 
   const jsonWithTags = JSON.parse(text) as Record<string, unknown>;
   return jsonWithTags;

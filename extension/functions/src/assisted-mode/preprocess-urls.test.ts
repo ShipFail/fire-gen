@@ -9,7 +9,7 @@ describe("preprocessUrls", () => {
       const result = preprocessUrls(input);
 
       expect(result.extractedUrls).toEqual(["gs://my-bucket/images/cat.jpg"]);
-      expect(result.taggedPrompt).toBe("Show <FIREGEN_IMAGE_URI_1/>");
+      expect(result.taggedPrompt).toBe("Show <FIREGEN_IMAGE_JPEG_URI_1/>");
     });
 
     test("should convert GCS API URLs to gs:// format", () => {
@@ -17,7 +17,7 @@ describe("preprocessUrls", () => {
       const result = preprocessUrls(input);
 
       expect(result.extractedUrls).toEqual(["gs://products/shoe.jpg"]);
-      expect(result.taggedPrompt).toBe("Animate <FIREGEN_IMAGE_URI_1/>");
+      expect(result.taggedPrompt).toBe("Animate <FIREGEN_IMAGE_JPEG_URI_1/>");
     });
 
     test("should preserve GCS URIs as-is", () => {
@@ -25,7 +25,7 @@ describe("preprocessUrls", () => {
       const result = preprocessUrls(input);
 
       expect(result.extractedUrls).toEqual(["gs://my-bucket/video.mp4"]);
-      expect(result.taggedPrompt).toBe("Use <FIREGEN_VIDEO_URI_1/>");
+      expect(result.taggedPrompt).toBe("Use <FIREGEN_VIDEO_MP4_URI_1/>");
     });
 
     test("should preserve generic HTTPS URLs as-is", () => {
@@ -33,7 +33,7 @@ describe("preprocessUrls", () => {
       const result = preprocessUrls(input);
 
       expect(result.extractedUrls).toEqual(["https://example.com/random/image.jpg"]);
-      expect(result.taggedPrompt).toBe("Show <FIREGEN_IMAGE_URI_1/>");
+      expect(result.taggedPrompt).toBe("Show <FIREGEN_IMAGE_JPEG_URI_1/>");
     });
 
     test("should handle URLs without protocol (http)", () => {
@@ -44,7 +44,7 @@ describe("preprocessUrls", () => {
         "gs://bucket/file.png",
         "http://insecure.com/old.jpg",
       ]);
-      expect(result.taggedPrompt).toBe("Show <FIREGEN_IMAGE_URI_1/> and <FIREGEN_IMAGE_URI_2/>");
+      expect(result.taggedPrompt).toBe("Show <FIREGEN_IMAGE_PNG_URI_1/> and <FIREGEN_IMAGE_JPEG_URI_2/>");
     });
   });
 
@@ -54,7 +54,7 @@ describe("preprocessUrls", () => {
       const result = preprocessUrls(input);
 
       expect(result.taggedPrompt).toBe(
-        "Show <FIREGEN_IMAGE_URI_1/> then <FIREGEN_VIDEO_URI_2/> then <FIREGEN_AUDIO_URI_3/>"
+        "Show <FIREGEN_IMAGE_JPEG_URI_1/> then <FIREGEN_VIDEO_MP4_URI_2/> then <FIREGEN_AUDIO_MPEG_URI_3/>"
       );
       expect(result.extractedUrls).toEqual([
         "gs://a.jpg",
@@ -68,7 +68,7 @@ describe("preprocessUrls", () => {
       const result = preprocessUrls(input);
 
       expect(result.taggedPrompt).toBe(
-        "Files: <FIREGEN_IMAGE_URI_1/> <FIREGEN_IMAGE_URI_2/> <FIREGEN_VIDEO_URI_3/> <FIREGEN_IMAGE_URI_4/>"
+        "Files: <FIREGEN_IMAGE_JPEG_URI_1/> <FIREGEN_IMAGE_JPEG_URI_2/> <FIREGEN_VIDEO_MP4_URI_3/> <FIREGEN_IMAGE_PNG_URI_4/>"
       );
       expect(result.extractedUrls).toHaveLength(4);
     });
@@ -78,10 +78,10 @@ describe("preprocessUrls", () => {
       const result = preprocessUrls(input);
 
       // Should be 1, 2, 3 (NOT 1, 1, 2)
-      expect(result.taggedPrompt).toContain("<FIREGEN_IMAGE_URI_1/>");
-      expect(result.taggedPrompt).toContain("<FIREGEN_VIDEO_URI_2/>");
-      expect(result.taggedPrompt).toContain("<FIREGEN_IMAGE_URI_3/>");
-      expect(result.taggedPrompt).not.toContain("<FIREGEN_VIDEO_URI_1/>");
+      expect(result.taggedPrompt).toContain("<FIREGEN_IMAGE_JPEG_URI_1/>");
+      expect(result.taggedPrompt).toContain("<FIREGEN_VIDEO_MP4_URI_2/>");
+      expect(result.taggedPrompt).toContain("<FIREGEN_IMAGE_PNG_URI_3/>");
+      expect(result.taggedPrompt).not.toContain("<FIREGEN_VIDEO_MP4_URI_1/>");
     });
   });
 
@@ -92,7 +92,7 @@ describe("preprocessUrls", () => {
 
       expect(result.extractedUrls).toEqual(["gs://cat.jpg"]); // Only once!
       expect(result.taggedPrompt).toBe(
-        "Show <FIREGEN_IMAGE_URI_1/> and later show <FIREGEN_IMAGE_URI_1/> again"
+        "Show <FIREGEN_IMAGE_JPEG_URI_1/> and later show <FIREGEN_IMAGE_JPEG_URI_1/> again"
       );
     });
 
@@ -107,7 +107,7 @@ describe("preprocessUrls", () => {
       // All three should normalize to gs://bucket/file.jpg and use same tag
       expect(result.extractedUrls).toEqual(["gs://bucket/file.jpg"]);
       expect(result.taggedPrompt).toBe(
-        "First <FIREGEN_IMAGE_URI_1/> then <FIREGEN_IMAGE_URI_1/> finally <FIREGEN_IMAGE_URI_1/>"
+        "First <FIREGEN_IMAGE_JPEG_URI_1/> then <FIREGEN_IMAGE_JPEG_URI_1/> finally <FIREGEN_IMAGE_JPEG_URI_1/>"
       );
     });
 
@@ -120,7 +120,7 @@ describe("preprocessUrls", () => {
         "gs://file.mp4", // Index 1 (tag 2)
       ]); // No duplicate jpg
       expect(result.taggedPrompt).toBe(
-        "Image <FIREGEN_IMAGE_URI_1/> Video <FIREGEN_VIDEO_URI_2/> Image <FIREGEN_IMAGE_URI_1/>"
+        "Image <FIREGEN_IMAGE_JPEG_URI_1/> Video <FIREGEN_VIDEO_MP4_URI_2/> Image <FIREGEN_IMAGE_JPEG_URI_1/>"
       );
     });
 
@@ -133,7 +133,7 @@ describe("preprocessUrls", () => {
         "gs://bucket2/cat.jpg",
       ]);
       expect(result.taggedPrompt).toBe(
-        "<FIREGEN_IMAGE_URI_1/> and <FIREGEN_IMAGE_URI_2/>"
+        "<FIREGEN_IMAGE_JPEG_URI_1/> and <FIREGEN_IMAGE_JPEG_URI_2/>"
       );
     });
   });
@@ -144,11 +144,11 @@ describe("preprocessUrls", () => {
       const result = preprocessUrls(input);
 
       expect(result.extractedUrls).toHaveLength(5);
-      expect(result.taggedPrompt).toContain("IMAGE_URI_1");
-      expect(result.taggedPrompt).toContain("IMAGE_URI_2");
-      expect(result.taggedPrompt).toContain("IMAGE_URI_3");
-      expect(result.taggedPrompt).toContain("IMAGE_URI_4");
-      expect(result.taggedPrompt).toContain("IMAGE_URI_5");
+      expect(result.taggedPrompt).toContain("IMAGE_JPEG_URI_1");
+      expect(result.taggedPrompt).toContain("IMAGE_PNG_URI_2");
+      expect(result.taggedPrompt).toContain("IMAGE_GIF_URI_3");
+      expect(result.taggedPrompt).toContain("IMAGE_WEBP_URI_4");
+      expect(result.taggedPrompt).toContain("IMAGE_JPEG_URI_5");
     });
 
     test("should detect video extensions", () => {
@@ -156,10 +156,10 @@ describe("preprocessUrls", () => {
       const result = preprocessUrls(input);
 
       expect(result.extractedUrls).toHaveLength(4);
-      expect(result.taggedPrompt).toContain("VIDEO_URI_1");
-      expect(result.taggedPrompt).toContain("VIDEO_URI_2");
-      expect(result.taggedPrompt).toContain("VIDEO_URI_3");
-      expect(result.taggedPrompt).toContain("VIDEO_URI_4");
+      expect(result.taggedPrompt).toContain("VIDEO_MP4_URI_1");
+      expect(result.taggedPrompt).toContain("VIDEO_QUICKTIME_URI_2");
+      expect(result.taggedPrompt).toContain("VIDEO_X-MSVIDEO_URI_3");
+      expect(result.taggedPrompt).toContain("VIDEO_WEBM_URI_4");
     });
 
     test("should detect audio extensions", () => {
@@ -167,19 +167,17 @@ describe("preprocessUrls", () => {
       const result = preprocessUrls(input);
 
       expect(result.extractedUrls).toHaveLength(4);
-      expect(result.taggedPrompt).toContain("AUDIO_URI_1");
-      expect(result.taggedPrompt).toContain("AUDIO_URI_2");
-      expect(result.taggedPrompt).toContain("AUDIO_URI_3");
-      expect(result.taggedPrompt).toContain("AUDIO_URI_4");
+      expect(result.taggedPrompt).toContain("AUDIO_MPEG_URI_1");
+      expect(result.taggedPrompt).toContain("AUDIO_WAV_URI_2");
+      expect(result.taggedPrompt).toContain("AUDIO_AAC_URI_3");
+      expect(result.taggedPrompt).toContain("AUDIO_OGG_URI_4");
     });
 
-    test("should default to image for unknown extensions", () => {
+    test("should throw error for unknown extensions", () => {
       const input = "Unknown: gs://file.xyz gs://noext";
-      const result = preprocessUrls(input);
-
-      expect(result.extractedUrls).toHaveLength(2);
-      expect(result.taggedPrompt).toContain("IMAGE_URI_1");
-      expect(result.taggedPrompt).toContain("IMAGE_URI_2");
+      
+      // Should throw error since mime package can't determine type
+      expect(() => preprocessUrls(input)).toThrow("Cannot determine MIME type");
     });
   });
 
@@ -190,7 +188,7 @@ describe("preprocessUrls", () => {
       const result = preprocessUrls(firebaseUrl);
 
       expect(result.extractedUrls).toEqual(["gs://bucket/image.jpg"]); // Converted!
-      expect(result.taggedPrompt).toBe("<FIREGEN_IMAGE_URI_1/>");
+      expect(result.taggedPrompt).toBe("<FIREGEN_IMAGE_JPEG_URI_1/>");
     });
 
     test("should process GCS API URLs before generic HTTPS", () => {
@@ -198,7 +196,7 @@ describe("preprocessUrls", () => {
       const result = preprocessUrls(gcsApiUrl);
 
       expect(result.extractedUrls).toEqual(["gs://bucket/file.mp4"]); // Converted!
-      expect(result.taggedPrompt).toBe("<FIREGEN_VIDEO_URI_1/>");
+      expect(result.taggedPrompt).toBe("<FIREGEN_VIDEO_MP4_URI_1/>");
     });
 
     test("should not double-process URLs", () => {
@@ -237,7 +235,7 @@ describe("preprocessUrls", () => {
         "gs://c.mp3",
       ]);
       expect(result.taggedPrompt).toBe(
-        "Use <FIREGEN_IMAGE_URI_1/> <FIREGEN_VIDEO_URI_2/> <FIREGEN_IMAGE_URI_1/> <FIREGEN_AUDIO_URI_3/> <FIREGEN_VIDEO_URI_2/>"
+        "Use <FIREGEN_IMAGE_JPEG_URI_1/> <FIREGEN_VIDEO_MP4_URI_2/> <FIREGEN_IMAGE_JPEG_URI_1/> <FIREGEN_AUDIO_MPEG_URI_3/> <FIREGEN_VIDEO_MP4_URI_2/>"
       );
     });
 
@@ -250,9 +248,9 @@ describe("preprocessUrls", () => {
         "gs://b.Mp4",
         "gs://c.PNG",
       ]);
-      expect(result.taggedPrompt).toContain("IMAGE_URI_1");
-      expect(result.taggedPrompt).toContain("VIDEO_URI_2");
-      expect(result.taggedPrompt).toContain("IMAGE_URI_3");
+      expect(result.taggedPrompt).toContain("IMAGE_JPEG_URI_1");
+      expect(result.taggedPrompt).toContain("VIDEO_MP4_URI_2");
+      expect(result.taggedPrompt).toContain("IMAGE_PNG_URI_3");
     });
 
     test("should handle multiple URLs in one prompt", () => {
@@ -266,7 +264,7 @@ describe("preprocessUrls", () => {
         "https://example.com/old.jpg",   // Generic HTTPS (processed last)
       ]);
       expect(result.taggedPrompt).toBe(
-        "Compare <FIREGEN_IMAGE_URI_3/> with <FIREGEN_IMAGE_URI_2/> and <FIREGEN_IMAGE_URI_1/>"
+        "Compare <FIREGEN_IMAGE_JPEG_URI_3/> with <FIREGEN_IMAGE_JPEG_URI_2/> and <FIREGEN_IMAGE_PNG_URI_1/>"
       );
     });
 
@@ -284,7 +282,7 @@ describe("preprocessUrls", () => {
       const result = preprocessUrls(input);
 
       expect(result.extractedUrls).toEqual(["gs://my-bucket/users/123/profile photo.jpg"]);
-      expect(result.taggedPrompt).toBe("<FIREGEN_IMAGE_URI_1/>");
+      expect(result.taggedPrompt).toBe("<FIREGEN_IMAGE_JPEG_URI_1/>");
     });
   });
 
@@ -304,10 +302,10 @@ describe("preprocessUrls", () => {
         "https://example.com/audio/upbeat.mp3",
       ]);
 
-      expect(result.taggedPrompt).toContain("<FIREGEN_IMAGE_URI_1/>");
-      expect(result.taggedPrompt).toContain("<FIREGEN_IMAGE_URI_2/>");
-      expect(result.taggedPrompt).toContain("<FIREGEN_VIDEO_URI_3/>");
-      expect(result.taggedPrompt).toContain("<FIREGEN_AUDIO_URI_4/>");
+      expect(result.taggedPrompt).toContain("<FIREGEN_IMAGE_JPEG_URI_1/>");
+      expect(result.taggedPrompt).toContain("<FIREGEN_IMAGE_JPEG_URI_2/>");
+      expect(result.taggedPrompt).toContain("<FIREGEN_VIDEO_MP4_URI_3/>");
+      expect(result.taggedPrompt).toContain("<FIREGEN_AUDIO_MPEG_URI_4/>");
     });
   });
 });

@@ -5,7 +5,10 @@
  *
  * Detects and converts URLs to GCS URI format, tags them in prompt.
  * Uses unified sequential indexing with single flat array storage and deduplication.
+ * Tags include MIME type for downstream processing.
  */
+
+import mime from "mime";
 
 export interface UrlExtractionResult {
   taggedPrompt: string;
@@ -13,14 +16,26 @@ export interface UrlExtractionResult {
 }
 
 /**
- * Detect media type from file extension or URL pattern.
- * Defaults to 'image' if no extension matches.
+ * Convert MIME type to tag name format.
+ * Examples:
+ * - image/jpeg → IMAGE_JPEG
+ * - video/mp4 → VIDEO_MP4
+ * - audio/mpeg → AUDIO_MPEG
  */
-function getMediaType(url: string): "image" | "video" | "audio" {
-  if (/\.(jpg|jpeg|png|gif|webp)$/i.test(url)) return "image";
-  if (/\.(mp4|mov|avi|webm)$/i.test(url)) return "video";
-  if (/\.(mp3|wav|aac|ogg)$/i.test(url)) return "audio";
-  return "image"; // Default to image
+function mimeTypeToTagName(mimeType: string): string {
+  return mimeType.replace("/", "_").toUpperCase();
+}
+
+/**
+ * Get MIME type from URL using mime package.
+ * Throws error if MIME type cannot be determined.
+ */
+function getMimeType(url: string): string {
+  const mimeType = mime.getType(url);
+  if (!mimeType) {
+    throw new Error(`Cannot determine MIME type for URL: ${url}`);
+  }
+  return mimeType;
 }
 
 /**
@@ -36,8 +51,8 @@ function getMediaType(url: string): "image" | "video" | "audio" {
  * Unified indexing: Sequential numbering across all media types (1, 2, 3...)
  * Single array storage: extractedUrls[tagNumber - 1] = URL
  *
- * Tags format:
- * - <FIREGEN_IMAGE_URI_1/>, <FIREGEN_VIDEO_URI_2/>, <FIREGEN_AUDIO_URI_3/>, ...
+ * Tags format (includes MIME type):
+ * - <FIREGEN_IMAGE_JPEG_URI_1/>, <FIREGEN_VIDEO_MP4_URI_2/>, <FIREGEN_AUDIO_MPEG_URI_3/>, ...
  */
 export function preprocessUrls(prompt: string): UrlExtractionResult {
   const extractedUrls: string[] = [];  // Flat array indexed by tag number
@@ -55,10 +70,11 @@ export function preprocessUrls(prompt: string): UrlExtractionResult {
       return existingTag; // Reuse same tag for duplicate URL
     }
 
-    // New URL - create tag with global index (1-based)
-    const mediaType = getMediaType(gcsUri);
+    // New URL - create tag with MIME type and global index (1-based)
+    const mimeType = getMimeType(gcsUri);
+    const mimeTagName = mimeTypeToTagName(mimeType);
     const tagNumber = extractedUrls.length + 1; // Next index (1-based)
-    const tag = `<FIREGEN_${mediaType.toUpperCase()}_URI_${tagNumber}/>`;
+    const tag = `<FIREGEN_${mimeTagName}_URI_${tagNumber}/>`;
 
     // Track URL → tag mapping
     urlToTag.set(gcsUri, tag);

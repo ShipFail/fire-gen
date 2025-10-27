@@ -1,14 +1,14 @@
 /**
  * Serialize an error for JSON logging.
- * 
- * Error objects have non-enumerable properties (message, stack, name) and serialize 
+ *
+ * Error objects have non-enumerable properties (message, stack, name) and serialize
  * to {} by default when passed to JSON.stringify() or Firebase Functions logger.
- * 
+ *
  * This utility extracts error properties into a plain object for proper logging.
- * 
+ *
  * @param err - Unknown error object from catch block
  * @returns Plain object with error details suitable for JSON serialization
- * 
+ *
  * @example
  * ```typescript
  * try {
@@ -26,13 +26,13 @@ export function serializeError(err: unknown): Record<string, unknown> {
       message: err.message,
       stack: err.stack,
     };
-    
+
     // Include nested cause if present (ES2022 Error.cause)
     const errWithCause = err as Error & {cause?: unknown};
     if (errWithCause.cause) {
       result.cause = serializeError(errWithCause.cause);
     }
-    
+
     return result;
   }
 

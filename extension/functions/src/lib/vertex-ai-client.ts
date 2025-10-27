@@ -51,11 +51,25 @@ export async function predictLongRunning(
 }
 
 /**
- * Get operation status
+ * Get the status of a long-running operation.
+ *
+ * WORKAROUND: Google's predictLongRunning for publisher models (Veo, etc.) returns operation names
+ * in format: "projects/{project}/locations/{location}/publishers/google/models/{model}/operations/{id}"
+ * but the operations.get API only accepts: "projects/{project}/locations/{location}/operations/{id}"
+ *
+ * We need to strip out the "/publishers/google/models/{model}" segment to make it work.
+ * This appears to be a Google API design issue that emerged recently.
  */
 export async function getOperation(operationName: string): Promise<VertexAIOperation> {
   const token = await auth.getAccessToken();
-  const endpoint = `https://${REGION}-aiplatform.googleapis.com/v1beta1/${operationName}`;
+
+  // Strip /publishers/google/models/{model} segment if present (Google API quirk)
+  const normalizedName = operationName.replace(
+    /\/publishers\/google\/models\/[^/]+\/operations\//,
+    "/operations/"
+  );
+
+  const endpoint = `https://${REGION}-aiplatform.googleapis.com/v1beta1/${normalizedName}`;
 
   const response = await fetch(endpoint, {
     method: "GET",

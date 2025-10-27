@@ -1,6 +1,6 @@
 {
   "name": "functions",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "FireGen Firebase Extension - AI media generation via pure REST API (18 Vertex AI models)",
   "scripts": {
     "lint": "eslint --ext .js,.ts .",

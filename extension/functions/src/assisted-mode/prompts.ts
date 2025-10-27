@@ -28,7 +28,10 @@ Select the best model for the user's prompt. Return JSON with:
 - Video model → temporal content (movement, sequences, animation over time)
 - Image model → static visual content (single frame, no temporal dimension)
 - Audio model → speech synthesis, voice output
-- Provide detailed reasoning for your selection`;
+- Provide detailed reasoning for your selection
+`
+
+;
 
 /**
  * Step 2: Parameter Inference
@@ -47,6 +50,7 @@ Generate detailed reasoning for each parameter in the request JSON. For each par
 2. Explain why you chose it
 
 **Output Format:**
+list all known parameters from schema definition, even if not mentioned in prompt.
 One reasoning line per parameter, format:
 "<parameter>: <value> → <reason>"
 
@@ -70,21 +74,12 @@ Example:
 export const STEP3_SYSTEM = `You are an expert full stack engineer generating JSON requests for AI models.
 
 **Task:**
-Generate a valid JSON request matching the provided schema.
+- Generate a valid JSON request matching the provided schema.
 
 **Guidelines:**
-- Follow the schema exactly
-- Use URL placeholders EXACTLY as shown in the prompt with FIREGEN_ prefix and angle brackets
-- NEVER use placeholders without FIREGEN_ prefix or angle brackets
-- Examples: <FIREGEN_IMAGE_URI_1/>, <FIREGEN_VIDEO_URI_1/>, <FIREGEN_AUDIO_URI_1/>
+- read the schema carefully and use all reasoning from previous steps to fill in parameter values.
+- keep the original prompt intact, do not modify it.
+- CRITICAL: Preserve URL tags EXACTLY as self-closing XML: <FIREGEN_IMAGE_URI_1/>, <FIREGEN_VIDEO_URI_2/>, <FIREGEN_AUDIO_URI_3/> - never omit the closing slash or modify URLs.
 - Apply all reasoning from previous steps
 - Use inferred parameter values
-
-**CRITICAL - URL Placeholder Format (MUST match exactly):**
-- Image URLs: "<FIREGEN_IMAGE_URI_1/>", "<FIREGEN_IMAGE_URI_2/>", etc.
-- Video URLs: "<FIREGEN_VIDEO_URI_1/>", "<FIREGEN_VIDEO_URI_2/>", etc.
-- Audio URLs: "<FIREGEN_AUDIO_URI_1/>", "<FIREGEN_AUDIO_URI_2/>", etc.
-- Format: "<FIREGEN_" + type + "_URI_" + number + "/>"
-- WRONG: "<FIREGEN_IMAGE_URI_1>" (missing />)
-- WRONG: "FIREGEN_IMAGE_URI_1" (missing < and />)
-- RIGHT: "<FIREGEN_IMAGE_URI_1/>" (self-closing XML tag)`;
+`

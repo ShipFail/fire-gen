@@ -88,6 +88,12 @@ ${step1Reasons.map((r) => `- ${r}`).join("\n")}`;
         parts: [{text: userPrompt}],
       },
     ],
+    generationConfig: {
+      temperature: 0,
+      topK: 1,
+      topP: 1.0,
+      candidateCount: 1,
+    },
   });
 
   const text = response.candidates?.[0]?.content?.parts?.[0]?.text;

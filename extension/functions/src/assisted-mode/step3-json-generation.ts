@@ -56,6 +56,10 @@ ${allReasons.map((r) => `- ${r}`).join("\n")}`;
       },
     ],
     generationConfig: {
+      temperature: 0,
+      topK: 1,
+      topP: 1.0,
+      candidateCount: 1,
       responseMimeType: "application/json",
       responseSchema: transformSchemaForGeminiResponseSchema(zodToJsonSchema(modelSchema, {
         $refStrategy: "none",

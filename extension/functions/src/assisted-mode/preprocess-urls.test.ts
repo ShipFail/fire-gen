@@ -290,9 +290,9 @@ describe("preprocessUrls", () => {
 
   describe("Integration", () => {
     test("should handle real-world complex prompt", () => {
-      const input = `Product demo: Show https://storage.googleapis.com/products/shoe-left.jpg and 
-      https://storage.googleapis.com/products/shoe-right.jpg rotating. 
-      Use gs://styles/cinematic.mp4 as reference. 
+      const input = `Product demo: Show https://storage.googleapis.com/products/shoe-left.jpg and
+      https://storage.googleapis.com/products/shoe-right.jpg rotating.
+      Use gs://styles/cinematic.mp4 as reference.
       Background music: https://example.com/audio/upbeat.mp3`;
 
       const result = preprocessUrls(input);

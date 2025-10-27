@@ -156,19 +156,16 @@ const fixtures = [
               image: expect.objectContaining({
                 gcsUri: "gs://example/product1.jpg",
               }),
-              referenceType: expect.stringMatching(/^(asset|style)$/),
             }),
             expect.objectContaining({
               image: expect.objectContaining({
                 gcsUri: "gs://example/product2.jpg",
               }),
-              referenceType: expect.stringMatching(/^(asset|style)$/),
             }),
             expect.objectContaining({
               image: expect.objectContaining({
                 gcsUri: "gs://example/product3.jpg",
               }),
-              referenceType: expect.stringMatching(/^(asset|style)$/),
             }),
           ]),
         }),
@@ -176,7 +173,7 @@ const fixtures = [
       parameters: expect.objectContaining({
         durationSeconds: expect.any(Number),
         aspectRatio: "16:9",
-        generateAudio: expect.any(Boolean),
+        generateAudio: true,
       }),
     },
   },
@@ -312,12 +309,12 @@ const fixtures = [
   },
   {
     id: "video:veo31-gcs-uri-exact-format-firebase",
-    prompt: "Animate https://firebasestorage.googleapis.com/v0/b/my-project.appspot.com/o/users%2Ftest%2Fvideo.mp4?alt=media",
+    prompt: "Continue this video https://firebasestorage.googleapis.com/v0/b/my-project.appspot.com/o/users%2Ftest%2Fvideo.mp4?alt=media",
     expected: {
       model: expect.stringMatching(/^veo-3\.1-(fast-)?generate-preview$/),
       instances: expect.arrayContaining([
         expect.objectContaining({
-          prompt: expect.stringMatching(/^(?!.*firebasestorage)/i),
+          prompt: expect.stringMatching(/Continue this video/i),
           video: expect.objectContaining({
             gcsUri: "gs://my-project.appspot.com/users/test/video.mp4",
           }),

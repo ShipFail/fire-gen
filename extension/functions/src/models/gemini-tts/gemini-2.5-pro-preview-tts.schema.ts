@@ -21,10 +21,12 @@ const Gemini25ProPreviewTTSVoiceSchema = z.enum([
 // ============= CONTENT SCHEMA =============
 
 const Gemini25ProPreviewTTSContentSchema = z.object({
-  role: z.literal("user").optional(),
+  role: z.literal("user").optional()
+    .describe("Role of the content sender. Always 'user' for user-provided text."),
   parts: z.array(z.object({
-    text: TextContentSchema,
-  })),
+    text: TextContentSchema
+      .describe("Text content to convert to speech."),
+  })).describe("Content parts containing the text to synthesize."),
 });
 
 // ============= SPEECH CONFIG SCHEMA =============
@@ -32,17 +34,24 @@ const Gemini25ProPreviewTTSContentSchema = z.object({
 const Gemini25ProPreviewTTSSpeechConfigSchema = z.object({
   voiceConfig: z.object({
     prebuiltVoiceConfig: z.object({
-      voiceName: Gemini25ProPreviewTTSVoiceSchema,
-    }).optional(),
-  }).optional(),
-}).optional();
+      voiceName: Gemini25ProPreviewTTSVoiceSchema
+        .describe("Voice selection from preset options (e.g., Zephyr, Puck, Charon)."),
+    }).optional()
+      .describe("Prebuilt voice configuration using named voice preset."),
+  }).optional()
+    .describe("Voice characteristics configuration for speech synthesis."),
+}).optional()
+  .describe("Overall speech generation settings including voice selection.");
 
 // ============= GENERATION CONFIG SCHEMA =============
 
 const Gemini25ProPreviewTTSGenerationConfigSchema = z.object({
-  responseModalities: z.array(z.literal("AUDIO")),
-  speechConfig: Gemini25ProPreviewTTSSpeechConfigSchema,
-}).optional();
+  responseModalities: z.array(z.literal("AUDIO"))
+    .describe("Output modality types. Must be ['AUDIO'] for text-to-speech."),
+  speechConfig: Gemini25ProPreviewTTSSpeechConfigSchema
+    .describe("Speech synthesis configuration including voice selection."),
+}).optional()
+  .describe("Model generation parameters for audio output.");
 
 // ============= REQUEST SCHEMA =============
 
@@ -50,15 +59,16 @@ const Gemini25ProPreviewTTSGenerationConfigSchema = z.object({
  * Complete REST API request schema for gemini-2.5-pro-preview-tts.
  */
 export const Gemini25ProPreviewTTSRequestSchema = z.object({
-  model: z.literal("gemini-2.5-pro-preview-tts"),
+  model: z.literal("gemini-2.5-pro-preview-tts")
+    .describe("Model identifier for Gemini 2.5 Pro text-to-speech."),
   contents: z.union([
     TextContentSchema.transform(text => [{role: "user" as const, parts: [{text}]}]),
     z.array(Gemini25ProPreviewTTSContentSchema),
-  ]),
+  ]).describe("Text content to convert to speech audio."),
   generationConfig: Gemini25ProPreviewTTSGenerationConfigSchema.transform(config => ({
     responseModalities: ["AUDIO"],
     speechConfig: config?.speechConfig,
-  })),
+  })).describe("Generation configuration specifying output modality and voice settings."),
 });
 
 // ============= TYPE (Inferred from Schema) =============

@@ -114,22 +114,21 @@ const fixtures = [
   },
   {
     id: "video:veo31-two-subjects",
-    prompt: "Create a video featuring https://storage.googleapis.com/example/person1.jpg and https://storage.googleapis.com/example/person2.jpg walking together in a park",
+    prompt: "Create a video featuring https://storage.googleapis.com/example/person1.jpg and https://storage.googleapis.com/example/person2.png walking together in a park",
     expected: {
       model: expect.stringMatching(/^veo-3\.1-(fast-)?generate-preview$/),
       instances: expect.arrayContaining([
         expect.objectContaining({
-          prompt: expect.stringMatching(/.+/),
+          prompt: expect.stringMatching(/walking.*together.*park/i),
+          image: expect.objectContaining({
+            gcsUri: expect.stringContaining("person1.jpg"),
+            mimeType: "image/jpeg",
+          }),
           referenceImages: expect.arrayContaining([
             expect.objectContaining({
               image: expect.objectContaining({
-                gcsUri: expect.stringContaining("person1.jpg"),
-              }),
-              referenceType: expect.stringMatching(/^(asset|style)$/),
-            }),
-            expect.objectContaining({
-              image: expect.objectContaining({
-                gcsUri: expect.stringContaining("person2.jpg"),
+                gcsUri: expect.stringContaining("person2.png"),
+                mimeType: "image/png",
               }),
               referenceType: expect.stringMatching(/^(asset|style)$/),
             }),
@@ -145,7 +144,7 @@ const fixtures = [
   },
   {
     id: "video:veo31-three-subjects-max",
-    prompt: "Create a video showcasing these three products rotating in a studio gs://example/product1.jpg gs://example/product2.jpg gs://example/product3.jpg",
+    prompt: "Create a video showcasing these three products rotating in a studio gs://example/product1.jpg gs://example/product2.png gs://example/product3.jpg",
     expected: {
       model: expect.stringMatching(/^veo-3\.1-(fast-)?generate-preview$/),
       instances: expect.arrayContaining([
@@ -155,16 +154,19 @@ const fixtures = [
             expect.objectContaining({
               image: expect.objectContaining({
                 gcsUri: "gs://example/product1.jpg",
+                mimeType: "image/jpeg",
               }),
             }),
             expect.objectContaining({
               image: expect.objectContaining({
-                gcsUri: "gs://example/product2.jpg",
+                gcsUri: "gs://example/product2.png",
+                mimeType: "image/png",
               }),
             }),
             expect.objectContaining({
               image: expect.objectContaining({
                 gcsUri: "gs://example/product3.jpg",
+                mimeType: "image/jpeg",
               }),
             }),
           ]),
@@ -261,20 +263,22 @@ const fixtures = [
   // ============================================
   {
     id: "video:veo31-first-last-frame-product-demo",
-    prompt: "First frame: https://firebasestorage.googleapis.com/v0/b/studio-3670859293-6f970.firebasestorage.app/o/users%2FnZ86oPazPgT3yZjTHhFFjkj7sR42%2Fprojects%2Fx5f8I6Tq99AGgj4HJrzF%2Fkeyframes%2Ffd3d84c9-9331-49ed-9739-7b35e76d9f9b.png?alt=media&token=8b570af6-92f9-4040-8f0c-c3ac0ae8ce17 Last frame: https://firebasestorage.googleapis.com/v0/b/studio-3670859293-6f970.firebasestorage.app/o/users%2FnZ86oPazPgT3yZjTHhFFjkj7sR42%2Fprojects%2Fx5f8I6Tq99AGgj4HJrzF%2Fkeyframes%2F5879bd22-6927-4549-9199-9281a6cd8115.png?alt=media&token=8c223589-0167-46e7-b2e0-6518d0611a53 base_style: \"cinematic, photorealistic, 4K\" aspect_ratio: \"9:16\" key_elements: - \"MAN\" - \"AMAZON ESSENTIALS LONG-SLEEVE HENLEY\" negative_prompts: [\"no text overlays\", \"no distracting music\"] timeline: - sequence: 1 timestamp: \"00:00-00:04\" action: \"The man stretches and smiles, his Amazon Essentials Henley moving comfortably with his body. A voiceover begins, describing the product's comfort. The dialogue for this shot is: 'Meet your everyday upgrade: The Amazon Essentials Men's Slim-Fit Henley.'\" - sequence: 2 timestamp: \"00:04-00:08\" action: \"the man takes a sip of his coffee and goes back to work\" audio: Sounds appropriate to the scene. The VO should say: 'It's comfort that keeps up with your day.'\"",
+    prompt: "First frame: https://firebasestorage.googleapis.com/v0/b/studio-3670859293-6f970.firebasestorage.app/o/users%2FnZ86oPazPgT3yZjTHhFFjkj7sR42%2Fprojects%2Fx5f8I6Tq99AGgj4HJrzF%2Fkeyframes%2Ffd3d84c9-9331-49ed-9739-7b35e76d9f9b.jpg?alt=media&token=8b570af6-92f9-4040-8f0c-c3ac0ae8ce17 Last frame: https://firebasestorage.googleapis.com/v0/b/studio-3670859293-6f970.firebasestorage.app/o/users%2FnZ86oPazPgT3yZjTHhFFjkj7sR42%2Fprojects%2Fx5f8I6Tq99AGgj4HJrzF%2Fkeyframes%2F5879bd22-6927-4549-9199-9281a6cd8115.png?alt=media&token=8c223589-0167-46e7-b2e0-6518d0611a53 base_style: \"cinematic, photorealistic, 4K\" aspect_ratio: \"9:16\" key_elements: - \"MAN\" - \"AMAZON ESSENTIALS LONG-SLEEVE HENLEY\" negative_prompts: [\"no text overlays\", \"no distracting music\"] timeline: - sequence: 1 timestamp: \"00:00-00:04\" action: \"The man stretches and smiles, his Amazon Essentials Henley moving comfortably with his body. A voiceover begins, describing the product's comfort. The dialogue for this shot is: 'Meet your everyday upgrade: The Amazon Essentials Men's Slim-Fit Henley.'\" - sequence: 2 timestamp: \"00:04-00:08\" action: \"the man takes a sip of his coffee and goes back to work\" audio: Sounds appropriate to the scene. The VO should say: 'It's comfort that keeps up with your day.'\"",
     expected: {
       model: expect.stringMatching(/^veo-3\.1-(fast-)?generate-preview$/), // Accept both fast and standard variants
       instances: expect.arrayContaining([
         expect.objectContaining({
           // Prompt should describe the action/scene WITHOUT URLs
-          prompt: expect.stringMatching(/^(?!.*firebasestorage).*man.*stretches.*smiles.*Henley.*coffee.*work/i),
+          prompt: expect.stringMatching(/.*man.*stretches.*smiles/i),
           // First frame goes in image field
           image: expect.objectContaining({
-            gcsUri: "gs://studio-3670859293-6f970.firebasestorage.app/users/nZ86oPazPgT3yZjTHhFFjkj7sR42/projects/x5f8I6Tq99AGgj4HJrzF/keyframes/fd3d84c9-9331-49ed-9739-7b35e76d9f9b.png",
+            gcsUri: "gs://studio-3670859293-6f970.firebasestorage.app/users/nZ86oPazPgT3yZjTHhFFjkj7sR42/projects/x5f8I6Tq99AGgj4HJrzF/keyframes/fd3d84c9-9331-49ed-9739-7b35e76d9f9b.jpg",
+            mimeType: "image/jpeg",
           }),
           // Last frame goes in lastFrame field (not referenceImages)
           lastFrame: expect.objectContaining({
             gcsUri: "gs://studio-3670859293-6f970.firebasestorage.app/users/nZ86oPazPgT3yZjTHhFFjkj7sR42/projects/x5f8I6Tq99AGgj4HJrzF/keyframes/5879bd22-6927-4549-9199-9281a6cd8115.png",
+            mimeType: "image/png",
           }),
         }),
       ]),

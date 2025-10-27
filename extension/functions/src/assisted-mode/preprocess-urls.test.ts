@@ -175,7 +175,7 @@ describe("preprocessUrls", () => {
 
     test("should throw error for unknown extensions", () => {
       const input = "Unknown: gs://file.xyz gs://noext";
-      
+
       // Should throw error since mime package can't determine type
       expect(() => preprocessUrls(input)).toThrow("Cannot determine MIME type");
     });

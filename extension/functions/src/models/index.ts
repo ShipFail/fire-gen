@@ -12,6 +12,13 @@ import {VEO_MODELS, VEO_AI_HINTS} from "./veo/index.js";
 import {GEMINI_FLASH_IMAGE_MODELS, GEMINI_25_FLASH_IMAGE_AI_HINT} from "./gemini-flash-image/index.js";
 import {GEMINI_TTS_MODELS, GEMINI_TTS_AI_HINTS} from "./gemini-tts/index.js";
 
+// Import schemas for getModelSchema() function
+import {Veo31GeneratePreviewRequestSchema} from "./veo/veo-3.1-generate-preview.js";
+import {Veo31FastGeneratePreviewRequestSchema} from "./veo/veo-3.1-fast-generate-preview.js";
+import {Gemini25FlashImageRequestSchema} from "./gemini-flash-image/gemini-2.5-flash-image.js";
+import {Gemini25FlashPreviewTTSRequestSchema} from "./gemini-tts/gemini-2.5-flash-preview-tts.js";
+import {Gemini25ProPreviewTTSRequestSchema} from "./gemini-tts/gemini-2.5-pro-preview-tts.js";
+
 // Export only what's needed by external modules (triggers, ai-request-analyzer)
 // DO NOT export schemas, types, or adapters - those are internal to model families
 export {VEO_AI_HINTS} from "./veo/index.js";
@@ -79,6 +86,41 @@ export function getModelIdSchema(): z.ZodEnum<[string, ...string[]]> {
 }
 
 /**
+ * Map of model IDs to their request Zod schemas.
+ * Used by assisted-mode Step 2 to generate model-specific parameter guidance.
+ */
+const MODEL_SCHEMA_MAP: Record<ModelId, z.ZodType<any>> = {
+  "veo-3.1-generate-preview": Veo31GeneratePreviewRequestSchema,
+  "veo-3.1-fast-generate-preview": Veo31FastGeneratePreviewRequestSchema,
+  "gemini-2.5-flash-image": Gemini25FlashImageRequestSchema,
+  "gemini-2.5-flash-preview-tts": Gemini25FlashPreviewTTSRequestSchema,
+  "gemini-2.5-pro-preview-tts": Gemini25ProPreviewTTSRequestSchema,
+};
+
+/**
+ * Get Zod schema for a model's request format.
+ * Used by assisted-mode to generate JSON Schema guidance for parameter inference.
+ *
+ * @param modelId - Model identifier (e.g., "veo-3.1-fast-generate-preview")
+ * @returns Zod schema for the model's request format
+ * @throws {Error} If model ID is not recognized
+ *
+ * @example
+ * ```typescript
+ * const schema = getModelSchema("veo-3.1-fast-generate-preview");
+ * const jsonSchema = zodToJsonSchema(schema);
+ * // Use jsonSchema in AI prompt for precise parameter inference
+ * ```
+ */
+export function getModelSchema(modelId: string): z.ZodType<any> {
+  const schema = MODEL_SCHEMA_MAP[modelId as ModelId];
+  if (!schema) {
+    throw new Error(`No schema found for model: ${modelId}`);
+  }
+  return schema;
+}
+
+/**
  * Build complete system instruction for AI request analyzer.
  * Assembles all AI hints from all model families.
  */
@@ -97,57 +139,5 @@ ${VEO_AI_HINTS}
 
 ${GEMINI_25_FLASH_IMAGE_AI_HINT}
 
-## Analysis Rules
-
-1. **Determine media type from keywords (PRIORITY MATTERS - check in this order):**
-
-   **CRITICAL FIRST: Check for TTS (Text-to-Speech)**
-   - TTS: "say", "speak", "voice", "read", "narrate", "announce", "tell", "pronounce"
-     * If request contains ANY SPOKEN WORDS → ALWAYS classify as TTS
-     * Semantic understanding: "speak hello" = someone speaking words out loud = TTS
-     * Examples: "speak hello", "say welcome", "read this text", "narrate story" → TTS
-
-   **Then check other types:**
-   - Video: "video", "clip", "footage", "movie", "animation", "motion"
-   - Image: "image", "picture", "photo", "illustration", "drawing", "render"
-
-2. **ALWAYS choose fastest model by default (CRITICAL):**
-   - Video: **veo-3.1-fast-generate-preview** is the smart default (fast, high quality)
-   - Image: gemini-2.5-flash-image - fast image generation
-   - TTS: gemini-2.5-flash-preview-tts
-
-3. **Extract parameters intelligently:**
-   - Duration from "4 second", "short", "long", "brief" (video: 4/6/8s only)
-
-   - **CRITICAL: Aspect ratio detection - SEMANTIC UNDERSTANDING**
-     * **VIDEO aspect ratios (ALWAYS extract if orientation mentioned):**
-       • "vertical" or "portrait" = TALLER than wide = **"9:16"** (height > width, standing, tall)
-       • "horizontal" or "landscape" = WIDER than tall = **"16:9"** (width > height, lying down, wide)
-       • "square" = equal dimensions = **"1:1"**
-       • Default if not mentioned: "16:9"
-
-     * **IMAGE aspect ratios (MUST extract when orientation mentioned):**
-       • "portrait" = TALLER than wide = **"2:3"** (standard photo orientation)
-       • "vertical" = TALLER than wide = **"9:16"** (phone/social media)
-       • "landscape" or "horizontal" = WIDER than tall = **"3:2"** (standard photo)
-       • "square" = equal dimensions = **"1:1"**
-       • Explicit ratio (e.g., "9:16 aspect ratio") → use exact value
-       • Default if not mentioned: "1:1"
-
-     * **REMEMBER: "vertical" and "portrait" both mean TALLER (height > width), NOT wider!**
-
-   - Resolution from "720p", "1080p", "4K" (map 4K→1080p)
-   - Audio preference from "silent", "no audio", "with sound"
-   - Understand user intent and context - use your intelligence, not keyword matching
-
-4. **Handle ambiguity:**
-   - If request could be multiple types, choose most likely based on context
-
-5. **Prompt refinement:**
-   - For video/image: Extract visual description, remove meta instructions
-   - For TTS: Extract exact text to speak
-
-## Response Format
-
-Return ONLY valid JSON matching the JobRequest schema. No explanations, no markdown, just JSON.`;
+`;
 }

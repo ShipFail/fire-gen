@@ -3,13 +3,14 @@
 /**
  * Step 2: Parameter Inference (AI Reasoning)
  *
- * Generate reasoning for model parameters based on selected model.
+ * Generate reasoning for model parameters based on selected model's JSON Schema.
  */
 
+import {zodToJsonSchema} from "zod-to-json-schema";
 import {callVertexAPI} from "../lib/vertex-ai-client.js";
 import {PROJECT_ID} from "../firebase-admin.js";
 import {REGION} from "../env.js";
-import {buildStep2System} from "./prompts.js";
+import {getModelSchema} from "../models/index.js";
 import {ANALYZER_MODEL} from "./constants.js";
 
 /**
@@ -26,7 +27,7 @@ interface GeminiResponse {
 /**
  * Generate reasoning for model parameters.
  *
- * Input: taggedPrompt + step1.reasons + model hints
+ * Input: taggedPrompt + step1.reasons + model schema (JSON)
  * Output: string[] (reasoning lines)
  */
 export async function step2ParameterInference(
@@ -38,6 +39,35 @@ export async function step2ParameterInference(
 ): Promise<string[]> {
   const endpoint = `v1/projects/${PROJECT_ID}/locations/${REGION}/publishers/google/models/${ANALYZER_MODEL}:generateContent`;
 
+  // Get model-specific JSON Schema
+  const modelSchema = getModelSchema(selectedModel);
+  const jsonSchema = JSON.stringify(zodToJsonSchema(modelSchema), null, 2);
+
+  // Build system instruction with JSON Schema
+  const systemInstruction = `You are an expert full stack engineer inferring parameters for ${selectedModel}.
+
+**Model Request JSON Schema:**
+\`\`\`json
+${jsonSchema}
+\`\`\`
+
+**Task:**
+Generate detailed reasoning for each parameter in the request JSON. Focus ONLY on fields defined in the schema above.
+
+**Output Format:**
+One reasoning line per parameter, format:
+"<parameter>: <value> → <reason>"
+
+Example:
+"durationSeconds: 8 → Default duration for short videos (schema allows: 4, 6, 8)"
+"aspectRatio: 9:16 → User requested vertical video (schema enum value)"
+
+**Guidelines:**
+- Infer parameter values semantically from the user's prompt
+- Reference schema constraints (enums, types, required fields)
+- Use default values when not specified
+- Be explicit about your reasoning`;
+
   // Build user prompt with step1 reasoning
   const userPrompt = `${taggedPrompt}
 
@@ -46,7 +76,7 @@ ${step1Reasons.map((r) => `- ${r}`).join("\n")}`;
 
   const response = await callVertexAPI<GeminiResponse>(endpoint, {
     systemInstruction: {
-      parts: [{text: buildStep2System(selectedModel, modelHints)}],
+      parts: [{text: systemInstruction}],
     },
     contents: [
       {

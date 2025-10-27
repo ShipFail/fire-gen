@@ -39,16 +39,36 @@ function getModelHints(modelId: ModelId): string {
 }
 
 /**
- * Analyze user prompt and generate model request.
+ * Process user prompt using AI-assisted mode.
+ *
+ * Converts natural language prompt into structured model request through
+ * a 3-step AI pipeline with full reasoning transparency.
  *
  * Architecture:
  * 1. Pre-process: Extract URLs → tags
  * 2. Step 1: AI selects model (JSON mode)
- * 3. Step 2: AI infers parameters (reasoning)
+ * 3. Step 2: AI infers parameters (reasoning with JSON Schema)
  * 4. Step 3: AI generates JSON (schema mode)
  * 5. Post-process: Validate + restore URLs
+ *
+ * @example
+ * ```typescript
+ * const result = await assistedRequest(
+ *   "Create a 6-second vertical waterfall video",
+ *   "job-abc123"
+ * );
+ *
+ * console.log(result.model);    // "veo-3.1-fast-generate-preview"
+ * console.log(result.request);  // {instances: [...], parameters: {...}}
+ * console.log(result.reasons);  // ["Selected model: veo-3.1...", ...]
+ * ```
+ *
+ * @param prompt - Natural language prompt from user
+ * @param jobId - Unique job identifier for tracking
+ * @returns Structured request with reasoning chain
+ * @throws {Error} If model selection fails or validation fails
  */
-export async function analyzePrompt(
+export async function assistedRequest(
   prompt: string,
   jobId: string,
 ): Promise<AnalyzeResult> {

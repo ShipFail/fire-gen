@@ -17,5 +17,5 @@
  * Used for RTDB jobs with `assisted.prompt` and `assisted.reasons` fields.
  */
 
-export {analyzePrompt} from "./orchestrator.js";
+export {assistedRequest} from "./orchestrator.js";
 export type {AnalyzeResult} from "./orchestrator.js";

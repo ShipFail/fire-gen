@@ -7,7 +7,7 @@ import {z} from "zod";
 import {JOB_TTL_MS, POLL_INTERVAL_MS} from "./config.js";
 import {generateSignedUrl} from "./storage.js";
 import {enqueuePollTask} from "./poller.js";
-import {analyzePrompt} from "./assisted-mode/index.js";
+import {assistedRequest} from "./assisted-mode/index.js";
 import {getModelAdapter, isValidModelId} from "./models/index.js";
 import {getFireGenVersion} from "./version.js";
 import type {JobNode, FileInfo} from "./types/index.js";
@@ -147,7 +147,7 @@ export async function analyzeAndTransformJob(
 
   try {
     // Step 1: Analyze prompt with AI (pure function - no RTDB operations)
-    const analyzed = await analyzePrompt(prompt, jobId);
+    const analyzed = await assistedRequest(prompt, jobId);
 
     logger.info("Prompt analyzed successfully", {
       jobId,

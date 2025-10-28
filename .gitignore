@@ -49,4 +49,3 @@ database-debug.log
 next-env.d.ts
 
 .env*
-package-lock.json

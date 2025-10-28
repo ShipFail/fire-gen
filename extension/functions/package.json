@@ -4,7 +4,7 @@
   "description": "FireGen Firebase Extension - AI media generation via pure REST API (18 Vertex AI models)",
   "scripts": {
     "lint": "eslint --ext .js,.ts .",
-    "prebuild": "tsx scripts/generate-version.ts",
+    "prebuild": "npx tsx scripts/generate-version.ts",
     "build": "tsc",
     "build:watch": "tsc --watch",
     "serve": "npm run build && firebase emulators:start --only functions",

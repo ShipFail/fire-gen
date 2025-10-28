@@ -252,7 +252,7 @@ FIREGEN_REGION=us-central1
 - Storage path: `gs://{bucket}/firegen-jobs/{jobId}/`
 - Job TTL: 90 minutes
 - Poll interval: 1 second
-- Signed URL expiry: 25 hours
+- Signed URL expiry: 24 hours
 - Max concurrent poll tasks: 150
 - Poll task timeout: 60 seconds
 
@@ -427,7 +427,7 @@ await uploadToYourStorage(blob); // Save to Firebase Storage, S3, etc.
 
 **URL Types:**
 - `uri`: `gs://bucket/firegen-jobs/{id}/video.mp4` (backend operations)
-- `url`: `https://storage.googleapis.com/...?Expires=...` (browser playback, expires 25h)
+- `url`: `https://storage.googleapis.com/...?Expires=...` (browser playback, expires 24h)
 
 ### Job Lifecycle
 
@@ -500,7 +500,7 @@ onValue(ref(db, `firegen-jobs/${jobId}`), (snapshot) => {
 | Storage Path | `firegen-jobs/{jobId}/` | Cloud Storage job directory |
 | Job TTL | 90 minutes | Job expiration timeout |
 | Poll Interval | 1 second | Async operation polling frequency |
-| Signed URL Expiry | 25 hours | Temporary URL lifetime (24h file + 1h buffer) |
+| Signed URL Expiry | 24 hours | Temporary URL lifetime |
 | Max Concurrent Polls | 150 | Maximum simultaneous poll tasks |
 | Poll Task Timeout | 60 seconds | Maximum time per poll task |
 
@@ -624,7 +624,7 @@ See [POSTINSTALL.md](./extension/POSTINSTALL.md#troubleshooting) for detailed st
 
 - **Authentication:** Firebase Auth (user-scoped jobs)
 - **Authorization:** RTDB security rules (uid-based)
-- **Signed URLs:** Temporary unauthenticated access (25h expiry)
+- **Signed URLs:** Temporary unauthenticated access (24h expiry)
 - **Data Lifecycle:** Auto-delete after 24h
 - **Service Account:** Cloud Functions bypass RTDB rules
 

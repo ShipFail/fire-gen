@@ -50,7 +50,7 @@ export function getOutputFileUri(jobId: string, request: JobRequest): string {
 
 /**
  * Generate a signed URL for a GCS URI.
- * Signed URLs allow temporary unauthenticated access (25h expiry).
+ * Signed URLs allow temporary unauthenticated access (24h expiry).
  */
 export async function generateSignedUrl(gcsUri: string): Promise<string | undefined> {
   if (!gcsUri || !gcsUri.startsWith("gs://")) {

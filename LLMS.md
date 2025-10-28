@@ -39,7 +39,7 @@ const job = await push(ref(db, 'firegen-jobs'), {
 onValue(ref(db, `firegen-jobs/${job.key}/status`), async (snap) => {
   if (snap.val() === 'succeeded') {
     const jobData = (await get(ref(db, `firegen-jobs/${job.key}`))).val();
-    const videoUrl = jobData.files[0].https; // ⚠️ Download now - expires in 25h
+    const videoUrl = jobData.files[0].https; // ⚠️ Download now - expires in 24h
   }
 });
 ```
@@ -67,7 +67,7 @@ onValue(ref(db, `firegen-jobs/${job.key}/status`), async (snap) => {
     {
       name: string                          // "file0.mp4", "file1.png", etc.
       gs: string                            // GCS URI: gs://bucket/path/file0.mp4
-      https: string                         // Signed URL (expires 25h)
+      https: string                         // Signed URL (expires 24h)
       mimeType?: string                     // "video/mp4", "image/png", "audio/wav"
       size?: number                         // Bytes
     }
@@ -301,7 +301,7 @@ function watchJob(jobId: string) {
       const file = job.files[0];
       console.log('Video URL:', file.https);
       
-      // Download immediately - URL expires in 25h
+      // Download immediately - URL expires in 24h
       await fetch(file.https).then(r => r.blob()).then(saveToStorage);
       
       unsubscribe();
@@ -325,9 +325,9 @@ function watchJob(jobId: string) {
 | Field | Format | Expiry | Auth Required | Use For |
 |-------|--------|--------|---------------|---------|
 | `gs` | `gs://bucket/path` | ⚠️ Unknown* | Yes (Admin SDK) | Backend copy operations |
-| `https` | Signed URL | 25 hours | No | Browser playback, download |
+| `https` | Signed URL | 24 hours | No | Browser playback, download |
 
-**⚠️ File Persistence:** Source code shows 25h signed URL expiry, but no auto-deletion implementation found. Implement your own cleanup if needed.
+**⚠️ File Persistence:** Source code shows 24h signed URL expiry, but no auto-deletion implementation found. Implement your own cleanup if needed.
 
 ---
 
@@ -501,7 +501,7 @@ try {
 ## Best Practices
 
 1. **⚠️ Subscribe to `status` only** - Not entire job (avoids 120+ re-renders during polling)
-2. **⚠️ Download files immediately** - Signed URLs expire in 25h
+2. **⚠️ Download files immediately** - Signed URLs expire in 24h
 3. **Use AI-Assisted for prototyping** - Fast iteration with natural language
 4. **Use Explicit for production** - Precise control, no AI overhead
 5. **Validate before writing** - Check schema to avoid validation errors

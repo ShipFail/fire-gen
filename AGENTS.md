@@ -37,7 +37,7 @@ firegen-jobs/{jobId}/
     {
       name: string                          // Filename (e.g., "file0.mp4", "file1.png")
       gs: string                            // GCS URI (gs://bucket/path/file0.mp4)
-      https: string                         // Signed URL (expires in 25h)
+      https: string                         // Signed URL (expires in 24h)
       mimeType?: string                     // e.g., "video/mp4", "image/png"
       size?: number                         // File size in bytes
     }

@@ -14,7 +14,7 @@ export type JobStatus =
 export interface FileInfo {
   name: string;            // Filename (e.g., "video.mp4", "image.png")
   gs: string;              // GCS URI (gs://bucket/path)
-  https: string;           // Signed URL (25h expiry)
+  https: string;           // Signed URL (24h expiry)
   mimeType?: string;       // e.g., "video/mp4", "image/png"
   size?: number;           // File size in bytes
 }

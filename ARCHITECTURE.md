@@ -700,17 +700,15 @@ Example: `gs://my-bucket/firegen-jobs/abc123/video-veo-3.1-fast-generate-preview
 
 ##### `generateSignedUrl(gcsUri: string): Promise<string>`
 
-Creates temporary access URL (25h expiry):
+Creates temporary access URL (24h expiry):
 
 ```typescript
 const file = bucket.file(filePath);
 const [signedUrl] = await file.getSignedUrl({
   action: "read",
-  expires: Date.now() + SIGNED_URL_EXPIRY_MS  // 25 hours
+  expires: Date.now() + SIGNED_URL_EXPIRY_MS  // 24 hours
 });
 ```
-
-**Expiry Strategy:** 25h = 24h file lifetime + 1h buffer
 
 ##### `uploadToGcs(data: Buffer, gcsUri: string, contentType: string): Promise<string>`
 
@@ -862,7 +860,7 @@ Total time: Normal time + 1-2s for AI analysis
 7. GeminiFlashImageAdapter → Returns {output: {uri, metadata}}
 
 8. orchestrator → generateSignedUrl(uri)
-   Creates signed URL (25h expiry)
+   Creates signed URL (24h expiry)
 
 9. orchestrator → RTDB update
    Writes: {status: "succeeded", response: {uri, url, metadata}}
@@ -925,7 +923,7 @@ Total time: ~3-8 seconds
     Extracts URI from response
 
 17. onFiregenJobPoll → generateSignedUrl(uri)
-    Creates signed URL (25h expiry)
+    Creates signed URL (24h expiry)
 
 18. onFiregenJobPoll → RTDB update
     Writes: {status: "succeeded", response: {uri, url, metadata}}
@@ -1248,7 +1246,7 @@ GCS (service account) → Write permissions
 ### Data Access Control
 
 **Signed URLs:**
-- Allow temporary unauthenticated access (25h)
+- Allow temporary unauthenticated access (24h)
 - Anyone with URL can download media
 - URLs expire automatically
 - Suitable for client-side playback
@@ -1303,7 +1301,7 @@ All operational constants are defined in `src/config.ts`:
 |----------|-------|---------|
 | `JOB_TTL_MS` | `90 * 60 * 1000` | Job expiration timeout (90 minutes) |
 | `POLL_INTERVAL_MS` | `1 * 1000` | Async polling frequency (1 second) |
-| `SIGNED_URL_EXPIRY_MS` | `25 * 60 * 60 * 1000` | Temporary URL lifetime (25 hours) |
+| `SIGNED_URL_EXPIRY_MS` | `24 * 60 * 60 * 1000` | Temporary URL lifetime (24 hours) |
 | `MAX_CONCURRENT_POLL_TASKS` | `150` | Maximum simultaneous poll tasks |
 | `POLL_TASK_TIMEOUT_SECONDS` | `60` | Maximum time per poll task |
 
@@ -1596,7 +1594,7 @@ The following section documents the SDK-based architecture that was replaced wit
 - ✅ Reduced PII exposure risk
 - ✅ No manual cleanup scripts needed
 - ❌ Clients must download within 24h (documented extensively)
-- ⚠️ Signed URLs expire at 25h (1h buffer)
+- ⚠️ Signed URLs expire at 24h
 
 **Alternatives Considered:**
 - Permanent storage: Higher costs, requires lifecycle policies

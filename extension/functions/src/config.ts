@@ -24,10 +24,10 @@ export const JOB_TTL_MS = 90 * 60 * 1000;
 export const POLL_INTERVAL_MS = 1 * 1000;
 
 /**
- * Signed URL expiry in milliseconds (25 hours).
- * This is 24h file lifetime + 1h buffer.
+ * Signed URL expiration time (24 hours).
+ * Provides 24h file lifetime for download operations.
  */
-export const SIGNED_URL_EXPIRY_MS = 25 * 60 * 60 * 1000;
+export const SIGNED_URL_EXPIRY_MS = 24 * 60 * 60 * 1000;
 
 /**
  * Maximum concurrent poll tasks.

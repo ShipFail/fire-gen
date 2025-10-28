@@ -35,7 +35,7 @@ You can test out this extension right away!
    - When complete, a `response` field appears with `url` and `uri`
 
 4. Access your generated media:
-   - `response.url` - Signed URL (valid for 25 hours, use immediately)
+   - `response.url` - Signed URL (valid for 24 hours, use immediately)
    - `response.uri` - GCS URI (`gs://...` for backend operations)
    - ⚠️ **Files are automatically deleted after 24 hours**
 
@@ -208,7 +208,7 @@ onValue(jobRef, (snapshot) => {
 
 **Important notes:**
 - ⚠️ **Files are deleted after 24 hours** - Download immediately
-- 🔗 **Signed URLs expire after 25 hours** - Use within validity period
+- 🔗 **Signed URLs expire after 24 hours** - Use within validity period
 - 🔒 **User-scoped jobs** - Set `uid` to match authenticated user for security
 
 ### Security rules

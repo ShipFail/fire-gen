@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firegen
-version: 0.2.0
+version: 0.2.4
 specVersion: v1beta
 
 displayName: FireGen – turns RTDB into your universal Generative AI API

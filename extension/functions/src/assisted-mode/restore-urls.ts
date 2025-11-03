@@ -90,7 +90,6 @@ function addMimeTypesFromTags(
   }
 
   // If this object has fileUri, check if original had a tag and extract MIME type
-  // (Used by Gemini image generation API for reference images)
   if (typeof restoredRecord.fileUri === "string" && typeof originalRecord.fileUri === "string") {
     const tagMatch = originalRecord.fileUri.match(/<FIREGEN_([A-Z]+_[A-Z0-9]+)_URI_\d+\/>/);
     if (tagMatch) {

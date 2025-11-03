@@ -36,7 +36,14 @@ export {
 async function generateImage(
   model: string,
   payload: {
-    contents: string | Array<{role?: string; parts: Array<{text: string}>}>;
+    contents: string | Array<{
+      role?: string;
+      parts: Array<
+        | {text: string}
+        | {inlineData: {mimeType: string; data: string}}
+        | {fileData: {mimeType: string; fileUri: string}}
+      >;
+    }>;
     generationConfig: {
       responseModalities: string[];
       imageConfig?: {

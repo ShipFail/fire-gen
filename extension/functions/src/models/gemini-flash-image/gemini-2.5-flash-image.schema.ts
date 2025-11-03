@@ -35,15 +35,53 @@ const SafetySettingSchema = z.object({
     .describe("Blocking sensitivity: BLOCK_NONE allows all, BLOCK_ONLY_HIGH blocks severe, BLOCK_MEDIUM_AND_ABOVE blocks moderate+"),
 });
 
+// ============= PART SCHEMAS =============
+
+/**
+ * Part type for multimodal content in Gemini API.
+ * Supports text, inline data (base64), and file data (GCS URIs).
+ * Each part can be one of three types (mutually exclusive fields).
+ */
+const TextPartSchema = z.object({
+  text: PromptSchema
+    .describe("Text content for prompts or instructions"),
+});
+
+const InlineDataPartSchema = z.object({
+  inlineData: z.object({
+    mimeType: z.string()
+      .describe("Media MIME type: image/jpeg, image/png, image/webp, etc."),
+    data: z.string()
+      .describe("Base64-encoded media data"),
+  }).describe("Inline media data encoded as base64"),
+});
+
+const FileDataPartSchema = z.object({
+  fileData: z.object({
+    mimeType: z.string()
+      .describe("Media MIME type: image/jpeg, image/png, image/webp, etc."),
+    fileUri: z.string()
+      .describe("Google Cloud Storage URI (gs://bucket/path) referencing media file"),
+  }).describe("Reference to media file stored in Google Cloud Storage"),
+});
+
+/**
+ * Union of all possible part types.
+ * At runtime, each part object will have exactly one of: text, inlineData, or fileData.
+ */
+const PartSchema = z.union([
+  TextPartSchema,
+  InlineDataPartSchema,
+  FileDataPartSchema,
+]);
+
 // ============= CONTENT SCHEMA =============
 
 const Gemini25FlashImageContentSchema = z.object({
   role: z.literal("user")
     .describe("Message sender role, always user for generation requests"),
-  parts: z.array(z.object({
-    text: PromptSchema
-      .describe("Image generation prompt describing desired visual content, style, composition, details"),
-  })).describe("Content components containing generation instructions"),
+  parts: z.array(PartSchema)
+    .describe("Content components: text prompts, inline media, or GCS file references"),
 });
 
 // ============= GENERATION CONFIG SCHEMA =============
@@ -64,7 +102,7 @@ const Gemini25FlashImageGenerationConfigSchema = z.object({
 /**
  * Complete REST API request schema for gemini-2.5-flash-image.
  *
- * Request body format:
+ * Request body format (text only):
  * {
  *   "model": "gemini-2.5-flash-image",
  *   "contents": [{"role": "user", "parts": [{"text": "..."}]}],
@@ -73,6 +111,23 @@ const Gemini25FlashImageGenerationConfigSchema = z.object({
  *     "imageConfig": {"aspectRatio": "1:1"}
  *   },
  *   "safetySettings": [{"category": "...", "threshold": "..."}]
+ * }
+ *
+ * Request body format (with reference images):
+ * {
+ *   "model": "gemini-2.5-flash-image",
+ *   "contents": [{
+ *     "role": "user",
+ *     "parts": [
+ *       {"text": "merge these images..."},
+ *       {"fileData": {"mimeType": "image/jpeg", "fileUri": "gs://bucket/image1.jpg"}},
+ *       {"fileData": {"mimeType": "image/png", "fileUri": "gs://bucket/image2.png"}}
+ *     ]
+ *   }],
+ *   "generationConfig": {
+ *     "responseModalities": ["IMAGE"],
+ *     "imageConfig": {"aspectRatio": "1:1"}
+ *   }
  * }
  */
 export const Gemini25FlashImageRequestSchema = z.object({

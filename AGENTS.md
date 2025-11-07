@@ -72,12 +72,12 @@ firegen-jobs/{jobId}/
 
 **Key Design Principles:**
 
-1. **`request` and `response` are raw** - Exact model API format, no transformation
+1. **`request` and `response` are raw** - Exact original raw RESTFUL API parameters and responses of the model, no transformation
 2. **`files` is user-facing** - Clean access URLs with sequential naming (file0, file1, file2...)
-3. **`error` is system errors** - Model errors stay in `response.error`
-4. **`metadata` contains timestamps** - All temporal and diagnostic data in one namespace
-5. **`model` at root level** - Enables efficient querying by model type
-6. **`assisted` optional** - Only present for AI-assisted jobs
+3. **`error` is FireGen system errors** - Model errors stay in `response.error`
+4. **`model` at root level** - Enables efficient querying by model type
+5. **`assisted` optional** - Only present for AI-assisted jobs
+6. **`metadata` contains everything else** - All temporal and diagnostic data in one namespace
 
 ## Rules
 
@@ -104,21 +104,21 @@ firegen-jobs/{jobId}/
 ## Supported Models
 
 - **Latest versions only**: FireGen always uses the newest model versions (Veo, Gemini, etc.)
-- **When new versions release**: Old versions are removed from AI analyzer but kept for backward compatibility
-- **Example**: When Veo 3.1 releases, Veo 3.0 is hidden from AI but still works for direct API calls
+- **When new versions release**: Old versions are removed from AI analyzer but kept in codebase for backward compatibility
+- **Example**: When Veo 3.1 releases, Veo 3.0 is hidden from AI analyzer (ai assist mode) but still works for direct API calls (explicit mode)
 
 ## Model Version Migration Rules
 
 ### Two-Tier Architecture
 1. **AI Analyzer Tier**: Only exposes the latest model versions
-2. **Implicit Request Tier**: Supports all model versions (new and old)
+2. **Explicit Request Tier**: Supports all model versions (new and old)
 
 ### Rules When Adding New Model Versions
 
 1. **AI Analyzer**: Remove all old versions from AI hints - only latest versions visible
 2. **Codebase**: Keep old model adapters and schemas - don't delete them
 3. **Tests**: Update to expect new versions - remove tests for old versions
-4. **Documentation**: Mark old versions as "implicit requests only"
+4. **Documentation**: Mark old versions as "explicit requests only"
 5. **Dependencies**: Always use `@latest` SDK version
 
 
@@ -216,3 +216,7 @@ firegen-jobs/{jobId}/
 18. **Step files are numbered and self-contained** - Name pipeline steps as `step1-*.ts`, `step2-*.ts` with clear single responsibility
 19. **Orchestrator coordinates without logic** - Main orchestrator file coordinates pipeline flow but contains no business logic
 20. **README in each major module** - Document architecture, data flow, and design principles in module-level README
+
+## Smoking Test
+
+- run `npm run build` and `npm run test` to ensure everything works

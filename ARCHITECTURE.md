@@ -60,7 +60,7 @@
                ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                    GOOGLE VERTEX AI                              │
-│  Video: Veo 2.0/3.0 | Image: Imagen/Nano Banana                 │
+│  Video: Veo 3.0 | Image: Imagen/Gemini Flash Image        │
 │  Audio: Gemini TTS, Chirp TTS/STT, Lyria | Text: Gemini         │
 └──────────────┬──────────────────────────────────────────────────┘
                │ writes media
@@ -113,7 +113,7 @@ export interface ModelAdapter {
 
 // Concrete adapters
 export class VeoAdapter implements ModelAdapter { }
-export class ImagenAdapter implements ModelAdapter { }
+export class GeminiFlashImageAdapter implements ModelAdapter { }
 export class GeminiTextAdapter implements ModelAdapter { }
 ```
 
@@ -622,7 +622,7 @@ return {output: {text, metadata}};  // ⭐ No URI - text only
 
 ---
 
-#### **Sync Adapter with Upload: ImagenAdapter** (`src/models/imagen.ts`)
+#### **Sync Adapter with Upload: Gemini Flash Image Adapter** (`src/models/gemini-flash-image/gemini-2.5-flash-image.ts`)
 
 **Execution Pattern:**
 ```typescript
@@ -666,7 +666,7 @@ return {
 
 **Key Difference from Veo:**
 - Veo: Writes directly to GCS (no FireGen upload)
-- Imagen: Returns inline data → FireGen uploads to GCS
+- Gemini Flash Image: Returns inline data → FireGen uploads to GCS
 
 ---
 
@@ -721,7 +721,7 @@ await file.save(data, {
 });
 ```
 
-**Used By:** Imagen, Nano Banana, Gemini TTS, Chirp TTS, Lyria
+**Used By:** Gemini Flash Image, Gemini TTS, Chirp TTS, Lyria
 
 ---
 

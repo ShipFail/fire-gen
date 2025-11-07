@@ -1,6 +1,6 @@
 // functions/src/models/gemini-flash-image/gemini-2.5-flash-image.schema.ts
-import {z} from "zod";
-import {PromptSchema} from "../../lib/zod-utils.js";
+import { z } from "zod";
+import { PromptSchema } from "../../lib/zod-utils.js";
 
 /**
  * Zod schema for gemini-2.5-flash-image model.
@@ -37,13 +37,36 @@ const SafetySettingSchema = z.object({
 
 // ============= CONTENT SCHEMA =============
 
+const InlineDataSchema = z.object({
+  mimeType: z.string().describe("IANA MIME type of the image (e.g., 'image/png', 'image/jpeg')"),
+  data: z.string().describe("Base64-encoded image data"),
+});
+
+const FileDataSchema = z.object({
+  mimeType: z.string().describe("IANA MIME type of the file"),
+  fileUri: z.string().describe("URI of the file (e.g., gs://bucket/image.png)"),
+});
+
+const PartSchema = z.union([
+  z.object({
+    text: PromptSchema.describe("Text prompt or description"),
+  }),
+  z.object({
+    inlineData: InlineDataSchema.describe("Inline image data (base64)"),
+  }),
+  z.object({
+    fileData: FileDataSchema.describe("Reference to external file (GCS)"),
+  }),
+]);
+
 const Gemini25FlashImageContentSchema = z.object({
-  role: z.literal("user")
-    .describe("Message sender role, always user for generation requests"),
-  parts: z.array(z.object({
-    text: PromptSchema
-      .describe("Image generation prompt describing desired visual content, style, composition, details"),
-  })).describe("Content components containing generation instructions"),
+  role: z.literal("user").optional().describe("Role of the content creator (usually 'user')"),
+  parts: z.array(PartSchema)
+    .min(1)
+    .refine((parts) => parts.some((part) => "text" in part), {
+      message: "At least one text part is required for Gemini Flash Image generation/editing",
+    })
+    .describe("Ordered parts that make up the content. MUST contain at least one text part."),
 });
 
 // ============= GENERATION CONFIG SCHEMA =============
@@ -51,6 +74,8 @@ const Gemini25FlashImageContentSchema = z.object({
 const Gemini25FlashImageGenerationConfigSchema = z.object({
   responseModalities: z.array(z.literal("IMAGE"))
     .describe("Output format specification, must be IMAGE for image generation"),
+  candidateCount: z.number().int().min(1).max(4).optional()
+    .describe("Number of images to generate"),
   imageConfig: z.object({
     aspectRatio: Gemini25FlashImageAspectRatioSchema.optional()
       .describe("Image dimensions: 1:1 square, 16:9 landscape, 9:16 portrait, 21:9 ultrawide, 3:4/4:3 traditional"),
@@ -78,14 +103,10 @@ const Gemini25FlashImageGenerationConfigSchema = z.object({
 export const Gemini25FlashImageRequestSchema = z.object({
   model: z.literal("gemini-2.5-flash-image")
     .describe("Gemini 2.5 Flash model with image generation capability"),
-  contents: z.union([
-    PromptSchema.transform(text => [{role: "user" as const, parts: [{text}]}]),
-    z.array(Gemini25FlashImageContentSchema),
-  ]).describe("User prompt describing desired image content and characteristics"),
-  generationConfig: Gemini25FlashImageGenerationConfigSchema.transform(config => ({
-    responseModalities: ["IMAGE" as const],
-    imageConfig: config?.imageConfig,
-  })).describe("Output configuration specifying IMAGE modality and image parameters"),
+  contents: z.array(Gemini25FlashImageContentSchema)
+    .describe("Multimodal prompt (text, images) for generation or editing"),
+  generationConfig: Gemini25FlashImageGenerationConfigSchema.optional()
+    .describe("Output configuration specifying IMAGE modality and image parameters"),
   safetySettings: z.array(SafetySettingSchema).optional()
     .describe("Content filtering controls for harmful categories"),
 });

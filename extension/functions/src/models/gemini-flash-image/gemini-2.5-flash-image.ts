@@ -1,11 +1,11 @@
 // functions/src/models/gemini-flash-image/gemini-2.5-flash-image.ts
 import * as logger from "firebase-functions/logger";
 
-import {callVertexAPI} from "../../lib/vertex-ai-client.js";
-import {PROJECT_ID} from "../../firebase-admin.js";
-import {REGION} from "../../env.js";
-import {getOutputFileUri, uploadToGcs} from "../../storage.js";
-import type {ModelAdapter, StartResult, ModelOutput} from "../../lib/model-adapter.js";
+import { callVertexAPI } from "../../lib/vertex-ai-client.js";
+import { PROJECT_ID } from "../../firebase-admin.js";
+import { REGION } from "../../env.js";
+import { getOutputFileUri, uploadToGcs } from "../../storage.js";
+import type { ModelAdapter, StartResult, ModelOutput } from "../../lib/model-adapter.js";
 import {
   Gemini25FlashImageRequestSchema,
   Gemini25FlashImageResponseSchema,
@@ -35,16 +35,7 @@ export {
  */
 async function generateImage(
   model: string,
-  payload: {
-    contents: string | Array<{role?: string; parts: Array<{text: string}>}>;
-    generationConfig: {
-      responseModalities: string[];
-      imageConfig?: {
-        aspectRatio?: string;
-      };
-    };
-    safetySettings?: Array<{category: string; threshold: string}>;
-  }
+  payload: Gemini25FlashImageRequest
 ): Promise<Gemini25FlashImageResponse> {
   const endpoint = `v1/projects/${PROJECT_ID}/locations/${REGION}/publishers/google/models/${model}:generateContent`;
   return callVertexAPI<Gemini25FlashImageResponse>(endpoint, payload);
@@ -78,6 +69,7 @@ export class Gemini25FlashImageAdapter implements ModelAdapter {
 
     // Call Gemini 2.5 Flash Image via REST API
     const response = await generateImage(this.modelId, {
+      model: this.modelId,
       contents: validated.contents,
       generationConfig: validated.generationConfig,
       safetySettings: validated.safetySettings,
@@ -89,7 +81,7 @@ export class Gemini25FlashImageAdapter implements ModelAdapter {
     );
 
     if (!imagePart?.inlineData?.data) {
-      throw new Error("No image data in Nano Banana response");
+      throw new Error("No image data in Gemini 2.5 Flash Image response");
     }
 
     // Convert base64 to buffer
@@ -97,10 +89,10 @@ export class Gemini25FlashImageAdapter implements ModelAdapter {
     const mimeType = imagePart.inlineData.mimeType || "image/png";
 
     // Upload to GCS
-    const outputUri = getOutputFileUri(jobId, {model: this.modelId, type: "image"});
+    const outputUri = getOutputFileUri(jobId, { model: this.modelId, type: "image" });
     await uploadToGcs(imageData, outputUri, mimeType);
 
-    logger.info("Nano Banana generation completed", {jobId, uri: outputUri});
+    logger.info("Gemini 2.5 Flash Image generation completed", { jobId, uri: outputUri });
 
     // Synchronous operation - return output immediately
     const output: ModelOutput = {

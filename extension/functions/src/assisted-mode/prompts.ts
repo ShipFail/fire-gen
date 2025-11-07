@@ -29,9 +29,10 @@ Select the best model for the user's prompt. Return JSON with:
 - Image model → static visual content (single frame, no temporal dimension)
 - Audio model → speech synthesis, voice output
 - Provide detailed reasoning for your selection
+- URI is not inline data, it is a reference to external file.
 `
 
-;
+  ;
 
 /**
  * Step 2: Parameter Inference

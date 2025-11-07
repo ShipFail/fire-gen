@@ -470,7 +470,30 @@ const fixtures = [
     prompt: "bring the animal in image 2 to into the setting in image 1: gs://studio-3670859293-6f970.firebasestorage.app/firegen-jobs/test-nano-1/image-gemini-2.5-flash-image.png gs://studio-3670859293-6f970.firebasestorage.app/firegen-jobs/test-nano-4/image-gemini-2.5-flash-image.png",
     expected: {
       model: "gemini-2.5-flash-image",
-      contents: expect.any(Array), // Validated manually in test loop due to complex nesting
+      contents: expect.arrayContaining([
+        expect.objectContaining({
+          parts: expect.arrayContaining([
+            // Text prompt part
+            expect.objectContaining({
+              text: expect.stringMatching(/.+/),
+            }),
+            // First reference image
+            expect.objectContaining({
+              fileData: expect.objectContaining({
+                mimeType: "image/png",
+                fileUri: "gs://studio-3670859293-6f970.firebasestorage.app/firegen-jobs/test-nano-1/image-gemini-2.5-flash-image.png",
+              }),
+            }),
+            // Second reference image
+            expect.objectContaining({
+              fileData: expect.objectContaining({
+                mimeType: "image/png",
+                fileUri: "gs://studio-3670859293-6f970.firebasestorage.app/firegen-jobs/test-nano-4/image-gemini-2.5-flash-image.png",
+              }),
+            }),
+          ]),
+        }),
+      ]),
       generationConfig: expect.objectContaining({
         responseModalities: ["IMAGE"],
       }),
@@ -481,7 +504,30 @@ const fixtures = [
     prompt: "Generate an image: blend these two images together https://storage.googleapis.com/example/forest.jpg https://storage.googleapis.com/example/lake.jpg",
     expected: {
       model: "gemini-2.5-flash-image",
-      contents: expect.any(Array), // Validated manually in test loop due to complex nesting
+      contents: expect.arrayContaining([
+        expect.objectContaining({
+          parts: expect.arrayContaining([
+            // Text prompt
+            expect.objectContaining({
+              text: expect.stringMatching(/blend/i),
+            }),
+            // First image reference
+            expect.objectContaining({
+              fileData: expect.objectContaining({
+                mimeType: "image/jpeg",
+                fileUri: "gs://example/forest.jpg",
+              }),
+            }),
+            // Second image reference
+            expect.objectContaining({
+              fileData: expect.objectContaining({
+                mimeType: "image/jpeg",
+                fileUri: "gs://example/lake.jpg",
+              }),
+            }),
+          ]),
+        }),
+      ]),
       generationConfig: expect.objectContaining({
         responseModalities: ["IMAGE"],
       }),

@@ -89,6 +89,15 @@ function addMimeTypesFromTags(
     }
   }
 
+  // If this object has fileUri, check if original had a tag and extract MIME type
+  if (typeof restoredRecord.fileUri === "string" && typeof originalRecord.fileUri === "string") {
+    const tagMatch = originalRecord.fileUri.match(/<FIREGEN_([A-Z]+_[A-Z0-9]+)_URI_\d+\/>/);
+    if (tagMatch) {
+      const mimeType = tagNameToMimeType(tagMatch[1]);
+      restoredRecord.mimeType = mimeType;
+    }
+  }
+
   // Recurse into nested objects
   Object.keys(restoredRecord).forEach(key => {
     addMimeTypesFromTags(restoredRecord[key], originalRecord[key]);

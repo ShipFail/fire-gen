@@ -6,7 +6,20 @@ import { PromptSchema } from "../../lib/zod-utils.js";
  * Zod schema for gemini-2.5-flash-image model.
  *
  * This is the SINGLE SOURCE OF TRUTH for the gemini-2.5-flash-image request format.
- * Uses Gemini generateContent API with IMAGE modality.
+ * 
+ * Official Documentation:
+ * - Model Overview: https://cloud.google.com/vertex-ai/generative-ai/docs/image/overview
+ * - Gemini 2.5 Flash Image Model: https://cloud.google.com/vertex-ai/generative-ai/docs/image/generate-images
+ * - generateContent API: https://cloud.google.com/vertex-ai/generative-ai/docs/reference/rest/v1/models/generateContent
+ * - Multimodal Inputs: https://cloud.google.com/vertex-ai/generative-ai/docs/multimodal/send-multimodal-prompts
+ * 
+ * API Endpoint: POST v1/projects/{project}/locations/{location}/publishers/google/models/gemini-2.5-flash-image:generateContent
+ * 
+ * Schema Structure:
+ * - Uses standard Gemini generateContent API format
+ * - Supports multimodal parts: text, inlineData (base64), fileData (GCS URIs)
+ * - Returns images as base64-encoded inlineData in response
+ * - IMAGE modality specified via responseModalities in generationConfig
  */
 
 // ============= ASPECT RATIO ENUM =============
@@ -28,6 +41,13 @@ export type Gemini25FlashImageAspectRatio = z.infer<typeof Gemini25FlashImageAsp
 
 // ============= SAFETY SETTINGS =============
 
+/**
+ * Safety settings for content filtering.
+ * 
+ * Official Documentation:
+ * https://cloud.google.com/vertex-ai/generative-ai/docs/multimodal/configure-safety-attributes
+ * https://cloud.google.com/vertex-ai/generative-ai/docs/reference/rest/v1/SafetySetting
+ */
 const SafetySettingSchema = z.object({
   category: z.string()
     .describe("Harmful content category: HARM_CATEGORY_HATE_SPEECH, SEXUALLY_EXPLICIT, HARASSMENT, DANGEROUS_CONTENT"),
@@ -35,30 +55,65 @@ const SafetySettingSchema = z.object({
     .describe("Blocking sensitivity: BLOCK_NONE allows all, BLOCK_ONLY_HIGH blocks severe, BLOCK_MEDIUM_AND_ABOVE blocks moderate+"),
 });
 
-// ============= CONTENT SCHEMA =============
+// ============= PART SCHEMAS =============
 
-const InlineDataSchema = z.object({
-  mimeType: z.string().describe("IANA MIME type of the image (e.g., 'image/png', 'image/jpeg')"),
-  data: z.string().describe("Base64-encoded image data"),
+/**
+ * Part type for multimodal content in Gemini API.
+ * 
+ * Official Documentation:
+ * https://cloud.google.com/vertex-ai/generative-ai/docs/reference/rest/v1/Content#part
+ * https://cloud.google.com/vertex-ai/generative-ai/docs/multimodal/send-multimodal-prompts
+ * 
+ * Supports three mutually exclusive part types:
+ * 1. text - Text prompts and instructions
+ * 2. inlineData - Base64-encoded media (images, etc.)
+ * 3. fileData - GCS URI references (gs://bucket/path)
+ * 
+ * Each part object contains exactly one of these fields.
+ */
+const TextPartSchema = z.object({
+  text: PromptSchema
+    .describe("Text content for prompts or instructions"),
 });
 
-const FileDataSchema = z.object({
-  mimeType: z.string().describe("IANA MIME type of the file"),
-  fileUri: z.string().describe("URI of the file (e.g., gs://bucket/image.png)"),
+const InlineDataPartSchema = z.object({
+  inlineData: z.object({
+    mimeType: z.string()
+      .describe("Media MIME type: image/jpeg, image/png, image/webp, etc."),
+    data: z.string()
+      .describe("Base64-encoded media data"),
+  }).describe("Inline media data encoded as base64"),
 });
 
+const FileDataPartSchema = z.object({
+  fileData: z.object({
+    mimeType: z.string()
+      .describe("Media MIME type: image/jpeg, image/png, image/webp, etc."),
+    fileUri: z.string()
+      .describe("Google Cloud Storage URI (gs://bucket/path) referencing media file"),
+  }).describe("Reference to media file stored in Google Cloud Storage"),
+});
+
+/**
+ * Union of all possible part types.
+ * At runtime, each part object will have exactly one of: text, inlineData, or fileData.
+ */
 const PartSchema = z.union([
-  z.object({
-    text: PromptSchema.describe("Text prompt or description"),
-  }),
-  z.object({
-    inlineData: InlineDataSchema.describe("Inline image data (base64)"),
-  }),
-  z.object({
-    fileData: FileDataSchema.describe("Reference to external file (GCS)"),
-  }),
+  TextPartSchema,
+  InlineDataPartSchema,
+  FileDataPartSchema,
 ]);
 
+// ============= CONTENT SCHEMA =============
+
+/**
+ * Content object for generateContent API requests.
+ * 
+ * Official Documentation:
+ * https://cloud.google.com/vertex-ai/generative-ai/docs/reference/rest/v1/Content
+ * 
+ * Structure matches the standard Gemini Content type with role and parts array.
+ */
 const Gemini25FlashImageContentSchema = z.object({
   role: z.literal("user").optional().describe("Role of the content creator (usually 'user')"),
   parts: z.array(PartSchema)
@@ -71,6 +126,17 @@ const Gemini25FlashImageContentSchema = z.object({
 
 // ============= GENERATION CONFIG SCHEMA =============
 
+/**
+ * Generation configuration for image generation.
+ * 
+ * Official Documentation:
+ * https://cloud.google.com/vertex-ai/generative-ai/docs/image/generate-images#api
+ * https://cloud.google.com/vertex-ai/generative-ai/docs/reference/rest/v1/GenerationConfig
+ * 
+ * Key fields:
+ * - responseModalities: Must be ["IMAGE"] for image generation
+ * - imageConfig.aspectRatio: Controls output image dimensions
+ */
 const Gemini25FlashImageGenerationConfigSchema = z.object({
   responseModalities: z.array(z.literal("IMAGE"))
     .describe("Output format specification, must be IMAGE for image generation"),
@@ -88,8 +154,15 @@ const Gemini25FlashImageGenerationConfigSchema = z.object({
 
 /**
  * Complete REST API request schema for gemini-2.5-flash-image.
+ * 
+ * Official API Documentation:
+ * https://cloud.google.com/vertex-ai/generative-ai/docs/image/generate-images#api
+ * https://cloud.google.com/vertex-ai/generative-ai/docs/reference/rest/v1/models/generateContent
+ * 
+ * API Endpoint:
+ * POST https://{REGION}-aiplatform.googleapis.com/v1/projects/{PROJECT}/locations/{REGION}/publishers/google/models/gemini-2.5-flash-image:generateContent
  *
- * Request body format:
+ * Request body format (text only):
  * {
  *   "model": "gemini-2.5-flash-image",
  *   "contents": [{"role": "user", "parts": [{"text": "..."}]}],
@@ -98,6 +171,23 @@ const Gemini25FlashImageGenerationConfigSchema = z.object({
  *     "imageConfig": {"aspectRatio": "1:1"}
  *   },
  *   "safetySettings": [{"category": "...", "threshold": "..."}]
+ * }
+ *
+ * Request body format (with reference images - multimodal):
+ * {
+ *   "model": "gemini-2.5-flash-image",
+ *   "contents": [{
+ *     "role": "user",
+ *     "parts": [
+ *       {"text": "merge these images..."},
+ *       {"fileData": {"mimeType": "image/jpeg", "fileUri": "gs://bucket/image1.jpg"}},
+ *       {"fileData": {"mimeType": "image/png", "fileUri": "gs://bucket/image2.png"}}
+ *     ]
+ *   }],
+ *   "generationConfig": {
+ *     "responseModalities": ["IMAGE"],
+ *     "imageConfig": {"aspectRatio": "1:1"}
+ *   }
  * }
  */
 export const Gemini25FlashImageRequestSchema = z.object({
@@ -119,7 +209,15 @@ export type Gemini25FlashImageRequest = z.infer<typeof Gemini25FlashImageRequest
 
 /**
  * Gemini generateContent API response for image generation.
- * Returns image data as base64-encoded inline data.
+ * 
+ * Official Documentation:
+ * https://cloud.google.com/vertex-ai/generative-ai/docs/reference/rest/v1/GenerateContentResponse
+ * https://cloud.google.com/vertex-ai/generative-ai/docs/image/generate-images#response
+ * 
+ * Response Structure:
+ * - candidates[].content.parts[].inlineData contains generated images
+ * - Images returned as base64-encoded data with mimeType
+ * - usageMetadata contains token usage information
  */
 export const Gemini25FlashImageResponseSchema = z.object({
   candidates: z.array(z.object({

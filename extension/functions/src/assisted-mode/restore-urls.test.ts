@@ -404,5 +404,51 @@ describe("restoreUrls", () => {
         },
       });
     });
+
+    test("should restore fileUri fields with mimeType (Gemini image generation)", () => {
+      const jsonWithTags = {
+        model: "gemini-2.5-flash-image",
+        contents: [
+          {
+            role: "user",
+            parts: [
+              {text: "merge these images"},
+              {fileData: {fileUri: "<FIREGEN_IMAGE_JPEG_URI_1/>"}},
+              {fileData: {fileUri: "<FIREGEN_IMAGE_PNG_URI_2/>"}},
+            ],
+          },
+        ],
+      };
+      const extractedUrls = [
+        "gs://bucket/image1.jpg",
+        "gs://bucket/image2.png",
+      ];
+
+      const result = restoreUrls(jsonWithTags, extractedUrls);
+
+      expect(result).toEqual({
+        model: "gemini-2.5-flash-image",
+        contents: [
+          {
+            role: "user",
+            parts: [
+              {text: "merge these images"},
+              {
+                fileData: {
+                  fileUri: "gs://bucket/image1.jpg",
+                  mimeType: "image/jpeg",
+                },
+              },
+              {
+                fileData: {
+                  fileUri: "gs://bucket/image2.png",
+                  mimeType: "image/png",
+                },
+              },
+            ],
+          },
+        ],
+      });
+    });
   });
 });

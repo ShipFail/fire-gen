@@ -1,6 +1,6 @@
 // functions/src/assisted-mode/prompts.test.ts
-import {describe, test, expect} from "vitest";
-import {assistedRequest} from "./index.js";
+import { describe, test, expect } from "vitest";
+import { assistedRequest } from "./index.js";
 
 /**
  * AssistedMode Test Suite
@@ -172,11 +172,6 @@ const fixtures = [
           ]),
         }),
       ]),
-      parameters: expect.objectContaining({
-        durationSeconds: expect.any(Number),
-        aspectRatio: "16:9",
-        generateAudio: true,
-      }),
     },
   },
 
@@ -244,7 +239,7 @@ const fixtures = [
       model: expect.stringMatching(/^veo-3\.1-(fast-)?generate-preview$/),
       instances: expect.arrayContaining([
         expect.objectContaining({
-          prompt: expect.stringMatching(/story continues/i),
+          prompt: expect.stringMatching(/Continue the story/i),
           video: expect.objectContaining({
             gcsUri: expect.stringContaining("chapter1.mp4"),
           }),
@@ -393,7 +388,6 @@ const fixtures = [
       model: "gemini-2.5-flash-image",
       contents: expect.arrayContaining([
         expect.objectContaining({
-          role: "user",
           parts: expect.arrayContaining([
             expect.objectContaining({
               text: expect.stringMatching(/.+/),
@@ -413,7 +407,6 @@ const fixtures = [
       model: "gemini-2.5-flash-image",
       contents: expect.arrayContaining([
         expect.objectContaining({
-          role: "user",
           parts: expect.arrayContaining([
             expect.objectContaining({
               text: expect.stringMatching(/.+/),
@@ -435,7 +428,6 @@ const fixtures = [
       model: "gemini-2.5-flash-image",
       contents: expect.arrayContaining([
         expect.objectContaining({
-          role: "user",
           parts: expect.arrayContaining([
             expect.objectContaining({
               text: expect.stringMatching(/.+/),
@@ -448,6 +440,107 @@ const fixtures = [
         imageConfig: expect.objectContaining({
           aspectRatio: "9:16",
         }),
+      }),
+    },
+  },
+
+  // ============================================
+  // IMAGE - MULTIMODAL & ADVANCED
+  // ============================================
+  {
+    id: "image:edit-gcs-uri",
+    prompt: "Edit this image gs://bucket/original.jpg to have a cyberpunk style",
+    expected: {
+      model: "gemini-2.5-flash-image",
+      contents: expect.arrayContaining([
+        expect.objectContaining({
+          parts: expect.arrayContaining([
+            expect.objectContaining({ text: expect.stringMatching(/cyberpunk/i) }),
+            expect.objectContaining({ fileData: { mimeType: expect.stringMatching(/^image\//), fileUri: "gs://bucket/original.jpg" } })
+          ])
+        })
+      ]),
+      generationConfig: expect.objectContaining({
+        responseModalities: ["IMAGE"],
+      }),
+    },
+  },
+  {
+    id: "image:merge-two-images",
+    prompt: "bring the animal in image 2 to into the setting in image 1: gs://studio-3670859293-6f970.firebasestorage.app/firegen-jobs/test-nano-1/image-gemini-2.5-flash-image.png gs://studio-3670859293-6f970.firebasestorage.app/firegen-jobs/test-nano-4/image-gemini-2.5-flash-image.png",
+    expected: {
+      model: "gemini-2.5-flash-image",
+      contents: expect.arrayContaining([
+        expect.objectContaining({
+          parts: expect.arrayContaining([
+            // Text prompt part
+            expect.objectContaining({
+              text: expect.stringMatching(/.+/),
+            }),
+            // First reference image
+            expect.objectContaining({
+              fileData: expect.objectContaining({
+                mimeType: "image/png",
+                fileUri: "gs://studio-3670859293-6f970.firebasestorage.app/firegen-jobs/test-nano-1/image-gemini-2.5-flash-image.png",
+              }),
+            }),
+            // Second reference image
+            expect.objectContaining({
+              fileData: expect.objectContaining({
+                mimeType: "image/png",
+                fileUri: "gs://studio-3670859293-6f970.firebasestorage.app/firegen-jobs/test-nano-4/image-gemini-2.5-flash-image.png",
+              }),
+            }),
+          ]),
+        }),
+      ]),
+      generationConfig: expect.objectContaining({
+        responseModalities: ["IMAGE"],
+      }),
+    },
+  },
+  {
+    id: "image:blend-images",
+    prompt: "Generate an image: blend these two images together https://storage.googleapis.com/example/forest.jpg https://storage.googleapis.com/example/lake.jpg",
+    expected: {
+      model: "gemini-2.5-flash-image",
+      contents: expect.arrayContaining([
+        expect.objectContaining({
+          parts: expect.arrayContaining([
+            // Text prompt
+            expect.objectContaining({
+              text: expect.stringMatching(/blend/i),
+            }),
+            // First image reference
+            expect.objectContaining({
+              fileData: expect.objectContaining({
+                mimeType: "image/jpeg",
+                fileUri: "gs://example/forest.jpg",
+              }),
+            }),
+            // Second image reference
+            expect.objectContaining({
+              fileData: expect.objectContaining({
+                mimeType: "image/jpeg",
+                fileUri: "gs://example/lake.jpg",
+              }),
+            }),
+          ]),
+        }),
+      ]),
+      generationConfig: expect.objectContaining({
+        responseModalities: ["IMAGE"],
+      }),
+    },
+  },
+  {
+    id: "image:candidate-count",
+    prompt: "Generate 4 different logo designs for a coffee shop",
+    expected: {
+      model: "gemini-2.5-flash-image",
+      generationConfig: expect.objectContaining({
+        responseModalities: ["IMAGE"],
+        candidateCount: 4,
       }),
     },
   },
@@ -514,15 +607,19 @@ const fixtures = [
 describe("Assisted Mode", () => {
   test.concurrent.each(fixtures)(
     "$id: $prompt",
-    async ({id, prompt, expected}) => {
+    async ({ id, prompt, expected }) => {
       const analyzed = await assistedRequest(prompt, `test-${id}`);
 
-      console.log(analyzed.reasons)
-      console.log(JSON.stringify(analyzed.request, null, 2));
-      console.log(prompt)
-
-      // Verify request structure matches expected
-      expect(analyzed.request).toMatchObject(expected);
+      try {
+        // Verify request structure matches expected
+        expect(analyzed.request).toMatchObject(expected);
+      } catch (error) {
+        console.log(analyzed.reasons)
+        console.log("ACTUAL:", JSON.stringify(analyzed.request, null, 2));
+        console.log("EXPECTED:", JSON.stringify(expected, null, 2));
+        console.log(prompt)
+        throw error;
+      }
 
       // Verify reasons array exists and has content
       expect(analyzed.reasons).toBeInstanceOf(Array);

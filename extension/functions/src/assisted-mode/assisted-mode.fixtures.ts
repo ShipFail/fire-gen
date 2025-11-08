@@ -118,12 +118,16 @@ const fixtures = [
       model: expect.stringMatching(/^veo-3\.1-(fast-)?generate-preview$/),
       instances: expect.arrayContaining([
         expect.objectContaining({
+          // AI consolidates both subject assets into referenceImages[] and may synthesize a cleaned prompt.
           prompt: expect.stringMatching(/walking.*together.*park/i),
-          image: expect.objectContaining({
-            gcsUri: expect.stringContaining("person1.jpg"),
-            mimeType: "image/jpeg",
-          }),
           referenceImages: expect.arrayContaining([
+            expect.objectContaining({
+              image: expect.objectContaining({
+                gcsUri: expect.stringContaining("person1.jpg"),
+                mimeType: "image/jpeg",
+              }),
+              referenceType: expect.stringMatching(/^(asset|style)$/),
+            }),
             expect.objectContaining({
               image: expect.objectContaining({
                 gcsUri: expect.stringContaining("person2.png"),

@@ -106,6 +106,9 @@ export async function assistedRequest(
     jobId,
   );
 
+  console.log('step1 reasons:\n', step1.reasoning.join('\n'));
+  console.log('step2 reasons:\n', step2Reasons.join('\n'));
+
   // Post-process: Validation
   const validatedJson = validateFinalJson(jsonWithTags, modelSchema, jobId);
 

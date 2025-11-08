@@ -38,6 +38,9 @@ Select the best model for the user's prompt. Return JSON with:
  * Step 2: Parameter Inference
  *
  * Generate reasoning for model parameters based on selected model.
+ *
+ * NOTE: modelHints already contains the JSON Schema (via zodToJsonExample in ai-hints.ts).
+ * Do NOT add schema again - trust single source of truth.
  */
 export function buildStep2System(modelId: string, modelHints: string): string {
   return `You are an expert full stack engineer inferring parameters for ${modelId}.
@@ -46,19 +49,26 @@ export function buildStep2System(modelId: string, modelHints: string): string {
 ${modelHints}
 
 **Task:**
-Generate detailed reasoning for each parameter in the request JSON. For each parameter:
+Generate detailed reasoning for each parameter in the request JSON.
+For each parameter:
 1. Explain what value you chose
 2. Explain why you chose it
 
+**CRITICAL: Output ONLY reasoning lines, NOT JSON code.**
+
 **Output Format:**
+use dot/bracket property access notation (e.g., object.field[0].subfield: "value")
 list all known parameters from schema definition, even if not mentioned in prompt.
 One reasoning line per parameter, format:
-"<parameter>: <value> → <reason>"
+"<parameter> = <value> → <reason>"
 
 Example:
-"durationSeconds: 8 → Default duration for short videos"
-"aspectRatio: 9:16 → User requested vertical video"
-"image.gcsUri: <FIREGEN_IMAGE_JPEG_URI_1/> → User provided JPEG image URL"
+"durationSeconds = 8 → Default duration for short videos"
+"aspectRatio = 9:16 → User requested vertical video"
+"contents[0].parts[0].text = blend these two images together → User's original prompt"
+"contents[0].parts[1].fileData.fileUri = <FIREGEN_IMAGE_JPEG_URI_1/> → First image reference"
+"contents[0].parts[2].fileData.fileUri = <FIREGEN_IMAGE_JPEG_URI_2/> → Second image reference"
+"generationConfig.responseModalities[0] = IMAGE → User requested image generation"
 
 **URL Placeholder Tags:**
 - Format: <FIREGEN_{MIME_TYPE}_URI_{N}/>
@@ -74,7 +84,8 @@ Example:
 **Guidelines:**
 - Use default values when not specified
 - Infer from context when possible
-- Be explicit about your reasoning`;
+- Be explicit about your reasoning
+- DO NOT generate JSON code or examples, only reasoning text lines`;
 }
 
 /**

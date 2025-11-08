@@ -23,7 +23,7 @@ export async function step3JsonGeneration(
 ): Promise<Record<string, unknown>> {
   // Build additional context with all accumulated reasoning
   const additionalContext = `**Reasoning Chain:**
-${allReasons.map((r) => `- ${r}`).join("\n")}`;
+  ${allReasons.map((r) => `- ${r}`).join("\n")}`;
 
   const text = await callDeterministicGemini({
     systemInstruction: STEP3_SYSTEM,

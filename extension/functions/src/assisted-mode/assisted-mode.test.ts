@@ -29,7 +29,7 @@ describe("Assisted Mode", () => {
       console.log(analyzed.reasons)
       console.log("ACTUAL:", JSON.stringify(analyzed.request, null, 2));
       console.log("EXPECTED:", JSON.stringify(expected, null, 2));
-      console.log(prompt)
+      console.log(`\n` + `prompt> ` + prompt + `\n`);
 
       // Verify request structure matches expected
       expect(analyzed.request).toMatchObject(expected);
@@ -38,7 +38,7 @@ describe("Assisted Mode", () => {
       expect(analyzed.reasons).toBeInstanceOf(Array);
       expect(analyzed.reasons.length).toBeGreaterThan(0);
     },
-    90000  // 90s timeout for 2-step pipeline with Pro model + retry buffer
+    15_000  // 10s timeout for 2-step pipeline with Pro model + retry buffer
   );
 
 });

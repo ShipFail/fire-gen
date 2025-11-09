@@ -1,0 +1,56 @@
+name: Run Node.js Tests with Google Cloud ADC (WIF)
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+  id-token: write   # 🔑 Required for WIF authentication
+
+env:
+  NODE_VERSION: 22
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  GCP_PROJECT_NUMBER: ${{ secrets.GCP_PROJECT_NUMBER }}
+  GCP_WIP_POOL_ID: github
+  GCP_WIP_PROVIDER_ID: github-actions
+  GCP_SERVICE_ACCOUNT: gha-vertex@${{ secrets.GCP_PROJECT_ID }}.iam.gserviceaccount.com
+
+jobs:
+  test:
+    name: Run npm test with ADC auth
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1️⃣ Checkout repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2️⃣ Setup Node.js 22
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      # 3️⃣ Authenticate to Google Cloud using WIF (Workload Identity Federation)
+      - id: auth
+        name: Authenticate to Google Cloud (via WIF)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/${{ env.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ env.GCP_WIP_POOL_ID }}/providers/${{ env.GCP_WIP_PROVIDER_ID }}
+          service_account: ${{ env.GCP_SERVICE_ACCOUNT }}
+          create_credentials_file: true   # makes ADC-compatible JSON for client libraries
+
+      # 4️⃣ Install dependencies
+      - name: Install dependencies
+        run: npm ci
+
+      # 5️⃣ Run tests (using ADC authentication)
+      - name: Run tests
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.auth.outputs.credentials_file_path }}
+          GOOGLE_CLOUD_PROJECT: ${{ env.GCP_PROJECT_ID }}
+        run: cd extension/functions && npm install && npm test

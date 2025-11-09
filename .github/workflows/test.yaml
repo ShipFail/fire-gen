@@ -46,11 +46,9 @@ jobs:
           service_account: ${{ env.GCP_SERVICE_ACCOUNT }}
           create_credentials_file: true   # makes ADC-compatible JSON for client libraries
 
-      - name: Change to functions/ folder
-        run: cd $WORKING_DIR
-
       # 4️⃣ Install dependencies
       - name: Install dependencies
+        working-directory: ${{ env.WORKING_DIR }}
         run: npm ci
 
       # 5️⃣ Run tests (using ADC authentication)
@@ -58,4 +56,5 @@ jobs:
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.auth.outputs.credentials_file_path }}
           GOOGLE_CLOUD_PROJECT: ${{ env.GCP_PROJECT_ID }}
+        working-directory: ${{ env.WORKING_DIR }}
         run: npm test

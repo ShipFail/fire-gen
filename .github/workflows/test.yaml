@@ -12,6 +12,7 @@ permissions:
 
 env:
   NODE_VERSION: 22
+  WORKING_DIR: extension/functions
   GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   GCP_PROJECT_NUMBER: ${{ secrets.GCP_PROJECT_NUMBER }}
   GCP_WIP_POOL_ID: github

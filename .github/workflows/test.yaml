@@ -13,11 +13,7 @@ permissions:
 env:
   NODE_VERSION: 22
   WORKING_DIR: extension/functions
-  # `GOOGLE_CLOUD_PROJECT`:
-  #   It’s a platform-provided environment variable
-  #   that is automatically injected into every function instance deployed on Google Cloud
-  #   — including Firebase Functions
-  GOOGLE_CLOUD_PROJECT: cineai-c7qqw
+  GOOGLE_CLOUD_PROJECT: cineai-c7qqw  # Platform-provided env var auto-injected into Google Cloud/Firebase Functions
   GOOGLE_CLOUD_PROJECT_NUMBER: 232686973871
   GCP_WIP_POOL_ID: github
   GCP_WIP_PROVIDER_ID: github-actions

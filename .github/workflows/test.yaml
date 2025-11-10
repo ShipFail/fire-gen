@@ -13,12 +13,12 @@ permissions:
 env:
   NODE_VERSION: 22
   WORKING_DIR: extension/functions
-  FIREGEN_BUCKET: ${{ vars.FIREGEN_BUCKET }}
-  GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
-  GCP_PROJECT_NUMBER: ${{ vars.GCP_PROJECT_NUMBER }}
+  FIREGEN_BUCKET: cineai-c7qqw.firebasestorage.app
+  GCP_PROJECT_ID: cineai-c7qqw
+  GCP_SERVICE_ACCOUNT: gha-vertex@${{ vars.cineai-c7qqw }}.iam.gserviceaccount.com
+  GCP_PROJECT_NUMBER: 232686973871
   GCP_WIP_POOL_ID: github
   GCP_WIP_PROVIDER_ID: github-actions
-  GCP_SERVICE_ACCOUNT: gha-vertex@${{ vars.GCP_PROJECT_ID }}.iam.gserviceaccount.com
 
 jobs:
   test:

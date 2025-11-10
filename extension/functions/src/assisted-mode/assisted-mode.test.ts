@@ -26,13 +26,16 @@ describe("Assisted Mode", () => {
     async ({ id, prompt, expected }) => {
       const analyzed = await assistedRequest(prompt, `test-${id}`);
 
-      console.log(analyzed.reasons)
-      console.log("ACTUAL:", JSON.stringify(analyzed.request, null, 2));
-      console.log("EXPECTED:", JSON.stringify(expected, null, 2));
-      console.log(`\n` + `prompt> ` + prompt + `\n`);
-
-      // Verify request structure matches expected
-      expect(analyzed.request).toMatchObject(expected);
+      try {
+        // Verify request structure matches expected
+        expect(analyzed.request).toMatchObject(expected);
+      } catch (e) {
+        console.log(analyzed.reasons)
+        console.log("ACTUAL:", JSON.stringify(analyzed.request, null, 2));
+        console.log("EXPECTED:", JSON.stringify(expected, null, 2));
+        console.log(`\n` + `prompt> ` + prompt + `\n`);
+        throw e;
+      }
 
       // Verify reasons array exists and has content
       expect(analyzed.reasons).toBeInstanceOf(Array);

@@ -15,7 +15,6 @@ env:
   WORKING_DIR: extension/functions
   FIREGEN_BUCKET: cineai-c7qqw.firebasestorage.app
   GCP_PROJECT_ID: cineai-c7qqw
-  GCP_SERVICE_ACCOUNT: gha-vertex@${{ vars.cineai-c7qqw }}.iam.gserviceaccount.com
   GCP_PROJECT_NUMBER: 232686973871
   GCP_WIP_POOL_ID: github
   GCP_WIP_PROVIDER_ID: github-actions
@@ -44,7 +43,7 @@ jobs:
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: projects/${{ env.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ env.GCP_WIP_POOL_ID }}/providers/${{ env.GCP_WIP_PROVIDER_ID }}
-          service_account: ${{ env.GCP_SERVICE_ACCOUNT }}
+          service_account: gha-vertex@${{ env.GCP_PROJECT_ID }}.iam.gserviceaccount.com
           create_credentials_file: true   # makes ADC-compatible JSON for client libraries
 
       # 4️⃣ Install dependencies

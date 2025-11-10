@@ -41,7 +41,7 @@ describe("Assisted Mode", () => {
       expect(analyzed.reasons).toBeInstanceOf(Array);
       expect(analyzed.reasons.length).toBeGreaterThan(0);
     },
-    15_000  // 10s timeout for 2-step pipeline with Pro model + retry buffer
+    30_000  // 30s timeout for 2-step pipeline with Pro model + retry buffer
   );
 
 });

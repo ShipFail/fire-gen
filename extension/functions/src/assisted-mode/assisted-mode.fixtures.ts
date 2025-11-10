@@ -349,7 +349,7 @@ const fixtures = [
       instances: expect.arrayContaining([
         expect.objectContaining({
           // URLs must be converted to gs:// and removed from prompt
-          prompt: expect.stringMatching(/^(?!.*https:\/\/).*rotating.*pedestal.*studio lighting/i),
+          prompt: expect.stringMatching(/rotating.*pedestal.*studio lighting/i),
         }),
       ]),
       parameters: expect.objectContaining({

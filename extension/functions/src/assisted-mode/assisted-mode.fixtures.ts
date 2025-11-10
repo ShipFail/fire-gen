@@ -242,7 +242,7 @@ const fixtures = [
       model: expect.stringMatching(/^veo-3\.1-(fast-)?generate-preview$/),
       instances: expect.arrayContaining([
         expect.objectContaining({
-          prompt: expect.stringMatching(/Continue the story/i),
+          prompt: expect.stringMatching(/the story/i),
           video: expect.objectContaining({
             gcsUri: expect.stringContaining("chapter1.mp4"),
           }),

@@ -78,9 +78,7 @@ export const PROJECT_ID = resolveProjectId();
  * Resolution order:
  * 1. FIREGEN_BUCKET - Explicit override
  * 2. Firebase app config storageBucket (production)
- * 3. Query gcloud CLI for actual Firebase Storage bucket
- *
- * @throws {Error} If bucket cannot be determined
+ * 3. Return default Firebase Storage bucket name
  */
 function resolveBucketName(): string {
   // 1. Try explicit override
@@ -98,29 +96,8 @@ function resolveBucketName(): string {
     // Bucket not configured in Firebase config
   }
 
-  // 3. Query gcloud CLI for actual Firebase Storage bucket
-  try {
-    const output = execSync(
-      `gcloud storage buckets list --project=${PROJECT_ID} --filter="name~firebasestorage.app" --format="value(name)" --limit=1`,
-      {encoding: "utf-8"}
-    ).trim();
-
-    if (output) {
-      logger.info("Bucket name resolved from gcloud CLI", {bucketName: output});
-      return output;
-    }
-  } catch (err) {
-    // gcloud CLI not available or query failed
-  }
-
-  // No defaults - fail fast with helpful error
-  throw new Error(
-    "Unable to determine Firebase Storage bucket name. " +
-    "Try one of: " +
-    "1) Set FIREGEN_BUCKET environment variable, " +
-    "2) Configure storageBucket in Firebase app initialization, " +
-    "3) Ensure gcloud CLI is authenticated and project is set"
-  );
+  // 3. Return default Firebase Storage bucket name
+  return `${PROJECT_ID}.firebasestorage.app`;
 }
 
 /**

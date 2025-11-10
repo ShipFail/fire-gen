@@ -120,7 +120,7 @@ onValue(ref(db, `firegen-jobs/${job.key}/status`), async (snap) => {
 
 **Models:** `veo-3.1-fast-generate-preview`, `veo-3.1-generate-preview`
 
-- **Schema reference:** [`veo-3.1-fast-generate-preview.schema.ts`](extension/functions/src/models/veo/veo-3.1-fast-generate-preview.schema.ts) (contains both fast + standard exports)
+- **Schema reference:** [`veo-3.1-fast-generate-preview.schema.ts`](https://raw.githubusercontent.com/ShipFail/firegen/main/extension/functions/src/models/veo/veo-3.1-fast-generate-preview.schema.ts) (contains both fast + standard exports)
 - **Payload shape:** `instances[]` describe prompt + optional media (`image`, `video`, `lastFrame`, `referenceImages`); `parameters` aligns with official Veo REST enum/string literals.
 
 **Example: Image-to-Video**
@@ -162,7 +162,7 @@ onValue(ref(db, `firegen-jobs/${job.key}/status`), async (snap) => {
 
 **Model:** `gemini-2.5-flash-image`
 
-- **Schema reference:** [`gemini-2.5-flash-image.schema.ts`](extension/functions/src/models/gemini-flash-image/gemini-2.5-flash-image.schema.ts)
+- **Schema reference:** [`gemini-2.5-flash-image.schema.ts`](https://raw.githubusercontent.com/ShipFail/firegen/main/extension/functions/src/models/gemini-flash-image/gemini-2.5-flash-image.schema.ts)
 - **Key fields:** `contents[]` follow Gemini `Content` contract (`role`, `parts`); `generationConfig.responseModalities` must remain `IMAGE`; optional `imageConfig.aspectRatio` enumerates supported ratios.
 
 **Example:**
@@ -185,7 +185,7 @@ onValue(ref(db, `firegen-jobs/${job.key}/status`), async (snap) => {
 
 **Available Voices (30):** Zephyr, Puck, Charon, Kore, Fenrir, Leda, Aoede, Callisto, Dione, Ganymede, Helios, Iapetus, Juno, Kairos, Luna, Mimas, Nereus, Oberon, Proteus, Rhea, Selene, Titan, Umbriel, Vesta, Xanthe, Ymir, Zelus, Atlas, Borealis, Cygnus
 
-- **Schema references:** [`gemini-2.5-flash-preview-tts.schema.ts`](extension/functions/src/models/gemini-tts/gemini-2.5-flash-preview-tts.schema.ts) and [`gemini-2.5-pro-preview-tts.schema.ts`](extension/functions/src/models/gemini-tts/gemini-2.5-pro-preview-tts.schema.ts)
+- **Schema references:** [`gemini-2.5-flash-preview-tts.schema.ts`](https://raw.githubusercontent.com/ShipFail/firegen/main/extension/functions/src/models/gemini-tts/gemini-2.5-flash-preview-tts.schema.ts) and [`gemini-2.5-pro-preview-tts.schema.ts`](https://raw.githubusercontent.com/ShipFail/firegen/main/extension/functions/src/models/gemini-tts/gemini-2.5-pro-preview-tts.schema.ts)
 - **Key fields:** Single `contents` message (`role: "user"`) with text parts; `generationConfig.responseModalities` locked to `AUDIO`; optional `speechConfig.voiceConfig.prebuiltVoiceConfig.voiceName` selects one of the prebuilt voices.
 
 **Example:**

@@ -48,11 +48,36 @@ export type Gemini25FlashImageAspectRatio = z.infer<typeof Gemini25FlashImageAsp
  * https://cloud.google.com/vertex-ai/generative-ai/docs/multimodal/configure-safety-attributes
  * https://cloud.google.com/vertex-ai/generative-ai/docs/reference/rest/v1/SafetySetting
  */
+const HarmCategorySchema = z.enum([
+  "HARM_CATEGORY_UNSPECIFIED",
+  "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+  "HARM_CATEGORY_HATE_SPEECH",
+  "HARM_CATEGORY_HARASSMENT",
+  "HARM_CATEGORY_DANGEROUS_CONTENT",
+]);
+
+const HarmBlockThresholdSchema = z.enum([
+  "HARM_BLOCK_THRESHOLD_UNSPECIFIED",
+  "BLOCK_ONLY_HIGH",
+  "BLOCK_MEDIUM_AND_ABOVE",
+  "BLOCK_LOW_AND_ABOVE",
+  "BLOCK_NONE",
+  "OFF",
+]);
+
+const HarmBlockMethodSchema = z.enum([
+  "HARM_BLOCK_METHOD_UNSPECIFIED",
+  "SEVERITY",
+  "PROBABILITY",
+]);
+
 const SafetySettingSchema = z.object({
-  category: z.string()
-    .describe("Harmful content category: HARM_CATEGORY_HATE_SPEECH, SEXUALLY_EXPLICIT, HARASSMENT, DANGEROUS_CONTENT"),
-  threshold: z.string()
-    .describe("Blocking sensitivity: BLOCK_NONE allows all, BLOCK_ONLY_HIGH blocks severe, BLOCK_MEDIUM_AND_ABOVE blocks moderate+"),
+  category: HarmCategorySchema
+    .describe("Harmful content category aligned with Vertex AI safety taxonomy"),
+  threshold: HarmBlockThresholdSchema
+    .describe("Blocking sensitivity: OFF disables, BLOCK_ONLY_HIGH blocks severe, BLOCK_MEDIUM_AND_ABOVE blocks medium+"),
+  method: HarmBlockMethodSchema.optional()
+    .describe("Scoring method: probability (default) or severity weighting"),
 });
 
 // ============= PART SCHEMAS =============
@@ -115,7 +140,8 @@ const PartSchema = z.union([
  * Structure matches the standard Gemini Content type with role and parts array.
  */
 const Gemini25FlashImageContentSchema = z.object({
-  role: z.literal("user").optional().describe("Role of the content creator (usually 'user')"),
+  role: z.enum(["user", "model"]).default("user")
+    .describe("Role of the content creator: user prompt or model reply when replaying history"),
   parts: z.array(PartSchema)
     .min(1)
     .refine((parts) => parts.some((part) => "text" in part), {

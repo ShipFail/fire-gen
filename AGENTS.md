@@ -95,6 +95,7 @@ firegen-jobs/{jobId}/
 - use `gcloud auth application-default login` to authenticate gcloud API requests in development environment
 - Always read file content before editing, especially for front matter or top-of-file modifications to avoid duplication.
 - **Error Logging**: Always serialize Error objects before logging - use `serializeError(err)` from `lib/error-utils` instead of raw `err` because Error objects have non-enumerable properties and serialize to `{}` in JSON/Firebase Functions logger.
+- Mirror Vertex AI REST schemas exactly in every model request/response validator—no optional or extra fields beyond the official docs.
 
 ## Module Export Rules
 

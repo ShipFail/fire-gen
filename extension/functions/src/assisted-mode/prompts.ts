@@ -117,4 +117,5 @@ export const STEP3_SYSTEM = `You are an expert full stack engineer generating JS
 - XML tags are placeholders for URI/URL links - preserve them exactly as provided
 - Apply all reasoning from previous steps
 - Use inferred parameter values
+- Fill all optional parameters with values
 `

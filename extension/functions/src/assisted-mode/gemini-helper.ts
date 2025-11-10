@@ -85,11 +85,15 @@ export async function callDeterministicGemini(
   //     • Explicit "no randomness" signal (makes intent clear)
   //     • Guards against potential API default behavior
   //     • Zero performance cost
+  //
+  // Seed stabilizes sampling state:
+  //   Vertex AI only offers best-effort replay, but a fixed seed helps minimize drift.
   const generationConfig: Record<string, any> = {
     temperature: 0,      // Defensive: explicit "no randomness"
     topK: 1,             // Core: only highest-probability token
     candidateCount: 1,   // Single response only
     maxOutputTokens,
+    seed: 42,
   };
 
   // Add JSON mode if schema provided

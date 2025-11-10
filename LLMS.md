@@ -120,33 +120,8 @@ onValue(ref(db, `firegen-jobs/${job.key}/status`), async (snap) => {
 
 **Models:** `veo-3.1-fast-generate-preview`, `veo-3.1-generate-preview`
 
-```typescript
-{
-  model: "veo-3.1-fast-generate-preview",
-  instances: [{
-    prompt: string,                        // Video description
-    image?: {gcsUri: string},              // Starting keyframe (image-to-video)
-    video?: {gcsUri: string},              // Video to extend
-    lastFrame?: {gcsUri: string},          // Target ending frame
-    referenceImages?: [                    // Max 3 references
-      {
-        image: {gcsUri: string},
-        referenceType: "asset" | "style"   // asset=subject, style=artistic
-      }
-    ]
-  }],
-  parameters: {
-    durationSeconds: 4 | 6 | 8,           // Default: 8
-    aspectRatio: "16:9" | "9:16" | "1:1" | "21:9" | "3:4" | "4:3", // Default: "16:9"
-    generateAudio: boolean,                // Default: true
-    enhancePrompt?: boolean,               // LLM-enhance prompt
-    negativePrompt?: string,               // Suppress elements
-    personGeneration?: "dont_allow" | "allow_adult",
-    sampleCount?: number,                  // Default: 1
-    seed?: number,                         // Deterministic generation
-  }
-}
-```
+- **Schema reference:** [`veo-3.1-fast-generate-preview.schema.ts`](extension/functions/src/models/veo/veo-3.1-fast-generate-preview.schema.ts) (contains both fast + standard exports)
+- **Payload shape:** `instances[]` describe prompt + optional media (`image`, `video`, `lastFrame`, `referenceImages`); `parameters` aligns with official Veo REST enum/string literals.
 
 **Example: Image-to-Video**
 ```typescript
@@ -187,21 +162,8 @@ onValue(ref(db, `firegen-jobs/${job.key}/status`), async (snap) => {
 
 **Model:** `gemini-2.5-flash-image`
 
-```typescript
-{
-  model: "gemini-2.5-flash-image",
-  contents: [{
-    role: "user",
-    parts: [{text: string}]               // Image generation prompt
-  }],
-  generationConfig: {
-    responseModalities: ["IMAGE"],
-    imageConfig?: {
-      aspectRatio?: "1:1" | "3:2" | "2:3" | "3:4" | "4:3" | "4:5" | "5:4" | "9:16" | "16:9" | "21:9"
-    }
-  }
-}
-```
+- **Schema reference:** [`gemini-2.5-flash-image.schema.ts`](extension/functions/src/models/gemini-flash-image/gemini-2.5-flash-image.schema.ts)
+- **Key fields:** `contents[]` follow Gemini `Content` contract (`role`, `parts`); `generationConfig.responseModalities` must remain `IMAGE`; optional `imageConfig.aspectRatio` enumerates supported ratios.
 
 **Example:**
 ```typescript
@@ -223,25 +185,8 @@ onValue(ref(db, `firegen-jobs/${job.key}/status`), async (snap) => {
 
 **Available Voices (30):** Zephyr, Puck, Charon, Kore, Fenrir, Leda, Aoede, Callisto, Dione, Ganymede, Helios, Iapetus, Juno, Kairos, Luna, Mimas, Nereus, Oberon, Proteus, Rhea, Selene, Titan, Umbriel, Vesta, Xanthe, Ymir, Zelus, Atlas, Borealis, Cygnus
 
-```typescript
-{
-  model: "gemini-2.5-flash-preview-tts",
-  contents: [{
-    role: "user",
-    parts: [{text: string}]               // Text to synthesize
-  }],
-  generationConfig: {
-    responseModalities: ["AUDIO"],
-    speechConfig?: {
-      voiceConfig?: {
-        prebuiltVoiceConfig?: {
-          voiceName: string               // One of 30 voices (default: auto-selected)
-        }
-      }
-    }
-  }
-}
-```
+- **Schema references:** [`gemini-2.5-flash-preview-tts.schema.ts`](extension/functions/src/models/gemini-tts/gemini-2.5-flash-preview-tts.schema.ts) and [`gemini-2.5-pro-preview-tts.schema.ts`](extension/functions/src/models/gemini-tts/gemini-2.5-pro-preview-tts.schema.ts)
+- **Key fields:** Single `contents` message (`role: "user"`) with text parts; `generationConfig.responseModalities` locked to `AUDIO`; optional `speechConfig.voiceConfig.prebuiltVoiceConfig.voiceName` selects one of the prebuilt voices.
 
 **Example:**
 ```typescript
@@ -329,60 +274,6 @@ function watchJob(jobId: string) {
 
 **⚠️ File Persistence:** Source code shows 24h signed URL expiry, but no auto-deletion implementation found. Implement your own cleanup if needed.
 
----
-
-## Error Handling
-
-**Common Errors:**
-
-```typescript
-// Validation error (Zod schema)
-{
-  status: "failed",
-  error: {
-    code: "VALIDATION_ERROR",
-    message: "parameters.durationSeconds: Invalid literal value, expected 4 | 6 | 8"
-  }
-}
-
-// UID mismatch (security)
-{
-  status: "failed",
-  error: {
-    code: "UID_MISMATCH",
-    message: "UID mismatch - you can only create jobs for yourself"
-  }
-}
-
-// AI analysis failed (AI-Assisted mode)
-{
-  status: "failed",
-  error: {
-    code: "AI_ANALYSIS_FAILED",
-    message: "AI analysis failed: ..."
-  },
-  assisted: {prompt: "...", reasons: []}
-}
-
-// Job expired (timeout)
-{
-  status: "expired"
-}
-
-// Model error (in response.error, NOT error field)
-{
-  status: "succeeded", // or "failed"
-  response: {
-    error: {
-      message: "Safety filter triggered",
-      code: "SAFETY_ERROR"
-    }
-  }
-}
-```
-
----
-
 ## Security
 
 **RTDB Rules Example:**
@@ -435,69 +326,6 @@ await push(ref(db, 'firegen-jobs'), "Create a 6-second waterfall video");
 
 ---
 
-## Complete Integration Example
-
-```typescript
-import {getDatabase, ref, push, onValue, get} from 'firebase/database';
-
-async function generateVideo(prompt: string): Promise<Blob> {
-  const db = getDatabase();
-  
-  // Create job (AI-Assisted)
-  const jobRef = await push(ref(db, 'firegen-jobs'), prompt);
-  const jobId = jobRef.key!;
-  
-  // Monitor status
-  return new Promise((resolve, reject) => {
-    const unsubscribe = onValue(
-      ref(db, `firegen-jobs/${jobId}/status`),
-      async (snap) => {
-        const status = snap.val();
-        
-        if (status === 'succeeded') {
-          const job = (await get(ref(db, `firegen-jobs/${jobId}`))).val();
-          const response = await fetch(job.files[0].https);
-          const blob = await response.blob();
-          unsubscribe();
-          resolve(blob);
-        } else if (status === 'failed' || status === 'expired') {
-          const job = (await get(ref(db, `firegen-jobs/${jobId}`))).val();
-          unsubscribe();
-          reject(new Error(job.error?.message || 'Job failed'));
-        }
-      }
-    );
-  });
-}
-
-// Usage
-try {
-  const video = await generateVideo("Create a 6-second sunset over mountains");
-  // Save to your storage...
-} catch (err) {
-  console.error('Generation failed:', err);
-}
-```
-
----
-
-## Performance Benchmarks
-
-| Model | Generation Time | Type | Polling |
-|-------|----------------|------|---------|
-| veo-3.1-fast-generate-preview | 30-60s | Async | Yes (1s intervals) |
-| veo-3.1-generate-preview | 60-120s | Async | Yes (1s intervals) |
-| gemini-2.5-flash-image | 2-5s | Sync | No |
-| gemini-2.5-flash-preview-tts | 2-5s | Sync | No |
-| gemini-2.5-pro-preview-tts | 3-6s | Sync | No |
-
-**Additional:**
-- Cold start: 2-5s (first function invocation)
-- Warm start: <500ms
-- Max concurrent polls: 150
-
----
-
 ## Best Practices
 
 1. **⚠️ Subscribe to `status` only** - Not entire job (avoids 120+ re-renders during polling)
@@ -506,10 +334,9 @@ try {
 4. **Use Explicit for production** - Precise control, no AI overhead
 5. **Validate before writing** - Check schema to avoid validation errors
 6. **Implement rate limiting** - Prevent abuse and control costs
-7. **Handle Zod errors gracefully** - Parse `error.message` for field-specific issues
-8. **Clean up old jobs** - Remove succeeded/failed jobs to save database space
-9. **Use `https` URLs for browser** - `gs` URIs require Admin SDK authentication
-10. **Save to permanent storage** - Don't rely on FireGen storage persistence
+7. **Clean up old jobs** - Remove succeeded/failed jobs to save database space
+8. **Use `https` URLs for browser** - `gs` URIs require Admin SDK authentication
+9. **Save to permanent storage** - Don't rely on FireGen storage persistence
 
 ---
 

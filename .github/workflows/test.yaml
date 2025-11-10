@@ -13,6 +13,7 @@ permissions:
 env:
   NODE_VERSION: 22
   WORKING_DIR: extension/functions
+  FIREGEN_BUCKET: ${{ vars.FIREGEN_BUCKET }}
   GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
   GCP_PROJECT_NUMBER: ${{ vars.GCP_PROJECT_NUMBER }}
   GCP_WIP_POOL_ID: github

@@ -33,6 +33,10 @@ export async function step3JsonGeneration(
     jsonSchema: modelSchema,
   });
 
-  const jsonWithTags = JSON.parse(text) as Record<string, unknown>;
-  return jsonWithTags;
+  try {
+    const jsonWithTags = JSON.parse(text) as Record<string, unknown>;
+    return jsonWithTags;
+  } catch (err) {
+    throw new Error(`Failed to parse JSON output from step3JsonGeneration: \n"""json\n${text}\n"""\n\nError: ${(err as Error).message}`);
+  }
 }

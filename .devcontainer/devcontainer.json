@@ -1,0 +1,10 @@
+{
+  "image": "mcr.microsoft.com/devcontainers/universal:latest",
+  "features": {
+    "ghcr.io/devcontainers/features/gcloud:latest": {
+      "version": "latest",
+      "installComponents": "alpha,beta" // Optional: Install additional components
+    }
+  },
+  "postCreateCommand": "npm install -g firebase-tools"
+}

@@ -118,4 +118,5 @@ export const STEP3_SYSTEM = `You are an expert full stack engineer generating JS
 - Apply all reasoning from previous steps
 - Use inferred parameter values
 - Fill all optional parameters with values
+- Ensure JSON is valid and matches schema, double check JSON stringification is clear.
 `

@@ -10,6 +10,8 @@
 [![Node.js](https://img.shields.io/badge/Node.js-22-green)](https://nodejs.org/)
 [![REST API](https://img.shields.io/badge/REST%20API-Pure-purple)](https://cloud.google.com/vertex-ai/docs/reference/rest)
 
+Read our announcement blog post at [Announcing FireGen: Turn Firebase RTDB into Your Universal Generative AI API](https://wechaty.js.org/2025/11/13/firegen-firebase-rtdb-genai-api/)
+
 ## The Problem
 
 Solo founders and AI co-founder practitioners waste **days debugging Vertex AI integration** instead of shipping features:

@@ -7,17 +7,12 @@
   "features": {
     // Google Cloud CLI Feature (3rd-party allowed)
     "ghcr.io/dhoeric/features/google-cloud-cli:1.0.1": {
-      "install_components": "gke-gcloud-auth-plugin"
+      "version": "latest"
     },
 
     // Node Feature (Spec v1-compliant), replaces node + npm-package
     "ghcr.io/devcontainers/features/node:1": {
-      "version": "22",
-      "installGlobalPackages": [
-        "pnpm",
-        "firebase-tools",
-        "npm-check-updates"
-      ]
+      "version": "22"
     },
 
     // Java 17 for Firebase Emulator Suite
@@ -26,29 +21,7 @@
     }
   },
 
+  "onCreateCommand": "git config --global pull.rebase true && npm install -g firebase-tools npm-check-updates",
   // Run after container is created and features are applied
-  "postStartCommand": "cd extension/functions && npm install --no-fund --no-audit",
-  "customizations": {
-    "vscode": {
-      "settings": {
-        "terminal.integrated.defaultProfile.linux": "bash"
-      },
-      "extensions": [
-        "firebase.firebase-tools",
-        "ms-azuretools.vscode-docker",
-        "esbenp.prettier-vscode"
-      ]
-    }
-  },
-
-  // Forward Firebase Emulator ports
-  "forwardPorts": [
-    4400,
-    4000,
-    5000,
-    8080,
-    9099,
-    9199,
-    9005
-  ]
+  "postCreateCommand": "cd extension/functions && npm install --no-fund --no-audit",
 }

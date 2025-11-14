@@ -3,7 +3,7 @@
   "features": {
     "ghcr.io/devcontainers/features/gcloud:latest": {
       "version": "latest",
-      "installComponents": "alpha,beta" // Optional: Install additional components
+      "installComponents": "alpha,beta"
     }
   },
   "postCreateCommand": "npm install -g firebase-tools"
